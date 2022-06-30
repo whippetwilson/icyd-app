@@ -1,0 +1,57 @@
+{
+  "bin": "start.js",
+  "name": "icyd-app",
+  "version": "1.0.0",
+  "description": "My Moleculer-based microservices project",
+  "scripts": {
+    "bundle": "pkg . -t host --out-path dist/",
+    "dev": "moleculer-runner --repl --hot services/**/*.service.js",
+    "start": "moleculer-runner",
+    "cli": "moleculer connect ",
+    "ci": "jest --watch",
+    "test": "jest --coverage",
+    "lint": "eslint services"
+  },
+  "pkg": {
+    "assets": [
+      "public/**/*.*"
+    ],
+    "scripts": [
+      "moleculer.config.js",
+      "services/**/*.*"
+    ]
+  },
+  "keywords": [
+    "microservices",
+    "moleculer"
+  ],
+  "author": "",
+  "devDependencies": {
+    "eslint": "^7.32.0",
+    "jest": "^27.1.0",
+    "jest-cli": "^27.1.0",
+    "moleculer-repl": "^0.6.6",
+    "pkg": "^5.7.0"
+  },
+  "dependencies": {
+    "@elastic/elasticsearch": "^8.2.1",
+    "axios": "^0.27.2",
+    "date-fns": "^2.28.0",
+    "dotenv": "^16.0.1",
+    "lodash": "^4.17.21",
+    "moleculer": "^0.14.16",
+    "moleculer-web": "^0.10.2",
+    "moment": "^2.29.3"
+  },
+  "engines": {
+    "node": ">= 12.x.x"
+  },
+  "jest": {
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node",
+    "rootDir": "./services",
+    "roots": [
+      "../test"
+    ]
+  }
+}
