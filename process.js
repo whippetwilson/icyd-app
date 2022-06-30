@@ -2473,8 +2473,7 @@ module.exports.useTracker = async (
 };
 
 module.exports.api = axios.create({
-  // baseURL: "http://localhost:3001/",
-  baseURL: "http://62.56.168.158:3001/",
+  baseURL: "http://localhost:3001/",
 });
 
 module.exports.flattenInstances = async (trackedEntityInstances, program) => {
