@@ -2477,7 +2477,7 @@ module.exports.api = axios.create({
   baseURL: "http://62.56.168.158:3001/",
 });
 
-module.exports.flattenInstances = async (trackedEntityInstances) => {
+module.exports.flattenInstances = async (trackedEntityInstances, program) => {
   const data = trackedEntityInstances.flatMap(
     ({
       trackedEntityInstance,
@@ -2590,7 +2590,7 @@ module.exports.processTrackedEntityInstances = async (program) => {
     },
   } = await this.instance.get("trackedEntityInstances.json", { params });
 
-  await this.flattenInstances(trackedEntityInstances);
+  await this.flattenInstances(trackedEntityInstances, program);
   for (let page = 2; page <= pageCount; page++) {
     console.log(`Working on page ${page}`);
     const {
@@ -2598,6 +2598,6 @@ module.exports.processTrackedEntityInstances = async (program) => {
     } = await this.instance.get("trackedEntityInstances.json", {
       params: { ...params, page },
     });
-    await this.flattenInstances(trackedEntityInstances);
+    await this.flattenInstances(trackedEntityInstances, program);
   }
 };
