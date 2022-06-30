@@ -2559,17 +2559,21 @@ module.exports.flattenInstances = async (trackedEntityInstances, program) => {
       }
     }
   );
-  const { data: response } = await this.api.post(
-    `wal/index?index=${String(program).toLowerCase()}`,
-    {
-      data,
-    }
-  );
+  try {
+    const { data: response } = await this.api.post(
+      `wal/index?index=${String(program).toLowerCase()}`,
+      {
+        data,
+      }
+    );
 
-  console.log(response.inserted);
-  response.errorDocuments.forEach(({ error, document }) =>
-    console.error(error, document)
-  );
+    console.log(response.inserted);
+    response.errorDocuments.forEach(({ error, document }) =>
+      console.error(error, document)
+    );
+  } catch (error) {
+    console.log(error.message);
+  }
 };
 
 module.exports.processTrackedEntityInstances = async (program) => {
