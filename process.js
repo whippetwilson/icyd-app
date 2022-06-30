@@ -2560,9 +2560,12 @@ module.exports.flattenInstances = async (trackedEntityInstances) => {
       }
     }
   );
-  const { data: response } = await this.api.post(`wal/index?index=${program}`, {
-    data,
-  });
+  const { data: response } = await this.api.post(
+    `wal/index?index=${String(program).toLowerCase()}`,
+    {
+      data,
+    }
+  );
 
   console.log(response.inserted);
   response.errorDocuments.forEach(({ error, document }) =>
@@ -2576,6 +2579,7 @@ module.exports.processTrackedEntityInstances = async (program) => {
     ouMode: "ALL",
     program,
     totalPages: true,
+    pageSize: 1000,
     page: 1,
   };
   console.log(`Working on page 1`);

@@ -1,3 +1,9 @@
 const { processTrackedEntityInstances } = require("./process");
 
-processTrackedEntityInstances("RDEklSXCD4C").then(() => console.log("Done"));
+const processAll = async () => {
+  for (const program of ["HEWq6yr4cs5", "RDEklSXCD4C", "IXxHJADVCkb"]) {
+    await processTrackedEntityInstances(program);
+  }
+};
+
+processAll().then(() => console.log("Done"));
