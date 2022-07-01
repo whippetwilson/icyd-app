@@ -2571,7 +2571,7 @@ module.exports.flattenInstances = async (
         return this.api.post(
           `wal/index?index=${String(program).toLowerCase()}`,
           {
-            data,
+            data: c,
           }
         );
       })
