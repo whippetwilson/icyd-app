@@ -1,10 +1,5 @@
 const { processTrackedEntityInstances } = require("./process");
-
-const processAll = async () => {
-  for (const program of ["IXxHJADVCkb"]) {
-    console.log(`Working on ${program}`);
-    await processTrackedEntityInstances(program);
-  }
-};
+const args = process.argv.slice(2);
+await processTrackedEntityInstances(args[0], args[1], args[2]);
 
 processAll().then(() => console.log("Done"));

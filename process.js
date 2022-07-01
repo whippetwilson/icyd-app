@@ -2478,7 +2478,11 @@ module.exports.api = axios.create({
   baseURL: "http://localhost:3001/api/",
 });
 
-module.exports.flattenInstances = async (trackedEntityInstances, program) => {
+module.exports.flattenInstances = async (
+  trackedEntityInstances,
+  program,
+  chunkSize
+) => {
   const data = trackedEntityInstances.flatMap(
     ({
       trackedEntityInstance,
@@ -2563,7 +2567,7 @@ module.exports.flattenInstances = async (trackedEntityInstances, program) => {
   );
   try {
     const inserted = await Promise.all(
-      chunk(data, 250).map((c) => {
+      chunk(data, chunkSize).map((c) => {
         return this.api.post(
           `wal/index?index=${String(program).toLowerCase()}`,
           {
@@ -2579,13 +2583,17 @@ module.exports.flattenInstances = async (trackedEntityInstances, program) => {
   }
 };
 
-module.exports.processTrackedEntityInstances = async (program) => {
+module.exports.processTrackedEntityInstances = async (
+  program,
+  pageSize,
+  chunkSize
+) => {
   let params = {
     fields: "*",
     ouMode: "ALL",
     program,
     totalPages: true,
-    pageSize: 250,
+    pageSize,
     page: 1,
   };
   console.log(`Working on page 1`);
@@ -2596,7 +2604,7 @@ module.exports.processTrackedEntityInstances = async (program) => {
     },
   } = await this.instance.get("trackedEntityInstances.json", { params });
 
-  await this.flattenInstances(trackedEntityInstances, program);
+  await this.flattenInstances(trackedEntityInstances, program, chunkSize);
   for (let page = 2; page <= pageCount; page++) {
     console.log(`Working on page ${page} of ${pageCount}`);
     const {
@@ -2604,6 +2612,6 @@ module.exports.processTrackedEntityInstances = async (program) => {
     } = await this.instance.get("trackedEntityInstances.json", {
       params: { ...params, page },
     });
-    await this.flattenInstances(trackedEntityInstances, program);
+    await this.flattenInstances(trackedEntityInstances, program, chunkSize);
   }
 };
