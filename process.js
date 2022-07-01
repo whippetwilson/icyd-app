@@ -2473,7 +2473,7 @@ module.exports.useTracker = async (
 };
 
 module.exports.api = axios.create({
-  baseURL: "http://localhost:3001/",
+  baseURL: "http://localhost:3001/api/",
 });
 
 module.exports.flattenInstances = async (trackedEntityInstances, program) => {
@@ -2560,17 +2560,15 @@ module.exports.flattenInstances = async (trackedEntityInstances, program) => {
     }
   );
   try {
-    const { data: response } = await this.api.post(
+    const {
+      data: { items },
+    } = await this.api.post(
       `wal/index?index=${String(program).toLowerCase()}`,
       {
         data,
       }
     );
-
-    console.log(response.inserted);
-    response.errorDocuments.forEach(({ error, document }) =>
-      console.error(error, document)
-    );
+    console.log(`Inserted ${items.length}`);
   } catch (error) {
     console.log(error.message);
   }
@@ -2582,7 +2580,7 @@ module.exports.processTrackedEntityInstances = async (program) => {
     ouMode: "ALL",
     program,
     totalPages: true,
-    pageSize: 1000,
+    pageSize: 250,
     page: 1,
   };
   console.log(`Working on page 1`);
@@ -2595,7 +2593,7 @@ module.exports.processTrackedEntityInstances = async (program) => {
 
   await this.flattenInstances(trackedEntityInstances, program);
   for (let page = 2; page <= pageCount; page++) {
-    console.log(`Working on page ${page}`);
+    console.log(`Working on page ${page} of ${pageCount}`);
     const {
       data: { trackedEntityInstances },
     } = await this.instance.get("trackedEntityInstances.json", {
