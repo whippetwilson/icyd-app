@@ -2580,7 +2580,7 @@ module.exports.processTrackedEntityInstances = async (program) => {
     ouMode: "ALL",
     program,
     totalPages: true,
-    pageSize: 5,
+    pageSize: 2,
     page: 1,
   };
   console.log(`Working on page 1`);
