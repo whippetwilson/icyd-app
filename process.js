@@ -13,6 +13,8 @@ const {
   maxBy,
   sortBy,
   uniq,
+  chunk,
+  sum,
 } = require("lodash");
 const moment = require("moment");
 const axios = require("axios");
@@ -2560,15 +2562,18 @@ module.exports.flattenInstances = async (trackedEntityInstances, program) => {
     }
   );
   try {
-    const {
-      data: { items },
-    } = await this.api.post(
-      `wal/index?index=${String(program).toLowerCase()}`,
-      {
-        data,
-      }
+    const inserted = await Promise.all(
+      chunk(data, 250).map((c) => {
+        return this.api.post(
+          `wal/index?index=${String(program).toLowerCase()}`,
+          {
+            data,
+          }
+        );
+      })
     );
-    console.log(`Inserted ${items.length}`);
+    const total = sum(inserted.map(({ data: { items } }) => items.length));
+    console.log(total);
   } catch (error) {
     console.log(error.message);
   }
@@ -2580,7 +2585,7 @@ module.exports.processTrackedEntityInstances = async (program) => {
     ouMode: "ALL",
     program,
     totalPages: true,
-    pageSize: 2,
+    pageSize: 250,
     page: 1,
   };
   console.log(`Working on page 1`);
