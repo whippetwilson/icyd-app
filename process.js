@@ -2622,23 +2622,22 @@ module.exports.flattenInstancesToAttributes = async (
       };
     }
   );
-  console.log(data)
-  // try {
-  //   const inserted = await Promise.all(
-  //     chunk(data, chunkSize).map((c) => {
-  //       return this.api.post(
-  //         `wal/index?index=${String(program).toLowerCase()}-attributes`,
-  //         {
-  //           data: c,
-  //         }
-  //       );
-  //     })
-  //   );
-  //   const total = sum(inserted.map(({ data: { items } }) => items.length));
-  //   console.log(total);
-  // } catch (error) {
-  //   console.log(error.message);
-  // }
+  try {
+    const inserted = await Promise.all(
+      chunk(data, chunkSize).map((c) => {
+        return this.api.post(
+          `wal/index?index=${String(program).toLowerCase()}-attributes`,
+          {
+            data: c,
+          }
+        );
+      })
+    );
+    const total = sum(inserted.map(({ data: { items } }) => items.length));
+    console.log(total);
+  } catch (error) {
+    console.log(error.message);
+  }
 };
 
 module.exports.processTrackedEntityInstances = async (
@@ -2701,19 +2700,19 @@ module.exports.processTrackedEntityInstancesAttributes = async (
     program,
     chunkSize
   );
-  // if (pageCount > 1) {
-  //   for (let page = 2; page <= pageCount; page++) {
-  //     console.log(`Working on page ${page} of ${pageCount}`);
-  //     const {
-  //       data: { trackedEntityInstances },
-  //     } = await this.instance.get("trackedEntityInstances.json", {
-  //       params: { ...params, page },
-  //     });
-  //     await this.flattenInstancesToAttributes(
-  //       trackedEntityInstances,
-  //       program,
-  //       chunkSize
-  //     );
-  //   }
-  // }
+  if (pageCount > 1) {
+    for (let page = 2; page <= pageCount; page++) {
+      console.log(`Working on page ${page} of ${pageCount}`);
+      const {
+        data: { trackedEntityInstances },
+      } = await this.instance.get("trackedEntityInstances.json", {
+        params: { ...params, page },
+      });
+      await this.flattenInstancesToAttributes(
+        trackedEntityInstances,
+        program,
+        chunkSize
+      );
+    }
+  }
 };
