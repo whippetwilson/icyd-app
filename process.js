@@ -2695,7 +2695,11 @@ module.exports.processTrackedEntityInstancesAttributes = async (
       } = await this.instance.get("trackedEntityInstances.json", {
         params: { ...params, page },
       });
-      await this.flattenInstances(trackedEntityInstances, program, chunkSize);
+      await this.flattenInstancesToAttributes(
+        trackedEntityInstances,
+        program,
+        chunkSize
+      );
     }
   }
 };
