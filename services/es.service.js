@@ -73,6 +73,16 @@ module.exports = {
         // };
       },
     },
+    sql: {
+      params: {
+        query: "string",
+      },
+      async handler(ctx) {
+        return await client.sql.query({
+          query: ctx.query,
+        });
+      },
+    },
     search: {
       params: {
         index: "string",

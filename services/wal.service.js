@@ -34,6 +34,18 @@ module.exports = {
         });
       },
     },
+    search: {
+      rest: {
+        method: "POST",
+        path: "/sql",
+      },
+      async handler(ctx) {
+        const { query } = ctx.params;
+        return await ctx.call("es.sql", {
+          query,
+        });
+      },
+    },
     scroll: {
       rest: {
         method: "POST",
