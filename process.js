@@ -2589,7 +2589,15 @@ module.exports.flattenInstancesToAttributes = async (
   chunkSize
 ) => {
   const data = trackedEntityInstances.map(
-    ({ trackedEntityInstance, orgUnit, attributes, relationships }) => {
+    ({
+      trackedEntityInstance,
+      orgUnit,
+      attributes,
+      enrollments,
+      inactive,
+      deleted,
+      relationships,
+    }) => {
       const allRelations = fromPairs(
         relationships.map((rel) => {
           return [
@@ -2598,6 +2606,7 @@ module.exports.flattenInstancesToAttributes = async (
           ];
         })
       );
+      const [{ enrollmentDate }] = enrollments;
       const processedAttributes = fromPairs(
         attributes.map(({ attribute, value }) => [attribute, value])
       );
@@ -2607,25 +2616,29 @@ module.exports.flattenInstancesToAttributes = async (
         orgUnit,
         ...processedAttributes,
         ...allRelations,
+        inactive,
+        deleted,
+        enrollmentDate,
       };
     }
   );
-  try {
-    const inserted = await Promise.all(
-      chunk(data, chunkSize).map((c) => {
-        return this.api.post(
-          `wal/index?index=${String(program).toLowerCase()}-attributes`,
-          {
-            data: c,
-          }
-        );
-      })
-    );
-    const total = sum(inserted.map(({ data: { items } }) => items.length));
-    console.log(total);
-  } catch (error) {
-    console.log(error.message);
-  }
+  console.log(data)
+  // try {
+  //   const inserted = await Promise.all(
+  //     chunk(data, chunkSize).map((c) => {
+  //       return this.api.post(
+  //         `wal/index?index=${String(program).toLowerCase()}-attributes`,
+  //         {
+  //           data: c,
+  //         }
+  //       );
+  //     })
+  //   );
+  //   const total = sum(inserted.map(({ data: { items } }) => items.length));
+  //   console.log(total);
+  // } catch (error) {
+  //   console.log(error.message);
+  // }
 };
 
 module.exports.processTrackedEntityInstances = async (
@@ -2667,7 +2680,8 @@ module.exports.processTrackedEntityInstancesAttributes = async (
   chunkSize
 ) => {
   let params = {
-    fields: "trackedEntityInstance,relationships,orgUnit,attributes",
+    fields:
+      "trackedEntityInstance,relationships,orgUnit,inactive,deleted,attributes,enrollments[enrollmentDate]",
     ouMode: "ALL",
     program,
     totalPages: true,
@@ -2687,19 +2701,19 @@ module.exports.processTrackedEntityInstancesAttributes = async (
     program,
     chunkSize
   );
-  if (pageCount > 1) {
-    for (let page = 2; page <= pageCount; page++) {
-      console.log(`Working on page ${page} of ${pageCount}`);
-      const {
-        data: { trackedEntityInstances },
-      } = await this.instance.get("trackedEntityInstances.json", {
-        params: { ...params, page },
-      });
-      await this.flattenInstancesToAttributes(
-        trackedEntityInstances,
-        program,
-        chunkSize
-      );
-    }
-  }
+  // if (pageCount > 1) {
+  //   for (let page = 2; page <= pageCount; page++) {
+  //     console.log(`Working on page ${page} of ${pageCount}`);
+  //     const {
+  //       data: { trackedEntityInstances },
+  //     } = await this.instance.get("trackedEntityInstances.json", {
+  //       params: { ...params, page },
+  //     });
+  //     await this.flattenInstancesToAttributes(
+  //       trackedEntityInstances,
+  //       program,
+  //       chunkSize
+  //     );
+  //   }
+  // }
 };
