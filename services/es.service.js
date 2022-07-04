@@ -79,7 +79,7 @@ module.exports = {
       },
       async handler(ctx) {
         return await client.sql.query({
-          query: ctx.query,
+          query: ctx.params.query,
         });
       },
     },
