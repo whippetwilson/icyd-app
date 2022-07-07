@@ -75,12 +75,7 @@ module.exports = {
     },
     sql: {
       async handler(ctx) {
-        const { query, ...others } = ctx.params;
-        console.log(ctx.params);
-        return await client.sql.query({
-          query,
-          ...others,
-        });
+        return await client.sql.query(ctx.params);
       },
     },
     search: {

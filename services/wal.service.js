@@ -34,7 +34,7 @@ module.exports = {
         });
       },
     },
-    search: {
+    sql: {
       rest: {
         method: "POST",
         path: "/sql",
