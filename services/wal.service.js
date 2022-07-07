@@ -40,10 +40,7 @@ module.exports = {
         path: "/sql",
       },
       async handler(ctx) {
-        const { query } = ctx.params;
-        return await ctx.call("es.sql", {
-          query,
-        });
+        return await ctx.call("es.sql", ctx.params);
       },
     },
     scroll: {
