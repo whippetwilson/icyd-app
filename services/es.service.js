@@ -74,12 +74,11 @@ module.exports = {
       },
     },
     sql: {
-      params: {
-        query: "string",
-      },
       async handler(ctx) {
+        const { query, ...others } = ctx.params;
         return await client.sql.query({
-          query: ctx.params.query,
+          query,
+          ...others,
         });
       },
     },
