@@ -2140,7 +2140,9 @@ module.exports.processInstances = async (
       });
     })
   );
-  const total = sum(inserted.map(({ data: { items } }) => items.length));
+  const total = sum(
+    inserted.map(({ data: { items } }) => (!!items ? items.length : 0))
+  );
   console.log(total);
 };
 
