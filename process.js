@@ -2227,6 +2227,7 @@ module.exports.useTracker = async (
       } = await this.api.post("wal/sql", { cursor: currentCursor });
       this.generate({ rows, columns }, periods, sessions);
       currentCursor = cursor;
+      console.log(cursor);
     } while (!!currentCursor);
   }
 };
