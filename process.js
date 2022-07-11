@@ -509,6 +509,7 @@ module.exports.fetchUnits4Instances = async (trackedEntityInstances) => {
           orgUnitName: unit.name,
           ...fromPairs(
             String(unit.path)
+              .split("/")
               .slice(1)
               .map((v, i) => {
                 return [`level${i + 1}`, v];
@@ -1984,7 +1985,6 @@ module.exports.processInstances = async (
       } else if (OVC_SERV === 0) {
         exitedWithGraduation = memberStatus;
       }
-
       layering.push({
         id: `${trackedEntityInstance}${qtr}`,
         qtr,
@@ -2124,6 +2124,7 @@ module.exports.processInstances = async (
         exitedWithGraduation,
         otherPERFARIP: "",
         otherIP: "",
+        On_ART_HVAT,
         homeVisitor,
         homeVisitorContact,
         dataEntrant,
@@ -2212,7 +2213,7 @@ module.exports.useTracker = async (
 ) => {
   const { data } = await this.api.post("wal/sql", {
     query: `select * from "rdeklsxcd4c" order by hly709n51z0`,
-    fetch_size: 1000,
+    fetch_size: 100,
   });
   const { sessions } = await this.useLoader();
   let { columns, rows, cursor: currentCursor } = data;
