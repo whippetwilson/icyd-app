@@ -495,7 +495,7 @@ module.exports.fetchUnits4Instances = async (trackedEntityInstances) => {
   } = await this.instance.get("organisationUnits.json", {
     params: {
       filter: `id:in:[${orgUnits.join(",")}]`,
-      fields: "id,name,parent[name,parent[name]]",
+      fields: "id,path,name,parent[name,parent[name]]",
       paging: "false",
     },
   });
@@ -507,6 +507,13 @@ module.exports.fetchUnits4Instances = async (trackedEntityInstances) => {
           subCounty: unit.parent?.name,
           district: unit.parent?.parent?.name,
           orgUnitName: unit.name,
+          ...fromPairs(
+            String(unit.path)
+              .slice(1)
+              .map((v, i) => {
+                return [`level${i + 1}`, v];
+              })
+          ),
         },
       ];
     })
@@ -885,7 +892,8 @@ module.exports.processInstances = async (
       n7VQaJ8biOJ,
       trackedEntityInstance,
     } = instance;
-    const { district, subCounty, orgUnitName } = processedUnits[orgUnit];
+    const { district, subCounty, orgUnitName, ...ous } =
+      processedUnits[orgUnit];
     const hasEnrollment = !!enrollmentDate;
 
     const hvat = !!hVatAssessments[hly709n51z0]
@@ -2119,6 +2127,7 @@ module.exports.processInstances = async (
         homeVisitor,
         homeVisitorContact,
         dataEntrant,
+        ...ous,
       });
     }
   }
