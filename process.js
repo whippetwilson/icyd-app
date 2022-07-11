@@ -2134,7 +2134,7 @@ module.exports.processInstances = async (
   }
 
   const inserted = await Promise.all(
-    chunk(layering, 100).map((c) => {
+    chunk(layering, 250).map((c) => {
       return this.api.post(`wal/index?index=layering`, {
         data: c,
       });
