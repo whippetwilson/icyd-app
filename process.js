@@ -2213,7 +2213,7 @@ module.exports.useTracker = async (
 ) => {
   const { data } = await this.api.post("wal/sql", {
     query: `select * from "rdeklsxcd4c" order by hly709n51z0`,
-    fetch_size: 250,
+    fetch_size: 100,
   });
   const { sessions } = await this.useLoader();
   let { columns, rows, cursor: currentCursor } = data;
