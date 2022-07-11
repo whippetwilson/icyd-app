@@ -32,7 +32,7 @@ const risks = {
 };
 
 module.exports.api = axios.create({
-  baseURL: "http://62.56.168.158:3001/api/",
+  baseURL: "http://localhost:3001/api/",
 });
 
 module.exports.instance = axios.create({
@@ -228,7 +228,7 @@ module.exports.findAnyEventValue = (events, dataElement) => {
   if (event) {
     return event[dataElement];
   }
-  return null;
+  return "";
 };
 
 module.exports.allValues4DataElement = (events, dataElement, value) => {
@@ -716,14 +716,30 @@ module.exports.getHEIInformation = (age, heiData) => {
       pcr,
     };
   }
-  return {};
+  return {
+    eidEnrollmentDate: "",
+    motherArtNo: "",
+    eidNo: "",
+    dateFirstPCRDone: "",
+    firstPCRResults: "",
+    dateSecondPCRDone: "",
+    secondPCRResults: "",
+    dateThirdPCRDone: "",
+    thirdPCRResults: "",
+    hivTestDueDate: "",
+    dateHivTestDone: "",
+    hivTestResults: "",
+    finalOutcome: "",
+    pcr: "",
+  };
 };
 
-module.exports.hivStatus = (
+module.exports.getHIVStatus = (
   HzUL8LTDPga,
   hivResult,
   hivTestResults,
-  viralLoadsBe4Quarter
+  viralLoadsBe4Quarter,
+  riskFactor
 ) => {
   if (viralLoadsBe4Quarter && viralLoadsBe4Quarter.length > 0) {
     return "+";
@@ -754,10 +770,10 @@ module.exports.hivInformation = (
   viralLoadCopies,
   viralLoadStatus
 ) => {
-  let ovcEligible;
-  let VLTestDone;
-  let VLStatus;
-  let ovcVL;
+  let ovcEligible = "";
+  let VLTestDone = "";
+  let VLStatus = "";
+  let ovcVL = "";
   let VLSuppressed;
   if (hivStatus === "+") {
     if (!!artStartDate) {
@@ -842,11 +858,14 @@ module.exports.processInstances = async (
     this.getProgramStageData(instanceIds, "B9EI27lmQrZ"),
     this.getProgramStageData(instanceIds, "kKlAyGUnCML"),
     // this.getProgramStageData(instanceIds, "LATgKmbf7Yv"),
-    this.getProgramStageData(instanceIds, "LATgKmbf7Yv"),
     this.getProgramStageData(instanceIds, "yz3zh5IFEZm"),
     this.getProgramStageData(instanceIds, "SxnXrDtSJZp"),
     this.getProgramStageData(instanceIds, "KOFm3jJl7n7"),
-    this.getProgramStageData(Object.keys(indexCases), "sYE3K7fFM4Y"),
+    this.getProgramStageData(
+      Object.keys(indexCases),
+      "sYE3K7fFM4Y",
+      "trackedEntityInstance,eventDate,zbAGBW6PsGd,kQCB9F39zWO,iRJUDyUBLQF"
+    ),
   ]);
   for (const instance of instances) {
     const {
@@ -869,13 +888,12 @@ module.exports.processInstances = async (
     const { district, subCounty, orgUnitName } = processedUnits[orgUnit];
     const hasEnrollment = !!enrollmentDate;
 
-    const { eventDate, zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF } =
-      !!hVatAssessments[hly709n51z0]
-        ? sortBy(hVatAssessments[hly709n51z0], (e) => e.eventDate())
-            .reverse()
-            .filter((e) => !!e.eventDate)[0]
-        : {};
-    console.log(eventDate);
+    const hvat = !!hVatAssessments[hly709n51z0]
+      ? sortBy(hVatAssessments[hly709n51z0], (e) => e.eventDate)
+          .reverse()
+          .filter((e) => !!e.eventDate)[0]
+      : {};
+    const { eventDate, zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF } = hvat || {};
     const { Xkwy5P2JG24, ExnzeYjgIaT } = !!indexCases[hly709n51z0]
       ? indexCases[hly709n51z0][0]
       : {};
@@ -968,6 +986,16 @@ module.exports.processInstances = async (
         this.getEvents(referrals, trackedEntityInstance),
         quarterStart,
         quarterEnd
+      );
+
+      const previousViralLoads = this.eventsBeforePeriod(
+        this.getEvents(viralLoads, trackedEntityInstance),
+        quarterStart
+      );
+
+      const previousReferrals = this.eventsBeforePeriod(
+        this.getEvents(referrals, trackedEntityInstance),
+        quarterStart
       );
 
       const hivResult = this.specificDataElement(
@@ -1116,6 +1144,19 @@ module.exports.processInstances = async (
         finalOutcome,
         pcr,
       } = this.getHEIInformation(age, heiData);
+      let riskFactor =
+        this.findAnyEventValue(homeVisitsBe4Quarter, "rQBaynepqjy") ||
+        nDUbdM2FjyP;
+
+      const hivStatus = this.getHIVStatus(
+        HzUL8LTDPga,
+        hivResult,
+        hivTestResults,
+        viralLoadsBe4Quarter,
+        riskFactor
+      );
+      riskFactor = hivStatus === "+" && age < 18 ? "CLHIV" : riskFactor;
+
       const testedForHIV = serviceProvided === "HCT/ Tested for HIV" ? 1 : 0;
       const primaryCareGiver = nDUbdM2FjyP === "Primary caregiver" ? 1 : 0;
       const OVC_TST_REFER =
@@ -1160,11 +1201,6 @@ module.exports.processInstances = async (
         "BMzryoryhtX"
       );
       const newlyEnrolled = isWithin ? "Yes" : "No";
-      const hivStatus = this.hivStatus(
-        HzUL8LTDPga,
-        hivResult,
-        viralLoadsBe4Quarter
-      );
 
       const { VLTestDone, ovcEligible, ovcVL, VLStatus, VLSuppressed } =
         this.hivInformation(
@@ -1197,11 +1233,7 @@ module.exports.processInstances = async (
       } else if (hivStatus === "+") {
         On_ART_HVAT = umqeJCVp4Zq === "Yes" ? 1 : 0;
       }
-      const riskFactor =
-        hivStatus === "+" && age < 18
-          ? "CLHIV"
-          : this.findAnyEventValue(homeVisitsBe4Quarter, "rQBaynepqjy") ||
-            nDUbdM2FjyP;
+
       const VSLA = this.hadASession(memberSessions, quarterStart, quarterEnd, [
         ...sessions["VSLA Methodology"],
         ...sessions["VSLA TOT"],
@@ -2090,7 +2122,16 @@ module.exports.processInstances = async (
       });
     }
   }
-  // console.log(layering);
+
+  const inserted = await Promise.all(
+    chunk(layering, 100).map((c) => {
+      return this.api.post(`wal/index?index=layering`, {
+        data: c,
+      });
+    })
+  );
+  const total = sum(inserted.map(({ data: { items } }) => items.length));
+  console.log(total);
 };
 
 module.exports.useProgramStage = async (
