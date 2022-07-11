@@ -1936,7 +1936,7 @@ module.exports.processInstances = async (
           "Positive"
         )
       ) {
-        child = { ...child, newlyTestedPositive: 1 };
+        newlyTestedPositive = 1;
       } else if (hivStatus === "+") {
         newlyTestedPositive = 0;
       }
@@ -2203,7 +2203,7 @@ module.exports.useTracker = async (
 ) => {
   const { data } = await this.api.post("wal/sql", {
     query: `select * from "rdeklsxcd4c" order by hly709n51z0`,
-    fetch_size: 250,
+    fetch_size: 1000,
   });
   const { sessions } = await this.useLoader();
   let { columns, rows, cursor: currentCursor } = data;
