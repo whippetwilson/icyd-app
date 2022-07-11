@@ -4,6 +4,8 @@ const {
   isBefore,
   isWithinInterval,
   parseISO,
+  subQuarters,
+  format,
 } = require("date-fns");
 const {
   every,
@@ -30,7 +32,7 @@ const risks = {
 };
 
 module.exports.api = axios.create({
-  baseURL: "http://localhost:3001/api/",
+  baseURL: "http://62.56.168.158:3001/api/",
 });
 
 module.exports.instance = axios.create({
@@ -120,98 +122,58 @@ module.exports.mapping2 = {
   SINOVUYO: 10,
 };
 
-module.exports.hadASession = (
-  allSessions,
-  participantIndex,
-  sessionNameIndex,
-  sessionDateIndex,
-  participant,
-  startDate,
-  endDate,
-  sessions
-) => {
-  return !!allSessions.find((row) => {
-    return (
-      row[participantIndex] === participant &&
-      sessions.indexOf(row[sessionNameIndex]) !== -1 &&
-      isWithinInterval(parseISO(row[sessionDateIndex]), {
-        start: startDate,
-        end: endDate,
-      })
-    );
-  });
+module.exports.hadASession = (memberSessions, startDate, endDate, sessions) => {
+  if (memberSessions) {
+    return !!memberSessions.find((row) => {
+      return (
+        sessions.indexOf(row.n20LkH4ZBF8) !== -1 &&
+        isWithinInterval(parseISO(row.eventDate), {
+          start: startDate,
+          end: endDate,
+        })
+      );
+    });
+  }
+  return false;
 };
 
-module.exports.hasCompleted = (
-  allSessions,
-  participantIndex,
-  sessionNameIndex,
-  sessionDateIndex,
-  participant,
-  endDate,
-  sessions,
-  value
-) => {
-  const doneSessions = allSessions
-    .filter((row) => {
-      return (
-        row[participantIndex] === participant &&
-        sessions.indexOf(row[sessionNameIndex]) !== -1 &&
-        parseISO(row[sessionDateIndex]).getTime() <= endDate.getTime()
-      );
-    })
-    .map((row) => row[sessionNameIndex]);
+module.exports.hasCompleted = (memberSessions, endDate, sessions, value) => {
+  const doneSessions = memberSessions.filter((row) => {
+    return (
+      sessions.indexOf(row.n20LkH4ZBF8) !== -1 &&
+      parseISO(row.eventDate).getTime() <= endDate.getTime()
+    );
+  });
 
   return doneSessions.length >= value;
 };
 
 module.exports.hasCompletedWithin = (
-  allSessions,
-  participantIndex,
-  sessionNameIndex,
-  sessionDateIndex,
-  participant,
+  memberSessions,
   startDate,
   endDate,
   sessions,
   value
 ) => {
-  const doneSessions = allSessions
-    .filter((row) => {
-      return (
-        row[participantIndex] === participant &&
-        sessions.indexOf(row[sessionNameIndex]) !== -1 &&
-        isWithinInterval(parseISO(row[sessionDateIndex]), {
-          start: startDate,
-          end: endDate,
-        })
-      );
-    })
-    .map((row) => row[sessionNameIndex]);
-
+  const doneSessions = memberSessions.filter((row) => {
+    return (
+      sessions.indexOf(row.n20LkH4ZBF8) !== -1 &&
+      isWithinInterval(parseISO(row.eventDate), {
+        start: startDate,
+        end: endDate,
+      })
+    );
+  });
   return doneSessions.length >= value;
 };
 
-module.exports.hasCompletedAtLeast1 = (
-  allSessions,
-  participantIndex,
-  sessionNameIndex,
-  sessionDateIndex,
-  participant,
-  endDate,
-  sessions,
-  value
-) => {
-  const doneSessions = allSessions
-    .filter((row) => {
-      return (
-        row[participantIndex] === participant &&
-        sessions.indexOf(row[sessionNameIndex]) !== -1 &&
-        parseISO(row[sessionDateIndex]).getTime() <= endDate.getTime()
-      );
-    })
-    .map((row) => row[sessionNameIndex]);
-
+module.exports.hasCompletedAtLeast1 = (memberSessions, endDate, sessions) => {
+  const doneSessions = memberSessions.filter((row) => {
+    return (
+      sessions.indexOf(row.n20LkH4ZBF8) !== -1 &&
+      parseISO(row.eventDate).getTime() <= endDate.getTime()
+    );
+  });
   return doneSessions.length >= 1;
 };
 module.exports.isAtSchool = (age, homeVisitValue, enrollmentValue) => {
@@ -241,20 +203,19 @@ module.exports.mostCurrentEvent = (events) => {
   return maxBy(events, "eventDate");
 };
 
-module.exports.eventsBeforePeriod = (events, programStage, end) => {
+module.exports.eventsBeforePeriod = (events, end) => {
   return events.filter((e) => {
-    return (
-      e.programStage === programStage && isBefore(parseISO(e.eventDate), end)
-    );
+    return isBefore(parseISO(e.eventDate), end);
   });
 };
 
-module.exports.eventsWithinPeriod = (events, programStage, start, end) => {
+module.exports.getEvents = (available, trackedEntityInstance) => {
+  return available[trackedEntityInstance] || [];
+};
+module.exports.eventsWithinPeriod = (events, start, end) => {
   return events.filter((e) => {
     return (
-      e.eventDate &&
-      e.programStage === programStage &&
-      isWithinInterval(parseISO(e.eventDate), { start, end })
+      e.eventDate && isWithinInterval(parseISO(e.eventDate), { start, end })
     );
   });
 };
@@ -274,7 +235,6 @@ module.exports.allValues4DataElement = (events, dataElement, value) => {
   if (events.length > 0) {
     return events.every((e) => e[dataElement] === value);
   }
-
   return true;
 };
 
@@ -546,7 +506,7 @@ module.exports.fetchUnits4Instances = async (trackedEntityInstances) => {
         {
           subCounty: unit.parent?.name,
           district: unit.parent?.parent?.name,
-          ou: unit.name,
+          orgUnitName: unit.name,
         },
       ];
     })
@@ -564,9 +524,7 @@ module.exports.fetchRelationships4Instances = async (
     trackedEntityInstances.rows.map((row) => row[relationIndex])
   );
   const data = await this.fetchAll({
-    query: `select trackedEntityInstance,eventDate,jiuPVqetSaV,Xkwy5P2JG24,enrollmentDate,zbAGBW6PsGd,kQCB9F39zWO,iRJUDyUBLQF from ${String(
-      "HEWq6yr4cs5"
-    ).toLowerCase()}`,
+    query: `select * from ${String("HEWq6yr4cs5").toLowerCase()}`,
     filter: {
       terms: {
         ["trackedEntityInstance.keyword"]: allInstances,
@@ -587,26 +545,31 @@ module.exports.fetchGroupActivities4Instances = async (
   );
   const data = await this.fetchAll({
     query: `select n20LkH4ZBF8,ypDUCAS6juy,eventDate from ${String(
-      "IXxHJADVCkb"
+      "VzkQBBglj3O"
     ).toLowerCase()}`,
     filter: {
-      bool: {
-        must: [
-          {
-            terms: {
-              ["ypDUCAS6juy.keyword"]: allMemberCodes,
-            },
-          },
-          {
-            term: {
-              ["programStage.keyword"]: "VzkQBBglj3O",
-            },
-          },
-        ],
+      terms: {
+        ["ypDUCAS6juy.keyword"]: allMemberCodes,
       },
     },
   });
   return groupBy(data, "ypDUCAS6juy");
+};
+
+module.exports.getProgramStageData = async (
+  trackedEntityInstances,
+  programStage,
+  columns = "*"
+) => {
+  const data = await this.fetchAll({
+    query: `select ${columns} from ${String(programStage).toLowerCase()}`,
+    filter: {
+      terms: {
+        ["trackedEntityInstance.keyword"]: trackedEntityInstances,
+      },
+    },
+  });
+  return groupBy(data, "trackedEntityInstance");
 };
 
 module.exports.processPrevention = async (
@@ -702,6 +665,153 @@ module.exports.processPrevention = async (
   );
 };
 
+module.exports.getHEIInformation = (age, heiData) => {
+  if (age <= 2) {
+    const eidEnrollmentDate = this.findAnyEventValue(heiData, "sDMDb4InL5F");
+    const motherArtNo = this.findAnyEventValue(heiData, "P6KEPNorRTT");
+    const eidNo = this.findAnyEventValue(heiData, "Qyp4adG3KJL");
+
+    const dateFirstPCRDone = this.findAnyEventValue(heiData, "yTSlwP6htQh");
+    const firstPCRResults = this.findAnyEventValue(heiData, "fUY7DEjsZin");
+
+    const dateSecondPCRDone = this.findAnyEventValue(heiData, "TJPxuJHRA3P");
+    const secondPCRResults = this.findAnyEventValue(heiData, "TX2qmTSj0rM");
+
+    const dateThirdPCRDone = this.findAnyEventValue(heiData, "r0zBP8h3UEl");
+    const thirdPCRResults = this.findAnyEventValue(heiData, "G0YhL0M4YjJ");
+
+    const hivTestDueDate = this.findAnyEventValue(heiData, "CWqTgshbDbW");
+    const dateHivTestDone = this.findAnyEventValue(heiData, "qitG6coAg3q");
+    const hivTestResults = this.findAnyEventValue(heiData, "lznDPbUscke");
+    const finalOutcome = this.findAnyEventValue(heiData, "fcAZR5zt9i3");
+
+    const pcr = !!hivTestResults
+      ? "4"
+      : !!thirdPCRResults
+      ? "3"
+      : !!secondPCRResults
+      ? "2"
+      : !!firstPCRResults
+      ? "1"
+      : "";
+
+    return {
+      eidEnrollmentDate,
+      motherArtNo,
+      eidNo,
+      dateFirstPCRDone,
+      firstPCRResults:
+        firstPCRResults === "1" ? "+" : firstPCRResults === "2" ? "-" : "",
+      dateSecondPCRDone,
+      secondPCRResults:
+        secondPCRResults === "1" ? "+" : secondPCRResults === "2" ? "-" : "",
+      dateThirdPCRDone,
+      thirdPCRResults:
+        thirdPCRResults === "1" ? "+" : thirdPCRResults === "2" ? "-" : "",
+      hivTestDueDate,
+      dateHivTestDone,
+      hivTestResults:
+        hivTestResults === "1" ? "+" : hivTestResults === "2" ? "-" : "",
+      finalOutcome,
+      pcr,
+    };
+  }
+  return {};
+};
+
+module.exports.hivStatus = (
+  HzUL8LTDPga,
+  hivResult,
+  hivTestResults,
+  viralLoadsBe4Quarter
+) => {
+  if (viralLoadsBe4Quarter && viralLoadsBe4Quarter.length > 0) {
+    return "+";
+  } else if (hivResult) {
+    return hivResult === "Positive" ? "+" : hivResult === "Negative" ? "-" : "";
+  } else if (!!hivTestResults) {
+    return hivTestResults;
+  } else if (riskFactor === "HEI") {
+    return "DK";
+  } else {
+    return HzUL8LTDPga === "Positive"
+      ? "+"
+      : HzUL8LTDPga === "Negative"
+      ? "-"
+      : HzUL8LTDPga === "Dont Know (DK)"
+      ? "DK"
+      : "";
+  }
+};
+
+module.exports.hivInformation = (
+  artStartDate,
+  hivStatus,
+  quarterEnd,
+  lastViralLoadDate,
+  viralTestDone,
+  viralLoadResultsReceived,
+  viralLoadCopies,
+  viralLoadStatus
+) => {
+  let ovcEligible;
+  let VLTestDone;
+  let VLStatus;
+  let ovcVL;
+  let VLSuppressed;
+  if (hivStatus === "+") {
+    if (!!artStartDate) {
+      const daysOnArt = differenceInMonths(quarterEnd, parseISO(artStartDate));
+      if (daysOnArt >= 6) {
+        ovcEligible = 1;
+      } else if (!!lastViralLoadDate) {
+        ovcEligible = 1;
+      } else {
+        ovcEligible = "NE";
+      }
+    } else if (!!lastViralLoadDate) {
+      ovcEligible = 1;
+    } else {
+      ovcEligible = "No VL";
+    }
+
+    if (!!lastViralLoadDate && ovcEligible === 1) {
+      const monthsSinceLastViralLoad = differenceInMonths(
+        quarterEnd,
+        parseISO(lastViralLoadDate)
+      );
+      if (monthsSinceLastViralLoad <= 12) {
+        VLTestDone =
+          viralTestDone === "true" ? 1 : viralTestDone === "false" ? 0 : 0;
+        VLStatus = viralLoadStatus;
+      } else {
+        VLTestDone = 0;
+      }
+    } else {
+      VLTestDone = 0;
+    }
+    if (!!viralLoadResultsReceived && VLTestDone === 1) {
+      ovcVL = viralLoadResultsReceived === "true" ? 1 : 0;
+    } else {
+      ovcVL = 0;
+    }
+    if (ovcVL === 1) {
+      copies = viralLoadCopies;
+      VLSuppressed = viralLoadStatus === "Suppressed" ? 1 : 0;
+    } else {
+      ovcVL = 0;
+      VLSuppressed = 0;
+    }
+  } else {
+    VLTestDone = "";
+    ovcEligible = "";
+    ovcVL = "";
+    VLStatus = "";
+  }
+
+  return { VLTestDone, ovcEligible, ovcVL, VLStatus, VLSuppressed };
+};
+
 module.exports.processInstances = async (
   trackedEntityInstances,
   periods,
@@ -715,87 +825,1271 @@ module.exports.processInstances = async (
   const instances = rows.map((r) => {
     return fromPairs(columns.map((c, i) => [c.name, r[i]]));
   });
-
-  // const { data: allEvents } = await this.api.post("wal/search", {
-  //   index: String("RDEklSXCD4C").toLowerCase(),
-  // size: 10000,
-  //   query: {
-  //     terms: {
-  //       ["trackedEntityInstance.keyword"]: instances.map(
-  //         (i) => i.trackedEntityInstance
-  //       ),
-  //     },
-  //   },
-  // });
-
-  const data = await this.fetchAll({
-    query: `select * from ${String("RDEklSXCD4C").toLowerCase()}`,
-    field_multi_value_leniency: true,
-    filter: {
-      bool: {
-        must: [
-          {
-            terms: {
-              ["trackedEntityInstance.keyword"]: instances.map(
-                (i) => i.trackedEntityInstance
-              ),
-            },
-          },
-        ],
-      },
-    },
-  });
-  console.log(data);
+  const instanceIds = instances.map((i) => i.trackedEntityInstance);
+  const [
+    // vulnerabilityAssessments,
+    homeVisits,
+    hivRiskAssessments,
+    viralLoads,
+    // casePlannings,
+    referrals,
+    serviceLinkages,
+    exposedInfants,
+    hVatAssessments,
+  ] = await Promise.all([
+    // this.getProgramStageData(instanceIds, "TuLJEpHu0um"),
+    this.getProgramStageData(instanceIds, "HaaSLv2ur0l"),
+    this.getProgramStageData(instanceIds, "B9EI27lmQrZ"),
+    this.getProgramStageData(instanceIds, "kKlAyGUnCML"),
+    // this.getProgramStageData(instanceIds, "LATgKmbf7Yv"),
+    this.getProgramStageData(instanceIds, "LATgKmbf7Yv"),
+    this.getProgramStageData(instanceIds, "yz3zh5IFEZm"),
+    this.getProgramStageData(instanceIds, "SxnXrDtSJZp"),
+    this.getProgramStageData(instanceIds, "KOFm3jJl7n7"),
+    this.getProgramStageData(Object.keys(indexCases), "sYE3K7fFM4Y"),
+  ]);
   for (const instance of instances) {
-    const { enrollmentDate, orgUnit, hly709n51z0, trackedEntityInstance } =
-      instance;
-    const units = processedUnits[orgUnit];
-    const availableIndexCases = sortBy(
-      indexCases[hly709n51z0],
-      (e) => e.eventDate
-    ).reverse();
+    const {
+      enrollmentDate,
+      orgUnit,
+      hly709n51z0,
+      HLKc2AKR9jW,
+      N1nMqKtYKvI,
+      nDUbdM2FjyP,
+      h4pXErY01YR,
+      umqeJCVp4Zq,
+      HzUL8LTDPga,
+      tHCT4RKXoiU,
+      e0zEpTw7IH6,
+      huFucxA3e5c,
+      CfpoFtRmK1z,
+      n7VQaJ8biOJ,
+      trackedEntityInstance,
+    } = instance;
+    const { district, subCounty, orgUnitName } = processedUnits[orgUnit];
+    const hasEnrollment = !!enrollmentDate;
 
-    let indexCase = null;
-    if (availableIndexCases.length > 0) {
-      indexCase = availableIndexCases[0];
-    }
+    const { eventDate, zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF } =
+      !!hVatAssessments[hly709n51z0]
+        ? sortBy(hVatAssessments[hly709n51z0], (e) => e.eventDate())
+            .reverse()
+            .filter((e) => !!e.eventDate)[0]
+        : {};
+    console.log(eventDate);
+    const { Xkwy5P2JG24, ExnzeYjgIaT } = !!indexCases[hly709n51z0]
+      ? indexCases[hly709n51z0][0]
+      : {};
     let houseHoldType = "";
-    if (indexCase) {
-      const score18 = [
-        indexCase.zbAGBW6PsGd,
-        indexCase.kQCB9F39zWO,
-        indexCase.iRJUDyUBLQF,
-      ].filter((v) => v !== undefined && v !== null);
 
-      const yeses = score18.filter((v) => v === "Yes").length;
-      const noses = score18.filter((v) => v === "No").length;
-
-      if (score18.length === 3) {
-        if (noses === 3) {
-          houseHoldType = "Destitute";
-        } else if (yeses === 3) {
-          houseHoldType = "Ready to Grow";
-        } else if (noses >= 1) {
-          houseHoldType = "Struggling";
-        }
+    const score18 = [zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF].filter(
+      (v) => v !== undefined && v !== null
+    );
+    const yeses = score18.filter((v) => v === "Yes").length;
+    const noses = score18.filter((v) => v === "No").length;
+    if (score18.length === 3) {
+      if (noses === 3) {
+        houseHoldType = "Destitute";
+      } else if (yeses === 3) {
+        houseHoldType = "Ready to Grow";
+      } else if (noses >= 1) {
+        houseHoldType = "Struggling";
       }
     }
+    const memberSessions = groupActivities[HLKc2AKR9jW] || [];
+    let servedInTheQuarter = {};
     for (const period of periods) {
       const quarterStart = period.startOf("quarter").toDate();
       const quarterEnd = period.endOf("quarter").toDate();
+      const previousQuarter = moment(subQuarters(quarterStart, 1)).format(
+        "YYYY[Q]Q"
+      );
       const [financialQuarterStart, financialQuarterEnd] =
         this.calculateQuarter(quarterStart.getFullYear(), period.quarter());
       const qtr = period.format("YYYY[Q]Q");
-      let layer = { ...units, qtr, ...instance, houseHoldType };
       const isWithin = isWithinInterval(parseISO(enrollmentDate), {
         start: quarterStart,
         end: quarterEnd,
       });
-      layer.newlyEnrolled = isWithin ? "Yes" : "No";
-      layering.push(layer);
+      const age = differenceInYears(quarterEnd, parseISO(N1nMqKtYKvI));
+      const ageGroup = this.findAgeGroup(age);
+      const heiData = this.eventsBeforePeriod(
+        this.getEvents(exposedInfants, trackedEntityInstance),
+        quarterEnd
+      );
+      const homeVisitsBe4Quarter = this.eventsBeforePeriod(
+        this.getEvents(homeVisits, trackedEntityInstance),
+        quarterEnd
+      );
+      const referralsDuringYear = this.eventsWithinPeriod(
+        this.getEvents(referrals, trackedEntityInstance),
+        financialQuarterStart,
+        financialQuarterEnd
+      );
+
+      const riskAssessmentsDuringYear = this.eventsWithinPeriod(
+        this.getEvents(hivRiskAssessments, trackedEntityInstance),
+        financialQuarterStart,
+        financialQuarterEnd
+      );
+
+      const referralsDuringQuarter = this.eventsWithinPeriod(
+        this.getEvents(referrals, trackedEntityInstance),
+        quarterStart,
+        quarterEnd
+      );
+      const serviceLinkagesDuringQuarter = this.eventsWithinPeriod(
+        this.getEvents(serviceLinkages, trackedEntityInstance),
+        quarterStart,
+        quarterEnd
+      );
+
+      const homeVisitsDuringQuarter = this.eventsWithinPeriod(
+        this.getEvents(homeVisits, trackedEntityInstance),
+        quarterStart,
+        quarterEnd
+      );
+
+      const viralLoadsBe4Quarter = this.eventsBeforePeriod(
+        this.getEvents(viralLoads, trackedEntityInstance),
+        quarterEnd
+      );
+
+      const viralLoadDuringQuarter = this.eventsWithinPeriod(
+        this.getEvents(viralLoads, trackedEntityInstance),
+        quarterStart,
+        quarterEnd
+      );
+
+      const currentReferral = this.mostCurrentEvent(referralsDuringYear);
+      const currentRiskAssessment = this.mostCurrentEvent(
+        riskAssessmentsDuringYear
+      );
+      const serviceProvisionDuringQuarter = this.eventsWithinPeriod(
+        this.getEvents(referrals, trackedEntityInstance),
+        quarterStart,
+        quarterEnd
+      );
+
+      const hivResult = this.specificDataElement(
+        currentReferral,
+        "XTdRWh5MqPw"
+      );
+
+      const tbScreeningChild = this.checkRiskAssessment(currentRiskAssessment, [
+        "DgCXKSDPTWn",
+        "Rs5qrKay7Gq",
+        "QEm2B8LZtzd",
+        "X9n17I5Ibdf",
+      ]);
+      const tbScreeningChild17 = this.checkRiskAssessment(
+        currentRiskAssessment,
+        [
+          "DgCXKSDPTWn",
+          "Rs5qrKay7Gq",
+          "QEm2B8LZtzd",
+          "X9n17I5Ibdf",
+          "Oi6CUuucUCP",
+        ]
+      );
+      const tbScreeningAdult = this.checkRiskAssessment(currentRiskAssessment, [
+        "If8hDeux5XE",
+        "ha2nnIeFgbu",
+        "NMtrXN3NBqY",
+        "Oi6CUuucUCP",
+      ]);
+
+      const atTBRiskChild = this.checkRiskAssessment(
+        currentRiskAssessment,
+        ["DgCXKSDPTWn", "Rs5qrKay7Gq", "QEm2B8LZtzd", "X9n17I5Ibdf"],
+        "true"
+      );
+      const atTBRiskChild17 = this.checkRiskAssessment(
+        currentRiskAssessment,
+        [
+          "DgCXKSDPTWn",
+          "Rs5qrKay7Gq",
+          "QEm2B8LZtzd",
+          "X9n17I5Ibdf",
+          "Oi6CUuucUCP",
+        ],
+        "true"
+      );
+      const atTBRiskAdult = this.checkRiskAssessment(
+        currentRiskAssessment,
+        ["If8hDeux5XE", "ha2nnIeFgbu", "NMtrXN3NBqY", "Oi6CUuucUCP"],
+        "true"
+      );
+
+      const notAtRisk = this.checkRiskAssessment(
+        currentRiskAssessment,
+        [
+          "WlTMjkcP6gv",
+          "Y8kX45XGXXI",
+          "NN0M618qUFX",
+          "MH5BGP1Ww2Q",
+          "p3FSiLQ1q6T",
+          "x1bL4w5EsPL",
+          "dunvFwnbGQF",
+          "oI9btGSwA7P",
+        ],
+        "false"
+      );
+
+      const notAtRiskAdult = this.checkRiskAssessment(
+        currentRiskAssessment,
+        [
+          "WwMOTHl2cOz",
+          "uf6tkJtuWpt",
+          "zpvSpZxMYIV",
+          "O6O0ADYLwua",
+          "VOCmw7bULXR",
+          "FHu4YfcrIQw",
+          "Dny6B3ubQEa",
+          "h7JCV3YLRJO",
+          "VtnameiqmRy",
+        ],
+        "false"
+      );
+
+      const serviceProvided = this.specificDataElement(
+        currentReferral,
+        "XWudTD2LTUQ"
+      );
+      const unknownOther = this.findAnyEventValue(
+        riskAssessmentsDuringYear,
+        "cTV8aMqnVbe"
+      );
+      const linked = this.deHasAnyValue(serviceProvided, [
+        "Started HIV treatment",
+        "PEP",
+        "HCT/ Tested for HIV",
+        "Intensive Adherence Counseling (IAC)",
+        "Viral Load Testing",
+        "Provided with ARVs",
+      ]);
+      const artStartDate = this.findAnyEventValue(
+        viralLoadsBe4Quarter,
+        "epmIBD8gh7G"
+      );
+
+      const lastViralLoadDate = this.findAnyEventValue(
+        viralLoadsBe4Quarter,
+        "Ti0huZXbAM0"
+      );
+      const viralTestDone = this.findAnyEventValue(
+        viralLoadsBe4Quarter,
+        "cM7dovIX2Dl"
+      );
+      const viralLoadResultsReceived = this.findAnyEventValue(
+        viralLoadsBe4Quarter,
+        "te2VwealaBT"
+      );
+      const viralLoadStatus = this.findAnyEventValue(
+        viralLoadsBe4Quarter,
+        "AmaNW7QDuOV"
+      );
+      const viralLoadCopies = this.findAnyEventValue(
+        viralLoadsBe4Quarter,
+        "b8p0uWaYRhY"
+      );
+      const regimen = this.findAnyEventValue(
+        viralLoadsBe4Quarter,
+        "nZ1omFVYFkT"
+      );
+      const weight = this.findAnyEventValue(
+        viralLoadsBe4Quarter,
+        "Kjtt7SV26zL"
+      );
+      const {
+        eidEnrollmentDate,
+        motherArtNo,
+        eidNo,
+        dateFirstPCRDone,
+        firstPCRResults,
+        dateSecondPCRDone,
+        secondPCRResults,
+        dateThirdPCRDone,
+        thirdPCRResults,
+        hivTestDueDate,
+        dateHivTestDone,
+        hivTestResults,
+        finalOutcome,
+        pcr,
+      } = this.getHEIInformation(age, heiData);
+      const testedForHIV = serviceProvided === "HCT/ Tested for HIV" ? 1 : 0;
+      const primaryCareGiver = nDUbdM2FjyP === "Primary caregiver" ? 1 : 0;
+      const OVC_TST_REFER =
+        serviceProvided && serviceProvided === "HCT/ Tested for HIV" ? 1 : 0;
+      const OVC_TST_REPORT = hivResult && OVC_TST_REFER === 1 ? 1 : 0;
+      const memberStatus =
+        this.findAnyEventValue(homeVisitsBe4Quarter, "tM67MBdox3O") === "true"
+          ? "Active"
+          : this.findAnyEventValue(homeVisitsBe4Quarter, "VEw6HHnx8mR")
+          ? this.findAnyEventValue(homeVisitsBe4Quarter, "VEw6HHnx8mR")
+          : "No Home Visit";
+      const householdStatus = !!this.findAnyEventValue(
+        homeVisitsBe4Quarter,
+        "PpUByWk3p8N"
+      )
+        ? this.findAnyEventValue(homeVisitsBe4Quarter, "PpUByWk3p8N")
+        : hasEnrollment
+        ? "Active"
+        : "Not Enrolled";
+
+      const enrolledInSchool = this.isAtSchool(age, "", h4pXErY01YR);
+
+      const homeVisitor = this.findAnyEventValue(
+        homeVisitsBe4Quarter,
+        "i6XGAmzx3Ri"
+      );
+
+      const dataEntrant1 = Xkwy5P2JG24;
+
+      const dataEntrant2 = this.findAnyEventValue(
+        viralLoadDuringQuarter,
+        "YY5zG4Bh898"
+      );
+
+      const dataEntrant =
+        this.findAnyEventValue(homeVisitsDuringQuarter, "YY5zG4Bh898") ||
+        dataEntrant1 ||
+        dataEntrant2;
+
+      const homeVisitorContact = this.findAnyEventValue(
+        homeVisitsBe4Quarter,
+        "BMzryoryhtX"
+      );
+      const newlyEnrolled = isWithin ? "Yes" : "No";
+      const hivStatus = this.hivStatus(
+        HzUL8LTDPga,
+        hivResult,
+        viralLoadsBe4Quarter
+      );
+
+      const { VLTestDone, ovcEligible, ovcVL, VLStatus, VLSuppressed } =
+        this.hivInformation(
+          artStartDate,
+          hivStatus,
+          quarterEnd,
+          lastViralLoadDate,
+          viralTestDone,
+          viralLoadResultsReceived,
+          viralLoadCopies,
+          viralLoadStatus
+        );
+
+      let onArt = 0;
+      let facility = "";
+      let artNo = "";
+      let On_ART_HVAT = "";
+      if (this.findAnyEventValue(viralLoadsBe4Quarter, "xyDBnQTdZqS")) {
+        onArt = this.findAnyEventValue(viralLoadsBe4Quarter, "xyDBnQTdZqS")
+          ? 1
+          : "";
+      } else if (hivStatus === "+") {
+        onArt = "No VL";
+      } else {
+        onArt = "";
+      }
+
+      if (hivStatus !== "+" && umqeJCVp4Zq === "NA") {
+        On_ART_HVAT = "";
+      } else if (hivStatus === "+") {
+        On_ART_HVAT = umqeJCVp4Zq === "Yes" ? 1 : 0;
+      }
+      const riskFactor =
+        hivStatus === "+" && age < 18
+          ? "CLHIV"
+          : this.findAnyEventValue(homeVisitsBe4Quarter, "rQBaynepqjy") ||
+            nDUbdM2FjyP;
+      const VSLA = this.hadASession(memberSessions, quarterStart, quarterEnd, [
+        ...sessions["VSLA Methodology"],
+        ...sessions["VSLA TOT"],
+        ...sessions["Saving and Borrowing"],
+      ])
+        ? 1
+        : 0;
+
+      const fLiteracy = this.hadASession(
+        memberSessions,
+        quarterStart,
+        quarterEnd,
+        sessions["Financial Literacy"]
+      )
+        ? 1
+        : 0;
+      const fHomeBasedLiteracy =
+        (this.anyEventWithDE(homeVisitsDuringQuarter, "PBiFAeCVnot") ||
+          this.anyEventWithDE(homeVisitsDuringQuarter, "Xlw16qiDxqk") ||
+          this.anyEventWithDE(homeVisitsDuringQuarter, "rOTbGzSfKbs")) &&
+        age >= 15
+          ? 1
+          : 0;
+
+      const bankLinkages =
+        this.anyEventWithAnyOfTheValue(
+          serviceLinkagesDuringQuarter,
+          "NxQ4EZUB0fr",
+          [
+            "F1. Access credit services",
+            "F2. Access saving services",
+            "F3. Insurance services/ Health Fund",
+          ]
+        ) ||
+        this.hadASession(
+          memberSessions,
+          quarterStart,
+          quarterEnd,
+          sessions["Bank Linkages"]
+        )
+          ? 1
+          : 0;
+
+      const agriBusiness = this.anyEventWithAnyOfTheValue(
+        serviceLinkagesDuringQuarter,
+        "NxQ4EZUB0fr",
+        [
+          "A1. Input Markets through voucher",
+          "A2. input such as seeds and poultry",
+          "A3. training in agricultural production",
+        ]
+      )
+        ? 1
+        : 0;
+      const spmTraining = this.hadASession(
+        memberSessions,
+        quarterStart,
+        quarterEnd,
+        sessions["SPM Training"]
+      )
+        ? 1
+        : 0;
+
+      const micro = this.anyEventWithAnyOfTheValue(
+        serviceLinkagesDuringQuarter,
+        "NxQ4EZUB0fr",
+        ["B1. Access to credit services", "B2. Access to saving services"]
+      )
+        ? 1
+        : 0;
+
+      const igaBooster = this.anyEventWithAnyOfTheValue(
+        serviceLinkagesDuringQuarter,
+        "NxQ4EZUB0fr",
+        ["O3. IGA Booster"]
+      )
+        ? 1
+        : 0;
+
+      const tempConsumption =
+        this.anyEventWithAnyOfTheValue(
+          serviceLinkagesDuringQuarter,
+          "NxQ4EZUB0fr",
+          ["UF12 Temporary Food Support"]
+        ) ||
+        this.anyEventWithAnyOfTheValue(referralsDuringQuarter, "XWudTD2LTUQ", [
+          "Temporary Food Support",
+        ])
+          ? 1
+          : 0;
+
+      const vlsaOvcFund = this.anyEventWithAnyOfTheValue(
+        serviceLinkagesDuringQuarter,
+        "NxQ4EZUB0fr",
+        ["UF3 VSLA OVC protection Fund"]
+      )
+        ? 1
+        : 0;
+      const educationFund = this.anyEventWithAnyOfTheValue(
+        serviceLinkagesDuringQuarter,
+        "NxQ4EZUB0fr",
+        ["UF09 OVC VSLA Education Fund"]
+      )
+        ? 1
+        : 0;
+      const educationSubsidy =
+        this.anyEventWithAnyOfTheValue(
+          serviceLinkagesDuringQuarter,
+          "NxQ4EZUB0fr",
+          ["O1. Education subsidy"]
+        ) ||
+        this.anyEventWithAnyOfTheValue(referralsDuringQuarter, "XWudTD2LTUQ", [
+          "Educational support",
+        ])
+          ? 1
+          : 0;
+      const nonFormalEducation =
+        this.anyEventWithAnyOfTheValue(
+          serviceLinkagesDuringQuarter,
+          "NxQ4EZUB0fr",
+          ["O2. None Formal Education"]
+        ) ||
+        this.anyEventWithAnyOfTheValue(referralsDuringQuarter, "XWudTD2LTUQ", [
+          "Vocational/Apprenticeship",
+        ])
+          ? 1
+          : 0;
+      const homeLearning = this.anyEventWithAnyOfTheValue(
+        serviceLinkagesDuringQuarter,
+        "NxQ4EZUB0fr",
+        ["Home Learning"]
+      )
+        ? 1
+        : 0;
+      const healthFund = this.anyEventWithAnyOfTheValue(
+        serviceLinkagesDuringQuarter,
+        "NxQ4EZUB0fr",
+        ["UF10 OVC VSLA Health Fund"]
+      )
+        ? 1
+        : 0;
+
+      const educationInformation =
+        (this.anyEventWithDE(homeVisitsDuringQuarter, "sTyaaJxvR5S") ||
+          this.anyEventWithDE(homeVisitsDuringQuarter, "oyQActIi370") ||
+          this.anyEventWithDE(homeVisitsDuringQuarter, "P7nd91Mkhol") ||
+          this.anyEventWithDE(homeVisitsDuringQuarter, "leNiACgoBcL")) &&
+        age >= 6
+          ? 1
+          : 0;
+      const HTSReferral =
+        this.deHasAnyValue(serviceProvided, [
+          "Started HIV treatment",
+          "PEP",
+          "HCT/ Tested for HIV",
+          "Intensive Adherence Counseling (IAC)",
+          "Viral Load Testing",
+          "Provided with ARVs",
+        ]) === 1 ||
+        this.anyEventWithAnyOfTheValue(
+          serviceLinkagesDuringQuarter,
+          "HzDRzHCuzdf",
+          ["HTS"]
+        )
+          ? 1
+          : 0;
+
+      const nonDisclosureSupport =
+        this.anyEventWithDE(homeVisitsDuringQuarter, "rLc3CF2VeOC") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "xSS9QHbuT4S")
+          ? 1
+          : 0;
+
+      const artInitiation = this.anyEventWithAnyOfTheValue(
+        referralsDuringQuarter,
+        "XWudTD2LTUQ",
+        ["Initiated on HIV Treatment"]
+      )
+        ? 1
+        : 0;
+
+      const homeDrugDelivery = this.deHasAnyValue(serviceProvided, [
+        "Home drug delivery",
+      ]);
+
+      const artAdherenceEducation =
+        this.anyEventWithDE(homeVisitsDuringQuarter, "NxhBKqINsZY") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "svrj6VtHjay") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "NJZ13SXf8XV")
+          ? 1
+          : 0;
+
+      const iac =
+        this.anyEventWithDataElement(
+          viralLoadDuringQuarter,
+          "iHdNYfm1qlz",
+          "true"
+        ) ||
+        this.anyEventWithAnyOfTheValue(referralsDuringQuarter, "XWudTD2LTUQ", [
+          "Intensive Adherence Counseling (IAC)",
+        ])
+          ? 1
+          : 0;
+      const eMTCT =
+        this.anyEventWithDE(homeVisitsDuringQuarter, "SrEP2vZtMHV") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "ffxCn2msT1R") ||
+        this.anyEventWithAnyOfTheValue(referralsDuringQuarter, "XWudTD2LTUQ", [
+          "EMTCT",
+        ])
+          ? 1
+          : 0;
+
+      const hivPrevention = this.anyEventWithDE(
+        homeVisitsDuringQuarter,
+        "xXqKqvuwA8m"
+      )
+        ? 1
+        : 0;
+
+      const journeysMOH = this.hasCompleted(
+        memberSessions,
+        quarterEnd,
+        sessions["MOH Journeys curriculum"],
+        this.mapping2["MOH Journeys curriculum"]
+      )
+        ? 1
+        : 0;
+
+      const journeysLARA = this.hasCompleted(
+        memberSessions,
+        quarterEnd,
+        sessions["MOE Journeys Plus"],
+        this.mapping2["MOE Journeys Plus"]
+      )
+        ? 1
+        : 0;
+
+      const NMNBoys = this.hasCompleted(
+        memberSessions,
+        quarterEnd,
+        sessions["No means No sessions (Boys)"],
+        this.mapping2["No means No sessions (Boys)"]
+      )
+        ? 1
+        : 0;
+
+      const NMNGirls = this.hasCompleted(
+        memberSessions,
+        quarterEnd,
+        sessions["No means No sessions (Girls)"],
+        this.mapping2["No means No sessions (Girls)"]
+      )
+        ? 1
+        : 0;
+      const TFHealth = this.anyEventWithAnyOfTheValue(
+        serviceLinkagesDuringQuarter,
+        "NxQ4EZUB0fr",
+        ["Transport to Facility"]
+      )
+        ? 1
+        : 0;
+
+      const PEP = this.anyEventWithAnyOfTheValue(
+        serviceProvisionDuringQuarter,
+        "XWudTD2LTUQ",
+        ["PEP"]
+      )
+        ? 1
+        : 0;
+
+      const covid19Education = this.anyEventWithDE(
+        homeVisitsDuringQuarter,
+        "RtQudbqa6XH"
+      )
+        ? 1
+        : 0;
+
+      const immunization = this.anyEventWithAnyOfTheValue(
+        referralsDuringQuarter,
+        "XWudTD2LTUQ",
+        ["Immunisation"]
+      )
+        ? 1
+        : 0;
+
+      const wash =
+        this.anyEventWithDE(homeVisitsDuringQuarter, "eEZu3v92pJZ") ||
+        this.anyEventWithAnyOfTheValue(referralsDuringQuarter, "XWudTD2LTUQ", [
+          "WASH",
+        ])
+          ? 1
+          : 0;
+
+      const treatedNets = this.anyEventWithAnyOfTheValue(
+        referralsDuringQuarter,
+        "XWudTD2LTUQ",
+        ["Insecticide Treated Nets"]
+      )
+        ? 1
+        : 0;
+
+      const familyPlanning = this.anyEventWithAnyOfTheValue(
+        referralsDuringQuarter,
+        "XWudTD2LTUQ",
+        ["Family planning services"]
+      )
+        ? 1
+        : 0;
+      const initiatedOnTB = this.anyEventWithAnyOfTheValue(
+        referralsDuringQuarter,
+        "XWudTD2LTUQ",
+        ["Initiated on TB Treatment"]
+      )
+        ? 1
+        : 0;
+      const tested4TB = this.anyEventWithAnyOfTheValue(
+        referralsDuringQuarter,
+        "XWudTD2LTUQ",
+        ["Tested for TB"]
+      )
+        ? 1
+        : 0;
+
+      const supported2CompleteTBDose = this.anyEventWithAnyOfTheValue(
+        referralsDuringQuarter,
+        "XWudTD2LTUQ",
+        ["Supported to Complete TB Dose"]
+      )
+        ? 1
+        : 0;
+
+      const viralLoadBleeding =
+        this.anyEventWithAnyOfTheValue(referralsDuringQuarter, "XWudTD2LTUQ", [
+          "Viral Load Testing",
+        ]) ||
+        this.anyEventWithAnyOfTheValue(
+          serviceLinkagesDuringQuarter,
+          "NxQ4EZUB0fr",
+          ["HTS7. Viral load test"]
+        )
+          ? 1
+          : 0;
+
+      const returnedToCare = this.anyEventWithAnyOfTheValue(
+        serviceLinkagesDuringQuarter,
+        "NxQ4EZUB0fr",
+        ["PLHIV Returned to care"]
+      )
+        ? 1
+        : 0;
+
+      const otherHealthServices =
+        this.anyEventWithDE(homeVisitsDuringQuarter, "eEZu3v92pJZ") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "D7rrGXWwjGn") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "CnfRJ2y4Lg8")
+          ? 1
+          : 0;
+
+      const tbScreening =
+        (tbScreeningChild === 4 && age < 16) ||
+        (tbScreeningAdult === 4 && age > 17) ||
+        (tbScreeningChild17 === 4 && age >= 16)
+          ? 1
+          : 0;
+
+      const GBVPreventionEducation =
+        this.anyEventWithDE(homeVisitsDuringQuarter, "ENMOyjoE2GM") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "ak7SceZTDsF") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "HqbcvvZAc9w") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "H4YhW8kTs2P") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "kpWBIc81VKL") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "pm7k8wuOTLt") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "a0lXaMhHh32")
+          ? 1
+          : 0;
+
+      const atRiskOfTB =
+        (atTBRiskChild >= 5 && age < 16) ||
+        (atTBRiskAdult >= 5 && age > 17) ||
+        (atTBRiskChild17 >= 5 && age >= 16)
+          ? 1
+          : 0;
+
+      const TFGBV =
+        this.anyEventWithDataElement(
+          referralsDuringQuarter,
+          "XWudTD2LTUQ",
+          "Transport GBV"
+        ) ||
+        this.anyEventWithDataElement(
+          serviceLinkagesDuringQuarter,
+          "NxQ4EZUB0fr",
+          "Transport GBV"
+        )
+          ? 1
+          : 0;
+
+      const referral4LegalSupport = this.anyEventWithDataElement(
+        referralsDuringQuarter,
+        "EDa2GQUCbsx",
+        "Legal Support"
+      )
+        ? 1
+        : 0;
+
+      const ECD = this.hadASession(
+        memberSessions,
+        quarterStart,
+        quarterEnd,
+        sessions["ECD"]
+      )
+        ? 1
+        : 0;
+
+      const parenting = this.hasCompletedWithin(
+        memberSessions,
+        quarterStart,
+        quarterEnd,
+        sessions["SINOVUYO"],
+        this.mapping2["SINOVUYO"]
+      )
+        ? 1
+        : 0;
+
+      const parentingAttended = this.hadASession(
+        memberSessions,
+        quarterStart,
+        quarterEnd,
+        sessions["SINOVUYO"]
+      )
+        ? 1
+        : 0;
+
+      const childProtectionEducation =
+        this.anyEventWithDE(homeVisitsDuringQuarter, "cgnfO3xqaYb") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "bJPqgTbbt8g") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "UlQEavBni01") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "v6zHvL8w9ex")
+          ? 1
+          : 0;
+
+      const nutritionEducation =
+        this.anyEventWithDE(homeVisitsDuringQuarter, "FGs1bkmfoTX") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "BDVZPgVPVww") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "p9EaFSIg3ht") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "Eg1yxmjMfG7")
+          ? 1
+          : 0;
+
+      const nutritionalFoodSupplement = this.deHasAnyValue(serviceProvided, [
+        "Food supplement",
+      ]);
+
+      const nutritionalAssessment = this.deHasAnyValue(serviceProvided, [
+        "Nutritional assessment",
+      ]);
+      const voucher4CropsOrKitchenGardens = this.anyEventWithAnyOfTheValue(
+        serviceLinkagesDuringQuarter,
+        "NxQ4EZUB0fr",
+        ["A1. Input Markets through voucher", "M3 Input Vouchers"]
+      )
+        ? 1
+        : 0;
+
+      const kitchenGarden = this.anyEventWithAnyOfTheValue(
+        serviceLinkagesDuringQuarter,
+        "NxQ4EZUB0fr",
+        ["A2. input such as seeds and poultry"]
+      )
+        ? 1
+        : 0;
+
+      const psychosocialSupport =
+        this.anyEventWithDE(homeVisitsDuringQuarter, "EPchB4Exe2W") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "bl1spy2qZx9") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "VfpDpPPKRN6") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "I8f8EVY5rtY") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "OawjweoGEhr") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "yowPVwuMMqZ") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "f4jgX6ch67t") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "YZH5hmsL7wS") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "KsGYugQ1vmD") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "Mu3g2OAL45z") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "DJuFa605flQ") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "l2dux9dZ80n") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "I14Ps4E6pkc") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "dkUee6TB7kh") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "SBnpTKoIGsP") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "ySVNhEXsMdJ") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "ttrftNW6Hvt") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "fKt9QfYFLcP") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "LLqXFg9LSva") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "RgiLe8wnGCu") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "xe4vjgebIvY") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "Vvhi5UERsGt") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "XPa9UnDjaBm") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "SPwxtuLWvUS") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "OPaSCuEHG6U") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "AirD3FZ9n6i") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "LQSy4undhKw") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "blyJnu6QaTY") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "xSS9QHbuT4S") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "ffxCn2msT1R") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "qr5qx26F2k5") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "WPjGiogQuMg") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "ArdR8f6lg2I") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "LEa6yJQU4FR") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "OQ2O7hzLz4n") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "kgeTLR5iPGl") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "af5jHMW6cPf") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "bdKyx6Eb911") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "nKjyjWLj88B")
+          ? 1
+          : 0;
+
+      const coreES =
+        VSLA === 1 ||
+        fLiteracy === 1 ||
+        fHomeBasedLiteracy === 1 ||
+        bankLinkages === 1 ||
+        agriBusiness === 1 ||
+        spmTraining === 1 ||
+        micro === 1 ||
+        igaBooster === 1 ||
+        tempConsumption ||
+        vlsaOvcFund === 1
+          ? 1
+          : 0;
+      const coreEducation =
+        educationSubsidy === 1 ||
+        homeLearning === 1 ||
+        nonFormalEducation === 1 ||
+        educationInformation === 1 ||
+        educationFund === 1
+          ? 1
+          : 0;
+      const coreHealth =
+        HTSReferral === 1 ||
+        nonDisclosureSupport === 1 ||
+        artInitiation === 1 ||
+        artAdherenceEducation === 1 ||
+        iac === 1 ||
+        eMTCT === 1 ||
+        hivPrevention === 1 ||
+        journeysMOH === 1 ||
+        journeysLARA === 1 ||
+        NMNBoys === 1 ||
+        NMNGirls === 1 ||
+        TFHealth === 1 ||
+        PEP === 1 ||
+        covid19Education === 1 ||
+        otherHealthServices === 1 ||
+        homeDrugDelivery === 1 ||
+        tested4TB ||
+        initiatedOnTB ||
+        wash ||
+        treatedNets ||
+        familyPlanning ||
+        healthFund ||
+        TFHealth ||
+        supported2CompleteTBDose ||
+        immunization === 1
+          ? 1
+          : 0;
+
+      const coreChildProtection =
+        GBVPreventionEducation === 1 ||
+        TFGBV === 1 ||
+        referral4LegalSupport === 1 ||
+        ECD === 1 ||
+        parentingAttended === 1 ||
+        childProtectionEducation === 1
+          ? 1
+          : 0;
+
+      const coreNutrition =
+        nutritionEducation === 1 ||
+        voucher4CropsOrKitchenGardens === 1 ||
+        nutritionalAssessment === 1 ||
+        kitchenGarden === 1 ||
+        nutritionalFoodSupplement === 1
+          ? 1
+          : 0;
+
+      const corePSS = psychosocialSupport === 1 ? 1 : 0;
+      const quarter =
+        coreES === 1 ||
+        coreEducation === 1 ||
+        coreHealth === 1 ||
+        coreChildProtection === 1 ||
+        coreNutrition === 1 ||
+        corePSS === 1
+          ? 1
+          : 0;
+      servedInTheQuarter = { ...servedInTheQuarter, [qtr]: quarter };
+      const servedInPreviousQuarter = servedInTheQuarter[previousQuarter];
+
+      let OVC_SERV = 0;
+      let OVC_ENROL = 0;
+      if (newlyEnrolled === "Yes" && quarter === 1) {
+        OVC_SERV = 1;
+      } else if (quarter === 1 && servedInPreviousQuarter === 1) {
+        OVC_SERV = 1;
+      } else {
+        OVC_SERV = 0;
+      }
+
+      if (age < 18 && ovcVL === 1 && OVC_SERV === 1) {
+        OVC_ENROL = 1;
+      } else if (age < 18 && hivStatus === "+") {
+        OVC_ENROL = 0;
+      }
+      let OVC_SERV_SUBPOP = risks[riskFactor] || riskFactor;
+      const OVC_HIV_STAT =
+        hivStatus === "+" ||
+        hivStatus === "-" ||
+        ([0, 3, 6].indexOf(notAtRisk) !== -1 &&
+          [0, 3, 6].indexOf(notAtRiskAdult) !== -1 &&
+          hivStatus === "DK")
+          ? 1
+          : 0;
+
+      let riskAssessment = 0;
+      if (riskAssessmentsDuringYear.length > 0 && hivStatus !== "+") {
+        riskAssessment = 1;
+      } else if (hivStatus === "+") {
+        riskAssessment = "";
+        isAtRisk = "";
+      } else {
+        riskAssessment = 0;
+        isAtRisk = 0;
+      }
+
+      if (riskAssessment === 1) {
+        if (age < 18 && [0, 3, 6].indexOf(notAtRisk) !== -1) {
+          isAtRisk = 0;
+        } else if (age >= 18 && [0, 3, 6].indexOf(notAtRiskAdult) !== -1) {
+          isAtRisk = 0;
+        } else if (
+          [0, 3, 6].indexOf(notAtRiskAdult) === -1 ||
+          [0, 3, 6].indexOf(notAtRisk) === -1
+        ) {
+          isAtRisk = 1;
+        }
+      }
+      let isNotAtRisk = 0;
+      if (hivStatus !== "+") {
+        if (
+          [0, 3, 6].indexOf(notAtRiskAdult) !== -1 ||
+          [0, 3, 6].indexOf(notAtRisk) !== -1
+        ) {
+          isNotAtRisk = 1;
+        } else {
+          isNotAtRisk = 0;
+        }
+      }
+      let unknown = "";
+      if (hivStatus !== "+" && hivStatus !== "-" && isNotAtRisk !== 1) {
+        if (riskFactor === "HEI" && hivStatus === "DK" && age <= 2) {
+          unknown = "HEI";
+        } else if (!!unknownOther) {
+          unknown = unknownOther;
+        } else {
+          unknown = "Other reasons";
+        }
+      }
+      let newlyPositive = 0;
+      if (newlyEnrolled === "Yes" && hivStatus === "+") {
+        newlyPositive = 1;
+      } else if (hivStatus === "+") {
+        if (
+          instance.HzUL8LTDPga === "Negative" &&
+          previousViralLoads.length === 0 &&
+          this.allValues4DataElement(
+            previousReferrals,
+            "XTdRWh5MqPw",
+            "Negative"
+          )
+        ) {
+          newlyPositive = 1;
+        } else {
+          newlyPositive = 0;
+        }
+      }
+      let newlyTestedPositive = 0;
+      if (
+        newlyPositive &&
+        !!artStartDate &&
+        isWithinInterval(parseISO(artStartDate), {
+          start: financialQuarterStart,
+          end: financialQuarterEnd,
+        })
+      ) {
+        newlyTestedPositive = 0;
+      } else if (
+        newlyPositive &&
+        this.hasDataElementWithinPeriod(
+          referralsDuringYear,
+          "XTdRWh5MqPw",
+          "Positive"
+        )
+      ) {
+        child = { ...child, newlyTestedPositive: 1 };
+      } else if (hivStatus === "+") {
+        newlyTestedPositive = 0;
+      }
+
+      let newlyTestedAndOnArt = 0;
+      if (
+        newlyTestedPositive &&
+        artStartDate &&
+        onArt &&
+        isWithinInterval(parseISO(artStartDate), {
+          start: financialQuarterStart,
+          end: financialQuarterEnd,
+        })
+      ) {
+        newlyTestedAndOnArt = 1;
+      } else if (serviceProvided === "Started HIV treatment") {
+        newlyTestedAndOnArt = 1;
+      }
+      if (
+        memberStatus === "Active" &&
+        OVC_SERV === 0 &&
+        servedInPreviousQuarter === 0 &&
+        quarter === 0 &&
+        newlyEnrolled === "No"
+      ) {
+        exitedWithGraduation = "Not served in both qtrs";
+      } else if (OVC_SERV === 0 && quarter === 0 && memberStatus === "Active") {
+        exitedWithGraduation = "Not served current qtr";
+      } else if (
+        OVC_SERV === 0 &&
+        servedInPreviousQuarter === 0 &&
+        memberStatus === "Active"
+      ) {
+        exitedWithGraduation = "Not served previous qtr";
+      } else if (OVC_SERV === 0 && memberStatus === "No Home Visit") {
+        exitedWithGraduation = "Not served in both qtrs";
+      } else if (OVC_SERV === 0) {
+        exitedWithGraduation = memberStatus;
+      }
+
+      layering.push({
+        id: `${trackedEntityInstance}${qtr}`,
+        qtr,
+        houseHoldType,
+        HLKc2AKR9jW,
+        e0zEpTw7IH6,
+        tHCT4RKXoiU,
+        enrollmentDate,
+        type: "Comprehensive",
+        district,
+        subCounty,
+        orgUnitName,
+        Xkwy5P2JG24,
+        ExnzeYjgIaT,
+        primaryCareGiver,
+        eventDate,
+        huFucxA3e5c,
+        N1nMqKtYKvI,
+        age,
+        ageGroup,
+        CfpoFtRmK1z,
+        weight,
+        riskFactor,
+        houseHoldType,
+        householdStatus,
+        memberStatus,
+        enrolledInSchool,
+        newlyEnrolled,
+        hivStatus,
+        riskAssessment,
+        isAtRisk,
+        OVC_TST_REFER,
+        OVC_TST_REPORT,
+        isNotAtRisk,
+        unknown,
+        linked,
+        testedForHIV,
+        newlyPositive,
+        newlyTestedPositive,
+        newlyTestedAndOnArt,
+        artStartDate,
+        n7VQaJ8biOJ,
+        artNo,
+        umqeJCVp4Zq,
+        facility,
+        lastViralLoadDate,
+        currentRegimen: regimen,
+        onArt,
+        ovcEligible,
+        VLTestDone,
+        ovcVL,
+        VLStatus,
+        copies: viralLoadCopies,
+        VLSuppressed,
+        eidNo,
+        eidEnrollmentDate,
+        motherArtNo,
+        dateFirstPCRDone,
+        firstPCRResults,
+        dateSecondPCRDone,
+        secondPCRResults,
+        dateThirdPCRDone,
+        thirdPCRResults,
+        hivTestDueDate,
+        dateHivTestDone,
+        hivTestResults,
+        finalOutcome,
+        pcr,
+        VSLA,
+        fLiteracy,
+        fHomeBasedLiteracy,
+        bankLinkages,
+        agriBusiness,
+        spmTraining,
+        micro,
+        igaBooster,
+        tempConsumption,
+        vlsaOvcFund,
+        coreES,
+        educationSubsidy,
+        homeLearning,
+        nonFormalEducation,
+        educationInformation,
+        educationFund,
+        coreEducation,
+        healthFund,
+        HTSReferral,
+        nonDisclosureSupport,
+        artInitiation,
+        homeDrugDelivery,
+        artAdherenceEducation,
+        viralLoadBleeding,
+        returnedToCare,
+        iac,
+        eMTCT,
+        hivPrevention,
+        journeysMOH,
+        journeysLARA,
+        NMNBoys,
+        NMNGirls,
+        TFHealth,
+        PEP,
+        covid19Education,
+        immunization,
+        wash,
+        treatedNets,
+        familyPlanning,
+        tbScreening,
+        atRiskOfTB,
+        tested4TB,
+        initiatedOnTB,
+        supported2CompleteTBDose,
+        otherHealthServices,
+        coreHealth,
+        TFGBV,
+        referral4LegalSupport,
+        ECD,
+        parentingAttended,
+        parenting,
+        childProtectionEducation,
+        coreChildProtection,
+        nutritionEducation,
+        voucher4CropsOrKitchenGardens,
+        kitchenGarden,
+        nutritionalAssessment,
+        nutritionalFoodSupplement,
+        coreNutrition,
+        psychosocialSupport,
+        corePSS,
+        quarter,
+        servedInPreviousQuarter,
+        graduated: "",
+        OVC_SERV,
+        OVC_ENROL,
+        OVC_SERV_SUBPOP,
+        OVC_HIV_STAT,
+        exitedWithGraduation,
+        otherPERFARIP: "",
+        otherIP: "",
+        homeVisitor,
+        homeVisitorContact,
+        dataEntrant,
+      });
     }
   }
-
   // console.log(layering);
 };
 
@@ -849,7 +2143,7 @@ module.exports.generate = async (trackedEntityInstances, periods, sessions) => {
     trackedEntityInstances
   );
 
-  const processed = this.processInstances(
+  await this.processInstances(
     trackedEntityInstances,
     periods,
     sessions,
@@ -859,24 +2153,29 @@ module.exports.generate = async (trackedEntityInstances, periods, sessions) => {
   );
 };
 module.exports.useTracker = async (
-  periods = [moment()],
-  program = "RDEklSXCD4C"
+  periods = [
+    moment().subtract(3, "quarters"),
+    moment().subtract(2, "quarters"),
+    moment().subtract(1, "quarters"),
+    moment(),
+  ]
 ) => {
   const { data } = await this.api.post("wal/sql", {
-    query: `select * from "rdeklsxcd4c-attributes" order by hly709n51z0`,
+    query: `select * from "rdeklsxcd4c" order by hly709n51z0`,
+    fetch_size: 250,
   });
   const { sessions } = await this.useLoader();
-  const { columns, rows, cursor: currentCursor } = data;
-  this.generate({ rows, columns }, periods, sessions);
-  // if (currentCursor) {
-  //   do {
-  //     const {
-  //       data: { rows, cursor },
-  //     } = await this.api.post("wal/sql", { cursor: currentCursor });
-  //     this.generate({ rows, columns }, program, periods, sessions);
-  //     currentCursor = cursor;
-  //   } while (!!currentCursor);
-  // }
+  let { columns, rows, cursor: currentCursor } = data;
+  await this.generate({ rows, columns }, periods, sessions);
+  if (currentCursor) {
+    do {
+      const {
+        data: { rows, cursor },
+      } = await this.api.post("wal/sql", { cursor: currentCursor });
+      this.generate({ rows, columns }, periods, sessions);
+      currentCursor = cursor;
+    } while (!!currentCursor);
+  }
 };
 
 module.exports.flattenInstances = async (
@@ -885,87 +2184,86 @@ module.exports.flattenInstances = async (
   chunkSize
 ) => {
   let instances = [];
-  const data = trackedEntityInstances.flatMap(
-    ({
-      trackedEntityInstance,
-      orgUnit,
-      attributes,
-      enrollments,
-      inactive,
-      deleted,
-      relationships,
-    }) => {
-      const processedAttributes = fromPairs(
-        attributes.map(({ attribute, value }) => [attribute, value])
-      );
-      const allRelations = fromPairs(
-        relationships.map((rel) => {
-          return [
-            rel.relationshipType,
-            rel.from.trackedEntityInstance.trackedEntityInstance,
-          ];
-        })
-      );
-      if (enrollments.length > 0) {
-        return enrollments.flatMap(
-          ({ events, program, orgUnitName, enrollmentDate, incidentDate }) => {
-            const instance = {
-              trackedEntityInstance,
-              id: trackedEntityInstance,
-              orgUnit,
-              ...processedAttributes,
-              ...allRelations,
-              inactive,
-              deleted,
-              enrollmentDate,
-              incidentDate,
-              orgUnitName,
-              program,
-            };
-            instances.push(instance);
-            if (events.length > 0) {
-              return events.flatMap(
-                ({
-                  dataValues,
-                  dueDate,
-                  eventDate,
-                  trackedEntityType,
-                  event,
-                  relationships,
-                  attributes,
-                  geometry,
-                  notes,
-                  ...eventDetails
-                }) => {
-                  return {
-                    id: event,
-                    orgUnitName,
-                    enrollmentDate,
-                    incidentDate,
-                    dueDate,
-                    eventDate,
-                    event,
-                    ...fromPairs(
-                      dataValues.map(({ dataElement, value }) => [
-                        dataElement,
-                        value,
-                      ])
-                    ),
-                    ...eventDetails,
-                  };
-                }
-              );
-            } else {
-              return [];
+  let calculatedEvents = [];
+  for (const {
+    trackedEntityInstance,
+    orgUnit,
+    attributes,
+    enrollments,
+    inactive,
+    deleted,
+    relationships,
+  } of trackedEntityInstances) {
+    const processedAttributes = fromPairs(
+      attributes.map(({ attribute, value }) => [attribute, value])
+    );
+    const allRelations = fromPairs(
+      relationships.map((rel) => {
+        return [
+          rel.relationshipType,
+          rel.from.trackedEntityInstance.trackedEntityInstance,
+        ];
+      })
+    );
+    if (enrollments.length > 0) {
+      for (const {
+        events,
+        program,
+        orgUnitName,
+        enrollmentDate,
+        incidentDate,
+      } of enrollments) {
+        {
+          const instance = {
+            trackedEntityInstance,
+            id: trackedEntityInstance,
+            orgUnit,
+            ...processedAttributes,
+            ...allRelations,
+            inactive,
+            deleted,
+            enrollmentDate,
+            incidentDate,
+            orgUnitName,
+            program,
+          };
+          instances.push(instance);
+          if (events.length > 0) {
+            for (const {
+              dataValues,
+              dueDate,
+              eventDate,
+              trackedEntityType,
+              event,
+              relationships,
+              attributes,
+              geometry,
+              notes,
+              ...eventDetails
+            } of events) {
+              calculatedEvents.push({
+                id: event,
+                orgUnitName,
+                enrollmentDate,
+                incidentDate,
+                dueDate,
+                eventDate,
+                event,
+                ...fromPairs(
+                  dataValues.map(({ dataElement, value }) => [
+                    dataElement,
+                    value,
+                  ])
+                ),
+                ...eventDetails,
+              });
             }
           }
-        );
-      } else {
-        return [];
+        }
       }
     }
-  );
-  const foundEvents = groupBy(data, "programStage");
+  }
+  const foundEvents = groupBy(calculatedEvents, "programStage");
   try {
     const requests = Object.entries(foundEvents).flatMap(([stage, events]) => {
       return chunk(events, chunkSize).map((c) => {
