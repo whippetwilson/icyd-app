@@ -2099,6 +2099,7 @@ module.exports.processInstances = async (
         supported2CompleteTBDose,
         otherHealthServices,
         coreHealth,
+        GBVPreventionEducation,
         TFGBV,
         referral4LegalSupport,
         ECD,
