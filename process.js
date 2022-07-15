@@ -32,7 +32,8 @@ const risks = {
 };
 
 module.exports.api = axios.create({
-  baseURL: "http://localhost:3001/api/",
+  baseURL: "https://data.icyd.hispuganda.org/api/",
+  // baseURL: "http://localhost:3001/api/",
 });
 
 module.exports.instance = axios.create({
@@ -846,9 +847,11 @@ module.exports.processInstances = async (
 ) => {
   let layering = [];
   const { columns, rows } = trackedEntityInstances;
-  const instances = rows.map((r) => {
-    return fromPairs(columns.map((c, i) => [c.name, r[i]]));
-  });
+  const instances = rows
+    .map((r) => {
+      return fromPairs(columns.map((c, i) => [c.name, r[i]]));
+    })
+    .filter((x) => !!x.trackedEntityInstance);
   const instanceIds = instances.map((i) => i.trackedEntityInstance);
   const [
     // vulnerabilityAssessments,
