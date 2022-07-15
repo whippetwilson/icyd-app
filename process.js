@@ -531,7 +531,7 @@ module.exports.fetchRelationships4Instances = async (
 
   const allInstances = uniq(
     trackedEntityInstances.rows.map((row) => row[relationIndex])
-  );
+  ).filter((x) => x !== null && x !== undefined);
   const data = await this.fetchAll({
     query: `select * from ${String("HEWq6yr4cs5").toLowerCase()}`,
     filter: {
@@ -851,7 +851,11 @@ module.exports.processInstances = async (
     .map((r) => {
       return fromPairs(columns.map((c, i) => [c.name, r[i]]));
     })
-    .filter((x) => !!x.trackedEntityInstance);
+    .filter(
+      (x) =>
+        x.trackedEntityInstance !== null &&
+        x.trackedEntityInstance !== undefined
+    );
   const instanceIds = instances.map((i) => i.trackedEntityInstance);
   const [
     // vulnerabilityAssessments,
