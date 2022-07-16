@@ -536,7 +536,7 @@ module.exports.fetchUnits4Instances = async (trackedEntityInstances) => {
     query: `select * from units`,
     filter: {
       terms: {
-        ["trackedEntityInstance.keyword"]: orgUnits,
+        ["id.keyword"]: orgUnits,
       },
     },
   });
