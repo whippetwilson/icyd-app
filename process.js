@@ -32,8 +32,8 @@ const risks = {
 };
 
 module.exports.api = axios.create({
-  // baseURL: "https://data.icyd.hispuganda.org/api/",
-  baseURL: "http://localhost:3001/api/",
+  baseURL: "https://data.icyd.hispuganda.org/api/",
+  // baseURL: "http://localhost:3001/api/",
 });
 
 module.exports.instance = axios.create({
@@ -524,23 +524,36 @@ module.exports.syncOrganisations = async () => {
   console.log(total);
 };
 
-module.exports.fetchUnits4Instances = async (trackedEntityInstances) => {
-  const orgUnitColumnIndex = trackedEntityInstances.columns.findIndex(
-    (c) => c.name === "orgUnit"
-  );
-  const orgUnits = uniq(
-    trackedEntityInstances.rows.map((row) => row[orgUnitColumnIndex])
-  );
-
-  const data = await this.fetchAll({
-    query: `select * from units`,
-    filter: {
-      terms: {
-        ["id.keyword"]: orgUnits,
-      },
+module.exports.fetchUnits4Instances = async () => {
+  const {
+    data: { organisationUnits },
+  } = await this.instance.get("organisationUnits.json", {
+    params: {
+      fields: "id,path,name,parent[name,parent[name]]",
+      paging: "false",
+      level: 5,
     },
   });
-  return fromPairs(data.map((d) => [d.id, d]));
+  return fromPairs(
+    organisationUnits.map((unit) => {
+      return [
+        unit.id,
+        {
+          subCounty: unit.parent?.name,
+          district: unit.parent?.parent?.name,
+          orgUnitName: unit.name,
+          ...fromPairs(
+            String(unit.path)
+              .split("/")
+              .slice(1)
+              .map((v, i) => {
+                return [`level${i + 1}`, v];
+              })
+          ),
+        },
+      ];
+    })
+  );
 };
 
 module.exports.fetchRelationships4Instances = async (
@@ -923,7 +936,7 @@ module.exports.processInstances = async (
       trackedEntityInstance,
     } = instance;
     const { district, subCounty, orgUnitName, ...ous } =
-      processedUnits[orgUnit];
+      processedUnits[orgUnit] || {};
     const hasEnrollment = !!enrollmentDate;
 
     const hvat = !!hVatAssessments[hly709n51z0]
@@ -2023,8 +2036,8 @@ module.exports.processInstances = async (
         tHCT4RKXoiU,
         enrollmentDate,
         type: "Comprehensive",
-        district,
-        subCounty,
+        district: district || "",
+        subCounty: subCounty || "",
         orgUnitName,
         Xkwy5P2JG24,
         ExnzeYjgIaT,
@@ -2215,10 +2228,12 @@ module.exports.useProgramStage = async (
   }
 };
 
-module.exports.generate = async (trackedEntityInstances, periods, sessions) => {
-  const processedUnits = await this.fetchUnits4Instances(
-    trackedEntityInstances
-  );
+module.exports.generate = async (
+  trackedEntityInstances,
+  processedUnits,
+  periods,
+  sessions
+) => {
   const indexCases = await this.fetchRelationships4Instances(
     trackedEntityInstances
   );
@@ -2244,6 +2259,7 @@ module.exports.useTracker = async (
   ],
   instances = []
 ) => {
+  const processedUnits = await fetchUnits4Instances();
   let query = {
     query: `select * from "rdeklsxcd4c" order by hly709n51z0`,
     fetch_size: 1000,
@@ -2261,13 +2277,13 @@ module.exports.useTracker = async (
   const { data } = await this.api.post("wal/sql", query);
   const { sessions } = await this.useLoader();
   let { columns, rows, cursor: currentCursor } = data;
-  await this.generate({ rows, columns }, periods, sessions);
+  await this.generate({ rows, columns }, processedUnits, periods, sessions);
   if (currentCursor) {
     do {
       const {
         data: { rows, cursor },
       } = await this.api.post("wal/sql", { cursor: currentCursor });
-      await this.generate({ rows, columns }, periods, sessions);
+      await this.generate({ rows, columns }, processedUnits, periods, sessions);
       currentCursor = cursor;
       console.log(cursor);
     } while (!!currentCursor);
