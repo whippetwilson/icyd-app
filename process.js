@@ -484,6 +484,46 @@ module.exports.useLoader = async () => {
   };
 };
 
+module.exports.syncOrganisations = async () => {
+  const {
+    data: { organisationUnits },
+  } = await this.instance.get("organisationUnits.json", {
+    params: {
+      fields: "id,path,name,parent[name,parent[name]]",
+      paging: "false",
+      level: 5,
+    },
+  });
+  const units = organisationUnits.map((unit) => {
+    return {
+      subCounty: unit.parent?.name,
+      id: unit.id,
+      district: unit.parent?.parent?.name,
+      orgUnitName: unit.name,
+      ...fromPairs(
+        String(unit.path)
+          .split("/")
+          .slice(1)
+          .map((v, i) => {
+            return [`level${i + 1}`, v];
+          })
+      ),
+    };
+  });
+
+  const inserted = await Promise.all(
+    chunk(units, 1000).map((c) => {
+      return this.api.post(`wal/index?index=units`, {
+        data: c,
+      });
+    })
+  );
+  const total = sum(
+    inserted.map(({ data: { items } }) => (!!items ? items.length : 0))
+  );
+  console.log(total);
+};
+
 module.exports.fetchUnits4Instances = async (trackedEntityInstances) => {
   const orgUnitColumnIndex = trackedEntityInstances.columns.findIndex(
     (c) => c.name === "orgUnit"
@@ -491,35 +531,16 @@ module.exports.fetchUnits4Instances = async (trackedEntityInstances) => {
   const orgUnits = uniq(
     trackedEntityInstances.rows.map((row) => row[orgUnitColumnIndex])
   );
-  const {
-    data: { organisationUnits },
-  } = await this.instance.get("organisationUnits.json", {
-    params: {
-      filter: `id:in:[${orgUnits.join(",")}]`,
-      fields: "id,path,name,parent[name,parent[name]]",
-      paging: "false",
+
+  const data = await this.fetchAll({
+    query: `select * from units`,
+    filter: {
+      terms: {
+        ["trackedEntityInstance.keyword"]: orgUnits,
+      },
     },
   });
-  return fromPairs(
-    organisationUnits.map((unit) => {
-      return [
-        unit.id,
-        {
-          subCounty: unit.parent?.name,
-          district: unit.parent?.parent?.name,
-          orgUnitName: unit.name,
-          ...fromPairs(
-            String(unit.path)
-              .split("/")
-              .slice(1)
-              .map((v, i) => {
-                return [`level${i + 1}`, v];
-              })
-          ),
-        },
-      ];
-    })
-  );
+  return groupBy(data, "id");
 };
 
 module.exports.fetchRelationships4Instances = async (
