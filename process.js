@@ -551,7 +551,7 @@ module.exports.fetchGroupActivities4Instances = async (
   );
   const allMemberCodes = uniq(
     trackedEntityInstances.rows.map((row) => row[memberCodeColumnIndex])
-  );
+  ).filter((v) => v !== null && v !== undefined && v !== "");
   const data = await this.fetchAll({
     query: `select n20LkH4ZBF8,ypDUCAS6juy,eventDate from ${String(
       "VzkQBBglj3O"
@@ -854,7 +854,8 @@ module.exports.processInstances = async (
     .filter(
       (x) =>
         x.trackedEntityInstance !== null &&
-        x.trackedEntityInstance !== undefined
+        x.trackedEntityInstance !== undefined &&
+        x.trackedEntityInstance !== ""
     );
   const instanceIds = instances.map((i) => i.trackedEntityInstance);
   const [
@@ -916,7 +917,7 @@ module.exports.processInstances = async (
     let houseHoldType = "";
 
     const score18 = [zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF].filter(
-      (v) => v !== undefined && v !== null
+      (v) => v !== null && v !== undefined && v !== ""
     );
     const yeses = score18.filter((v) => v === "Yes").length;
     const noses = score18.filter((v) => v === "No").length;
@@ -2219,12 +2220,24 @@ module.exports.useTracker = async (
     moment().subtract(2, "quarters"),
     moment().subtract(1, "quarters"),
     moment(),
-  ]
+  ],
+  instances = []
 ) => {
-  const { data } = await this.api.post("wal/sql", {
+  let query = {
     query: `select * from "rdeklsxcd4c" order by hly709n51z0`,
     fetch_size: 100,
-  });
+  };
+  if (instances) {
+    query = {
+      ...query,
+      filter: {
+        terms: {
+          ["trackedEntityInstance.keyword"]: instances,
+        },
+      },
+    };
+  }
+  const { data } = await this.api.post("wal/sql", query);
   const { sessions } = await this.useLoader();
   let { columns, rows, cursor: currentCursor } = data;
   await this.generate({ rows, columns }, periods, sessions);
@@ -2412,6 +2425,7 @@ module.exports.processTrackedEntityInstances = async (
   pageSize,
   chunkSize
 ) => {
+  let processed = [];
   let params = {
     fields: "*",
     ouMode: "ALL",
@@ -2420,15 +2434,19 @@ module.exports.processTrackedEntityInstances = async (
     pageSize,
     page: 1,
   };
-  console.log(`Working on page 1`);
   const {
     data: {
       trackedEntityInstances,
       pager: { pageCount },
     },
   } = await this.instance.get("trackedEntityInstances.json", { params });
-
   await this.flattenInstances(trackedEntityInstances, program, chunkSize);
+  processed = [
+    ...processed,
+    trackedEntityInstances.map(
+      ({ trackedEntityInstance }) => trackedEntityInstance
+    ),
+  ];
   for (let page = 2; page <= pageCount; page++) {
     console.log(`Working on page ${page} of ${pageCount}`);
     const {
@@ -2437,7 +2455,14 @@ module.exports.processTrackedEntityInstances = async (
       params: { ...params, page },
     });
     await this.flattenInstances(trackedEntityInstances, program, chunkSize);
+    processed = [
+      ...processed,
+      trackedEntityInstances.map(
+        ({ trackedEntityInstance }) => trackedEntityInstance
+      ),
+    ];
   }
+  return processed;
 };
 
 module.exports.processTrackedEntityInstancesAttributes = async (
