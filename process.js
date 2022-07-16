@@ -540,7 +540,7 @@ module.exports.fetchUnits4Instances = async (trackedEntityInstances) => {
       },
     },
   });
-  return groupBy(data, "id");
+  return fromPairs(data.map((d) => [d.id, d]));
 };
 
 module.exports.fetchRelationships4Instances = async (
