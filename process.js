@@ -2227,7 +2227,7 @@ module.exports.useTracker = async (
     query: `select * from "rdeklsxcd4c" order by hly709n51z0`,
     fetch_size: 100,
   };
-  if (instances) {
+  if (instances.length > 0) {
     query = {
       ...query,
       filter: {
