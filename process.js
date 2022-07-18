@@ -1880,7 +1880,8 @@ module.exports.processInstances = async (
           ? 1
           : 0;
       servedInTheQuarter = { ...servedInTheQuarter, [qtr]: quarter };
-      const servedInPreviousQuarter = servedInTheQuarter[previousQuarter];
+      const servedInPreviousQuarter = servedInTheQuarter[previousQuarter] || 0;
+      console.log(servedInPreviousQuarter);
 
       let OVC_SERV = 0;
       let OVC_ENROL = 0;
@@ -2278,16 +2279,16 @@ module.exports.useTracker = async (
   const { sessions } = await this.useLoader();
   let { columns, rows, cursor: currentCursor } = data;
   await this.generate({ rows, columns }, processedUnits, periods, sessions);
-  if (currentCursor) {
-    do {
-      const {
-        data: { rows, cursor },
-      } = await this.api.post("wal/sql", { cursor: currentCursor });
-      await this.generate({ rows, columns }, processedUnits, periods, sessions);
-      currentCursor = cursor;
-      console.log(cursor);
-    } while (!!currentCursor);
-  }
+  // if (currentCursor) {
+  //   do {
+  //     const {
+  //       data: { rows, cursor },
+  //     } = await this.api.post("wal/sql", { cursor: currentCursor });
+  //     await this.generate({ rows, columns }, processedUnits, periods, sessions);
+  //     currentCursor = cursor;
+  //     console.log(cursor);
+  //   } while (!!currentCursor);
+  // }
 };
 
 module.exports.flattenInstances = async (
