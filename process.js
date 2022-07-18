@@ -2018,14 +2018,6 @@ module.exports.processInstances = async (
       } else if (serviceProvided === "Started HIV treatment") {
         newlyTestedAndOnArt = 1;
       }
-
-      console.log(
-        memberStatus,
-        OVC_SERV,
-        servedInPreviousQuarter,
-        quarter,
-        newlyEnrolled
-      );
       let exitedWithGraduation = "";
       if (
         memberStatus === "Active" &&
