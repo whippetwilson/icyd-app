@@ -2265,7 +2265,7 @@ module.exports.useTracker = async (
   const processedUnits = await this.fetchUnits4Instances();
   let query = {
     query: `select * from "rdeklsxcd4c" order by hly709n51z0`,
-    fetch_size: 10,
+    fetch_size: 1000,
   };
   if (instances.length > 0) {
     query = {
