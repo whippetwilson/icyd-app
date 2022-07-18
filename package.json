@@ -41,7 +41,8 @@
     "lodash": "^4.17.21",
     "moleculer": "^0.14.16",
     "moleculer-web": "^0.10.2",
-    "moment": "^2.29.3"
+    "moment": "^2.29.3",
+    "node-schedule": "^2.1.0"
   },
   "engines": {
     "node": ">= 12.x.x"

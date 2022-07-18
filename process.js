@@ -1265,10 +1265,14 @@ module.exports.processInstances = async (
           viralLoadStatus
         );
 
-      let onArt = 0;
-      let facility = "";
+      let onArt = this.findAnyEventValue(viralLoadsBe4Quarter, "aBc9Lr1z25H");
+      let facility = this.findAnyEventValue(
+        viralLoadsBe4Quarter,
+        "usRWNcogGX7"
+      );
       let artNo = "";
       let On_ART_HVAT = "";
+
       if (this.findAnyEventValue(viralLoadsBe4Quarter, "xyDBnQTdZqS")) {
         onArt = this.findAnyEventValue(viralLoadsBe4Quarter, "xyDBnQTdZqS")
           ? 1
