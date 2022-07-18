@@ -1265,14 +1265,13 @@ module.exports.processInstances = async (
           viralLoadStatus
         );
 
-      let onArt = this.findAnyEventValue(viralLoadsBe4Quarter, "aBc9Lr1z25H");
+      let onArt = "";
       let facility = this.findAnyEventValue(
         viralLoadsBe4Quarter,
         "usRWNcogGX7"
       );
-      let artNo = "";
+      let artNo = this.findAnyEventValue(viralLoadsBe4Quarter, "aBc9Lr1z25H");
       let On_ART_HVAT = "";
-
       if (this.findAnyEventValue(viralLoadsBe4Quarter, "xyDBnQTdZqS")) {
         onArt = this.findAnyEventValue(viralLoadsBe4Quarter, "xyDBnQTdZqS")
           ? 1
@@ -2266,7 +2265,7 @@ module.exports.useTracker = async (
   const processedUnits = await this.fetchUnits4Instances();
   let query = {
     query: `select * from "rdeklsxcd4c" order by hly709n51z0`,
-    fetch_size: 1000,
+    fetch_size: 10,
   };
   if (instances.length > 0) {
     query = {
