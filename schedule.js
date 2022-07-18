@@ -17,7 +17,7 @@ let lastUpdatedStartDate = new Date();
 const testing = async () => {
   for (const program of ["HEWq6yr4cs5", "RDEklSXCD4C", "IXxHJADVCkb"]) {
     try {
-      await processTrackedEntityInstances(program, 250, 100);
+      await processTrackedEntityInstances(program, 100, 100);
     } catch (error) {
       console.log(error.message);
     }
