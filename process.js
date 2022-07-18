@@ -32,8 +32,8 @@ const risks = {
 };
 
 module.exports.api = axios.create({
-  // baseURL: "https://data.icyd.hispuganda.org/api/",
-  baseURL: "http://localhost:3001/api/",
+  baseURL: "https://data.icyd.hispuganda.org/api/",
+  // baseURL: "http://localhost:3001/api/",
 });
 
 module.exports.instance = axios.create({
@@ -253,7 +253,11 @@ module.exports.anyEventWithDE = (events, dataElement) => {
     return false;
   }
   const processed = events.find((event) => {
-    return has(event, dataElement);
+    return (
+      has(event, dataElement) &&
+      event[dataElement] !== null &&
+      event[dataElement] !== undefined
+    );
   });
   return !!processed;
 };
@@ -784,6 +788,7 @@ module.exports.getHIVStatus = (
   viralLoadsBe4Quarter,
   riskFactor
 ) => {
+  // console.log(viralLoadsBe4Quarter);
   if (viralLoadsBe4Quarter && viralLoadsBe4Quarter.length > 0) {
     return "+";
   } else if (hivResult) {
@@ -917,6 +922,8 @@ module.exports.processInstances = async (
       "trackedEntityInstance,eventDate,zbAGBW6PsGd,kQCB9F39zWO,iRJUDyUBLQF"
     ),
   ]);
+
+  // console.log(viralLoads);
   for (const instance of instances) {
     const {
       enrollmentDate,
@@ -1206,6 +1213,8 @@ module.exports.processInstances = async (
         viralLoadsBe4Quarter,
         riskFactor
       );
+
+      // console.log(hivStatus);
       riskFactor = hivStatus === "+" && age < 18 ? "CLHIV" : riskFactor;
 
       const testedForHIV = serviceProvided === "HCT/ Tested for HIV" ? 1 : 0;
@@ -1460,7 +1469,6 @@ module.exports.processInstances = async (
         this.anyEventWithDE(homeVisitsDuringQuarter, "xSS9QHbuT4S")
           ? 1
           : 0;
-
       const artInitiation = this.anyEventWithAnyOfTheValue(
         referralsDuringQuarter,
         "XWudTD2LTUQ",
@@ -1660,7 +1668,8 @@ module.exports.processInstances = async (
         this.anyEventWithDE(homeVisitsDuringQuarter, "H4YhW8kTs2P") ||
         this.anyEventWithDE(homeVisitsDuringQuarter, "kpWBIc81VKL") ||
         this.anyEventWithDE(homeVisitsDuringQuarter, "pm7k8wuOTLt") ||
-        this.anyEventWithDE(homeVisitsDuringQuarter, "a0lXaMhHh32")
+        this.anyEventWithDE(homeVisitsDuringQuarter, "a0lXaMhHh32") ||
+        this.anyEventWithDE(homeVisitsDuringQuarter, "plFdhIhcP8X")
           ? 1
           : 0;
 
@@ -2009,6 +2018,15 @@ module.exports.processInstances = async (
       } else if (serviceProvided === "Started HIV treatment") {
         newlyTestedAndOnArt = 1;
       }
+
+      console.log(
+        memberStatus,
+        OVC_SERV,
+        servedInPreviousQuarter,
+        quarter,
+        newlyEnrolled
+      );
+      let exitedWithGraduation = "";
       if (
         memberStatus === "Active" &&
         OVC_SERV === 0 &&
@@ -2387,16 +2405,17 @@ module.exports.flattenInstances = async (
         });
       });
     });
-    const inserted = await Promise.all(
-      requests.concat(
-        chunk(instances, chunkSize).map((c) => {
-          return this.api.post(`wal/index?index=${program.toLowerCase()}`, {
-            data: c,
-          });
-        })
-      )
+    const inserted = await Promise.all([
+      ...chunk(instances, chunkSize).map((c) => {
+        return this.api.post(`wal/index?index=${program.toLowerCase()}`, {
+          data: c,
+        });
+      }),
+      ...requests,
+    ]);
+    const total = inserted.map(({ data: { items } }) =>
+      items.map((i) => i.index.error)
     );
-    const total = sum(inserted.map(({ data: { items } }) => items.length));
     console.log(total);
   } catch (error) {
     console.log(error.message);
@@ -2463,7 +2482,8 @@ module.exports.flattenInstancesToAttributes = async (
 module.exports.processTrackedEntityInstances = async (
   program,
   pageSize,
-  chunkSize
+  chunkSize,
+  otherParams = {}
 ) => {
   let processed = [];
   let params = {
@@ -2473,6 +2493,7 @@ module.exports.processTrackedEntityInstances = async (
     totalPages: true,
     pageSize,
     page: 1,
+    ...otherParams,
   };
   const {
     data: {
@@ -2480,6 +2501,7 @@ module.exports.processTrackedEntityInstances = async (
       pager: { pageCount },
     },
   } = await this.instance.get("trackedEntityInstances.json", { params });
+
   await this.flattenInstances(trackedEntityInstances, program, chunkSize);
   processed = [
     ...processed,
