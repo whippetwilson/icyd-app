@@ -1881,7 +1881,6 @@ module.exports.processInstances = async (
           : 0;
       servedInTheQuarter = { ...servedInTheQuarter, [qtr]: quarter };
       const servedInPreviousQuarter = servedInTheQuarter[previousQuarter] || 0;
-      console.log(servedInPreviousQuarter);
 
       let OVC_SERV = 0;
       let OVC_ENROL = 0;
