@@ -581,6 +581,29 @@ module.exports.fetchRelationships4Instances = async (
   return groupBy(data, "trackedEntityInstance");
 };
 
+module.exports.previousLayering = async (trackedEntityInstances) => {
+  try {
+    const data = await this.fetchAll({
+      query: `select trackedEntityInstances,qtr,quarter from layering`,
+      filter: {
+        terms: {
+          ["trackedEntityInstance.keyword"]: trackedEntityInstances,
+        },
+      },
+    });
+    return fromPairs(
+      Object.entries(groupBy(data, "trackedEntityInstance")).map(
+        ([instance, data]) => [
+          instance,
+          fromPairs(data.map((d) => [d["qtr"], d["quarter"]])),
+        ]
+      )
+    );
+  } catch (error) {
+    return {};
+  }
+};
+
 module.exports.fetchGroupActivities4Instances = async (
   trackedEntityInstances
 ) => {
@@ -897,6 +920,8 @@ module.exports.processInstances = async (
         x.trackedEntityInstance !== ""
     );
   const instanceIds = instances.map((i) => i.trackedEntityInstance);
+
+  const previousLayer = await this.previousLayering(instanceIds);
   const [
     // vulnerabilityAssessments,
     homeVisits,
@@ -972,7 +997,7 @@ module.exports.processInstances = async (
       }
     }
     const memberSessions = groupActivities[HLKc2AKR9jW] || [];
-    let servedInTheQuarter = {};
+    let servedInTheQuarter = previousLayer[trackedEntityInstance] || {};
     for (const period of periods) {
       const quarterStart = period.startOf("quarter").toDate();
       const quarterEnd = period.endOf("quarter").toDate();
@@ -2299,7 +2324,6 @@ module.exports.useTracker = async (
       } = await this.api.post("wal/sql", { cursor: currentCursor });
       await this.generate({ rows, columns }, processedUnits, periods, sessions);
       currentCursor = cursor;
-      console.log(cursor);
     } while (!!currentCursor);
   }
 };
@@ -2406,10 +2430,21 @@ module.exports.flattenInstances = async (
       }),
       ...requests,
     ]);
-    const total = inserted.map(({ data: { items } }) =>
-      items.map((i) => i.index.error)
+    const total = sum(
+      inserted.map(
+        ({ data: { items } }) =>
+          items.filter((i) => i.index.error === undefined).length
+      )
     );
-    console.log(total);
+
+    const errors = sum(
+      inserted.map(
+        ({ data: { items } }) =>
+          items.filter((i) => i.index.error !== undefined).length
+      )
+    );
+    console.log(`total:${total}`);
+    console.log(`errors:${errors}`);
   } catch (error) {
     console.log(error.message);
   }

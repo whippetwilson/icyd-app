@@ -1,27 +1,46 @@
 const schedule = require("node-schedule");
-const { processTrackedEntityInstances } = require("./process");
-let lastUpdatedStartDate = new Date();
+const { processTrackedEntityInstances, useTracker } = require("./process");
+const moment = require("moment");
+let quarter = moment().format("YYYY[Q]Q");
 
-// const job = schedule.scheduleJob("*/15 * * * *", async function () {
-//   const lastUpdatedEndDate = new Date();
-//   for (const program of ["HEWq6yr4cs5", "RDEklSXCD4C", "IXxHJADVCkb"]) {
-//     try {
-//       await processTrackedEntityInstances(program, 100, 100);
-//     } catch (error) {
-//       console.log(error.message);
-//     }
-//   }
-//   lastUpdatedStartDate = lastUpdatedEndDate;
-// });
-
-const testing = async () => {
-  for (const program of ["HEWq6yr4cs5", "RDEklSXCD4C", "IXxHJADVCkb"]) {
-    try {
-      await processTrackedEntityInstances(program, 100, 100);
-    } catch (error) {
-      console.log(error.message);
+const job = schedule.scheduleJob("*/15 * * * *", async function () {
+  const currentQuarter = moment().format("YYYY[Q]Q");
+  try {
+    console.log("Working on HVAT");
+    await processTrackedEntityInstances("HEWq6yr4cs5", 100, 100, {
+      lastUpdatedDuration: "30m",
+    });
+    console.log("Working on GROUP ACTIVITIES");
+    await processTrackedEntityInstances("IXxHJADVCkb", 100, 100, {
+      lastUpdatedDuration: "30m",
+    });
+    console.log("Working on AVAT");
+    const tei = await processTrackedEntityInstances("RDEklSXCD4C", 100, 100, {
+      lastUpdatedDuration: "30m",
+    });
+    console.log("Generating the layering");
+    if (quarter !== currentQuarter) {
+      console.log("This is new quarter Generating the layering afresh");
+      await useTracker([
+        moment().subtract(3, "quarters"),
+        moment().subtract(2, "quarters"),
+        moment().subtract(1, "quarters"),
+        moment(),
+      ]);
+    } else {
+      await useTracker(
+        [
+          moment().subtract(3, "quarters"),
+          moment().subtract(2, "quarters"),
+          moment().subtract(1, "quarters"),
+          moment(),
+        ],
+        tei
+      );
     }
+    console.log("Done");
+  } catch (error) {
+    console.log(error.message);
   }
-};
-
-testing().then(() => console.log("Done"));
+  lastUpdatedStartDate = lastUpdatedEndDate;
+});
