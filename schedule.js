@@ -3,7 +3,7 @@ const { processTrackedEntityInstances, useTracker } = require("./process");
 const moment = require("moment");
 let quarter = moment().format("YYYY[Q]Q");
 
-const job = schedule.scheduleJob("*/15 * * * *", async function () {
+const generate = async () => {
   const currentQuarter = moment().format("YYYY[Q]Q");
   try {
     console.log("Working on HVAT");
@@ -18,6 +18,7 @@ const job = schedule.scheduleJob("*/15 * * * *", async function () {
     const tei = await processTrackedEntityInstances("RDEklSXCD4C", 100, 100, {
       lastUpdatedDuration: "30m",
     });
+    console.log(tei);
     console.log("Generating the layering");
     if (quarter !== currentQuarter) {
       console.log("This is new quarter Generating the layering afresh");
@@ -35,12 +36,16 @@ const job = schedule.scheduleJob("*/15 * * * *", async function () {
           moment().subtract(1, "quarters"),
           moment(),
         ],
-        tei
+        tei.flat()
       );
     }
     console.log("Done");
   } catch (error) {
     console.log(error.message);
   }
-  lastUpdatedStartDate = lastUpdatedEndDate;
+  quarter = currentQuarter;
+};
+
+schedule.scheduleJob("*/15 * * * *", async () => {
+  await generate();
 });
