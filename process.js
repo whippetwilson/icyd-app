@@ -2185,6 +2185,7 @@ module.exports.processInstances = async (
         homeVisitorContact,
         dataEntrant,
         ...ous,
+        generated: new Date().toISOString(),
       });
     }
   }
