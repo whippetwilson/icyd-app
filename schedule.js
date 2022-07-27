@@ -18,7 +18,6 @@ const generate = async () => {
     const tei = await processTrackedEntityInstances("RDEklSXCD4C", 100, 100, {
       lastUpdatedDuration: "30m",
     });
-    console.log(tei);
     console.log("Generating the layering");
     if (quarter !== currentQuarter) {
       console.log("This is new quarter Generating the layering afresh");

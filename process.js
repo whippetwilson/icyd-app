@@ -243,33 +243,23 @@ module.exports.anyEventWithDataElement = (events, dataElement, value) => {
   if (events.length === 0) {
     return false;
   }
-  const processed = events.find((event) => {
+  return !!events.find((event) => {
     return event[dataElement] === value;
   });
-  return !!processed;
 };
 module.exports.anyEventWithDE = (events, dataElement) => {
   if (events.length === 0) {
     return false;
   }
-  const processed = events.find((event) => {
-    return (
-      has(event, dataElement) &&
-      event[dataElement] !== null &&
-      event[dataElement] !== undefined
-    );
+  return !!events.find((event) => {
+    return has(event, dataElement) && !!event[dataElement];
   });
-  return !!processed;
 };
 
 module.exports.anyEventWithAnyOfTheValue = (events, dataElement, values) => {
-  const processed = events.find((event) => {
+  return !!events.find((event) => {
     return values.indexOf(event[dataElement]) !== -1;
   });
-  if (processed) {
-    return true;
-  }
-  return false;
 };
 
 module.exports.specificDataElement = (event, dataElement) => {
@@ -277,26 +267,6 @@ module.exports.specificDataElement = (event, dataElement) => {
     return event[dataElement];
   }
   return null;
-};
-
-module.exports.hasAYes = (event, dataElements) => {
-  if (event) {
-    const de = dataElements.map((de) => !!event[de]);
-    return de.includes(true);
-  }
-  return false;
-};
-
-module.exports.allHaveValue = (event, dataElements, value) => {
-  if (event) {
-    const de = dataElements
-      .map((de) => event[de])
-      .filter((v) => v !== undefined);
-    const result =
-      every(de, (v) => v === value) && de.length === dataElements.length;
-    return result;
-  }
-  return false;
 };
 
 module.exports.checkRiskAssessment = (event, dataElements, value) => {
@@ -811,7 +781,6 @@ module.exports.getHIVStatus = (
   viralLoadsBe4Quarter,
   riskFactor
 ) => {
-  // console.log(viralLoadsBe4Quarter);
   if (viralLoadsBe4Quarter && viralLoadsBe4Quarter.length > 0) {
     return "+";
   } else if (hivResult) {
@@ -1321,7 +1290,6 @@ module.exports.processInstances = async (
       } else if (hivStatus === "+") {
         On_ART_HVAT = umqeJCVp4Zq === "Yes" ? 1 : 0;
       }
-
       const VSLA = this.hadASession(memberSessions, quarterStart, quarterEnd, [
         ...sessions["VSLA Methodology"],
         ...sessions["VSLA TOT"],
