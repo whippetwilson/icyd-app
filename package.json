@@ -5,7 +5,7 @@
   "description": "My Moleculer-based microservices project",
   "scripts": {
     "bundle": "pkg . -t host --out-path dist/",
-    "dev": "moleculer-runner --repl --hot services/**/*.service.js",
+    "dev": "moleculer-runner --repl --hot --env services/**/*.service.js",
     "start": "moleculer-runner",
     "cli": "moleculer connect ",
     "ci": "jest --watch",

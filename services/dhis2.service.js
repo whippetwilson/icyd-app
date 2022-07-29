@@ -5,7 +5,7 @@
  */
 
 const axios = require("axios");
-
+console.log(process.env);
 const instance = axios.create({
   baseURL: process.env.ICYD_BASE_URL,
   auth: {
