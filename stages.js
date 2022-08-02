@@ -1,31 +1,31 @@
 const stages = [
-  "aTZwDRoJnxj",
+	"aTZwDRoJnxj",
 
-  "VzkQBBglj3O",
+	"VzkQBBglj3O",
 
-  "KOFm3jJl7n7",
+	"KOFm3jJl7n7",
 
-  "sYE3K7fFM4Y",
+	"sYE3K7fFM4Y",
 
-  "TuLJEpHu0um",
+	"TuLJEpHu0um",
 
-  "LATgKmbf7Yv",
+	"LATgKmbf7Yv",
 
-  "EVkAS8LJNbO",
+	"EVkAS8LJNbO",
 
-  "B9EI27lmQrZ",
+	"B9EI27lmQrZ",
 
-  "HaaSLv2ur0l",
+	"HaaSLv2ur0l",
 
-  "SxnXrDtSJZp",
+	"SxnXrDtSJZp",
 
-  "yz3zh5IFEZm",
+	"yz3zh5IFEZm",
 
-  "kKlAyGUnCML",
+	"kKlAyGUnCML",
 
-  "HEWq6yr4cs5",
-  "RDEklSXCD4C",
-  "IXxHJADVCkb",
+	"HEWq6yr4cs5",
+	"RDEklSXCD4C",
+	"IXxHJADVCkb",
 ];
 
 console.log(stages.map((s) => s.toLowerCase()));
