@@ -531,7 +531,7 @@ module.exports.fetchRelationships4Instances = async (
 		query: `select * from ${String("HEWq6yr4cs5").toLowerCase()}`,
 		filter: {
 			terms: {
-				["trackedEntityInstance.keyword"]: trackedEntityInstances,
+				"trackedEntityInstance.keyword": trackedEntityInstances,
 			},
 		},
 	});
@@ -541,10 +541,10 @@ module.exports.fetchRelationships4Instances = async (
 module.exports.previousLayering = async (trackedEntityInstances) => {
 	try {
 		const data = await this.fetchAll({
-			query: "select trackedEntityInstances,qtr,quarter from layering",
+			query: "select trackedEntityInstance,qtr,quarter from layering",
 			filter: {
 				terms: {
-					["trackedEntityInstance.keyword"]: trackedEntityInstances,
+					"trackedEntityInstance.keyword": trackedEntityInstances,
 				},
 			},
 		});
@@ -586,7 +586,7 @@ module.exports.getProgramStageData = async (
 		query: `select ${columns} from ${String(programStage).toLowerCase()}`,
 		filter: {
 			terms: {
-				["trackedEntityInstance.keyword"]: trackedEntityInstances,
+				"trackedEntityInstance.keyword": trackedEntityInstances,
 			},
 		},
 	});
@@ -2170,7 +2170,7 @@ module.exports.useTracker = async (
 		program: "RDEklSXCD4C",
 		totalPages: true,
 		pageSize: 250,
-		order:"created",
+		order: "created",
 		page: startingPage,
 		...realOtherParams,
 	};
