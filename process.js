@@ -2170,7 +2170,7 @@ module.exports.useTracker = async (
 		ouMode: "ALL",
 		program: "RDEklSXCD4C",
 		totalPages: true,
-		pageSize: 250,
+		pageSize: 1000,
 		order: "created",
 		page: startingPage,
 		...realOtherParams,
