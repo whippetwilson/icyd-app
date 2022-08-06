@@ -31,8 +31,8 @@ const risks = {
 };
 
 module.exports.api = axios.create({
-	// baseURL: "https://data.icyd.hispuganda.org/api/",
-	baseURL: "http://localhost:3001/api/",
+	baseURL: "https://data.icyd.hispuganda.org/api/",
+	// baseURL: "http://localhost:3001/api/",
 });
 
 module.exports.instance = axios.create({
@@ -936,18 +936,21 @@ module.exports.processInstances = async (
 		} = data;
 		const {district, subCounty, orgUnitName, ...ous} = processedUnits[orgUnit] || {};
 		const hasEnrollment = !!enrollmentDate;
-		const hvat = hVatAssessments[hly709n51z0]
-			? orderBy(hVatAssessments[hly709n51z0], ["eventDate"], ["desc"]).filter(
+		let hvat = {};
+		if (hVatAssessments[hly709n51z0] && hVatAssessments[hly709n51z0] !== undefined) {
+			const filtered = orderBy(hVatAssessments[hly709n51z0], ["eventDate"], ["desc"]).filter(
 				(e) => e.eventDate
-			)[0]
-			: {};
+			);
+			if (filtered.length > 0) {
+				hvat = filtered[0];
+			}
+		}
 
 		const {eventDate, zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF} = hvat;
 		const {Xkwy5P2JG24, ExnzeYjgIaT} = indexCases
 			? indexCases[hly709n51z0] && indexCases[hly709n51z0].length > 0 ? indexCases[hly709n51z0][0] : {}
 			: {};
 		let houseHoldType = "";
-		console.log(Xkwy5P2JG24, ExnzeYjgIaT);
 		const score18 = [zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF].filter(
 			(v) => v !== null && v !== undefined && v !== ""
 		);
@@ -2151,19 +2154,27 @@ module.exports.useTracker = async (
 		moment().subtract(1, "quarters"),
 		moment(),
 	],
-	otherParams = {}
+	otherParams = {},
 ) => {
 	const processedUnits = await this.fetchUnits4Instances();
-
+	let startingPage = 1;
+	let realOtherParams = otherParams;
+	if (otherParams.page) {
+		const {page, ...rest} = otherParams;
+		startingPage = page;
+		realOtherParams = rest;
+	}
 	let params = {
 		fields: "*",
 		ouMode: "ALL",
 		program: "RDEklSXCD4C",
 		totalPages: true,
 		pageSize: 250,
-		page: 1,
-		...otherParams,
+		order:"created",
+		page: startingPage,
+		...realOtherParams,
 	};
+	console.log(`Fetching page ${startingPage}`);
 	const {
 		data: {
 			trackedEntityInstances,
@@ -2173,27 +2184,34 @@ module.exports.useTracker = async (
 
 	const {sessions} = await this.useLoader();
 
+	console.log(`Finished fetching page ${startingPage}`);
+	console.log(`Generating layering for page ${startingPage}`);
 	await this.generate(
 		trackedEntityInstances.filter(({inactive, deleted}) => deleted === false && inactive === false),
 		processedUnits,
 		periods,
 		sessions
 	);
+	console.log(`Finished generating layering for page ${startingPage}`);
 
-	if (pageCount > 1) {
-		for (let page = 2; page <= pageCount; page++) {
+	if (pageCount > startingPage) {
+		for (let page = Number(startingPage) + 1; page <= pageCount; page++) {
 			console.log(`Working on page ${page} of ${pageCount}`);
 			const {
 				data: {trackedEntityInstances},
 			} = await this.instance.get("trackedEntityInstances.json", {
 				params: {...params, page},
 			});
+			console.log(`Finished fetching page ${page} of ${pageCount}`);
+			console.log(`Generating layering for page ${page}`);
+
 			await this.generate(
 				trackedEntityInstances.filter(({inactive, deleted}) => deleted === false && inactive === false),
 				processedUnits,
 				periods,
 				sessions
 			);
+			console.log(`Finished generating layering for page ${page}`);
 		}
 	}
 };
