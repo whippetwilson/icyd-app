@@ -5,7 +5,6 @@ const {
 	isWithinInterval,
 	parseISO,
 	subQuarters,
-	format,
 } = require("date-fns");
 const {
 	every,
@@ -13,7 +12,6 @@ const {
 	groupBy,
 	has,
 	maxBy,
-	sortBy,
 	orderBy,
 	uniq,
 	chunk,
@@ -57,7 +55,7 @@ module.exports.fetchAll = async (query) => {
 			} = await this.api.post("wal/sql", {cursor: currentCursor});
 			allRows = allRows.concat(rows);
 			currentCursor = cursor;
-		} while (!!currentCursor);
+		} while (currentCursor);
 	}
 	return allRows.map((r) => {
 		return fromPairs(columns.map((c, i) => [c.name, r[i]]));
@@ -121,14 +119,14 @@ module.exports.mapping2 = {
 	"No means No sessions (Boys)": 4,
 	"No means No sessions (Girls)": 5,
 	"No means No sessions (Boys) New Curriculum": 8,
-	"SINOVUYO": 10,
+	SINOVUYO: 10,
 };
 
 module.exports.hadASession = (memberSessions, startDate, endDate, sessions) => {
 	if (memberSessions) {
-		return !!memberSessions.find((row) => {
+		return memberSessions.find((row) => {
 			return (
-				sessions.indexOf(row.n20LkH4ZBF8) !== -1 &&
+				sessions.indexOf(row["n20LkH4ZBF8"]) !== -1 &&
 				isWithinInterval(parseISO(row.eventDate), {
 					start: startDate,
 					end: endDate,
@@ -142,7 +140,7 @@ module.exports.hadASession = (memberSessions, startDate, endDate, sessions) => {
 module.exports.hasCompleted = (memberSessions, endDate, sessions, value) => {
 	const doneSessions = memberSessions.filter((row) => {
 		return (
-			sessions.indexOf(row.n20LkH4ZBF8) !== -1 &&
+			sessions.indexOf(row["n20LkH4ZBF8"]) !== -1 &&
 			parseISO(row.eventDate).getTime() <= endDate.getTime()
 		);
 	});
@@ -158,7 +156,7 @@ module.exports.hasCompletedWithin = (
 ) => {
 	const doneSessions = memberSessions.filter((row) => {
 		return (
-			sessions.indexOf(row.n20LkH4ZBF8) !== -1 &&
+			sessions.indexOf(row["n20LkH4ZBF8"]) !== -1 &&
 			isWithinInterval(parseISO(row.eventDate), {
 				start: startDate,
 				end: endDate,
@@ -171,7 +169,7 @@ module.exports.hasCompletedWithin = (
 module.exports.hasCompletedAtLeast1 = (memberSessions, endDate, sessions) => {
 	const doneSessions = memberSessions.filter((row) => {
 		return (
-			sessions.indexOf(row.n20LkH4ZBF8) !== -1 &&
+			sessions.indexOf(row["n20LkH4ZBF8"]) !== -1 &&
 			parseISO(row.eventDate).getTime() <= endDate.getTime()
 		);
 	});
@@ -222,7 +220,7 @@ module.exports.eventsWithinPeriod = (events, start, end) => {
 };
 
 module.exports.findAnyEventValue = (events, dataElement) => {
-	const event = orderBy(events, ['eventDate', 'desc']).find(
+	const event = orderBy(events, ["eventDate", "desc"]).find(
 		({[dataElement]: de}) => de !== null && de !== undefined
 	);
 	if (event) {
@@ -242,7 +240,7 @@ module.exports.anyEventWithDataElement = (events, dataElement, value) => {
 	if (events.length === 0) {
 		return false;
 	}
-	return !!events.find((event) => {
+	return events.find((event) => {
 		return event[dataElement] === value;
 	});
 };
@@ -250,19 +248,19 @@ module.exports.anyEventWithDE = (events, dataElement) => {
 	if (events.length === 0) {
 		return false;
 	}
-	return !!events.find((event) => {
-		return has(event, dataElement) && !!event[dataElement];
+	return events.find((event) => {
+		return has(event, dataElement) && event[dataElement];
 	});
 };
 
 module.exports.anyEventWithAnyOfTheValue = (events, dataElement, values) => {
-	return !!events.find((event) => {
+	return events.find((event) => {
 		return values.indexOf(event[dataElement]) !== -1;
 	});
 };
 
 module.exports.specificDataElement = (event, dataElement) => {
-	return event?.[dataElement] || null;
+	return event ? event[dataElement] : null;
 };
 
 module.exports.checkRiskAssessment = (event, dataElements, value) => {
@@ -294,7 +292,7 @@ module.exports.checkRiskAssessment = (event, dataElements, value) => {
 };
 
 module.exports.hasDataElementWithinPeriod = (events, dataElement, value) => {
-	return !!events.find((e) => e[dataElement] === value);
+	return events.find((e) => e[dataElement] === value);
 };
 
 module.exports.deHasAnyValue = (de, values) => {
@@ -466,9 +464,9 @@ module.exports.syncOrganisations = async () => {
 	});
 	const units = organisationUnits.map((unit) => {
 		return {
-			subCounty: unit.parent?.name,
+			subCounty: unit.parent ? unit.parent.name : "",
 			id: unit.id,
-			district: unit.parent?.parent?.name,
+			district: unit.parent ? unit.parent.parent ? unit.parent.parent.name : "" : "",
 			orgUnitName: unit.name,
 			...fromPairs(
 				String(unit.path)
@@ -483,13 +481,13 @@ module.exports.syncOrganisations = async () => {
 
 	const inserted = await Promise.all(
 		chunk(units, 1000).map((c) => {
-			return this.api.post(`wal/index?index=units`, {
+			return this.api.post("wal/index?index=units", {
 				data: c,
 			});
 		})
 	);
 	const total = sum(
-		inserted.map(({data: {items}}) => (!!items ? items.length : 0))
+		inserted.map(({data: {items}}) => (items ? items.length : 0))
 	);
 	console.log(total);
 };
@@ -509,8 +507,8 @@ module.exports.fetchUnits4Instances = async () => {
 			return [
 				unit.id,
 				{
-					subCounty: unit.parent?.name,
-					district: unit.parent?.parent?.name,
+					subCounty: unit.parent ? unit.parent.name : "",
+					district: unit.parent ? unit.parent.parent ? unit.parent.parent.name : "" : "",
 					orgUnitName: unit.name,
 					...fromPairs(
 						String(unit.path)
@@ -529,18 +527,11 @@ module.exports.fetchUnits4Instances = async () => {
 module.exports.fetchRelationships4Instances = async (
 	trackedEntityInstances
 ) => {
-	const relationIndex = trackedEntityInstances.columns.findIndex(
-		(c) => c.name === "hly709n51z0"
-	);
-
-	const allInstances = uniq(
-		trackedEntityInstances.rows.map((row) => row[relationIndex])
-	).filter((x) => x !== null && x !== undefined);
 	const data = await this.fetchAll({
 		query: `select * from ${String("HEWq6yr4cs5").toLowerCase()}`,
 		filter: {
 			terms: {
-				["trackedEntityInstance.keyword"]: allInstances,
+				["trackedEntityInstance.keyword"]: trackedEntityInstances,
 			},
 		},
 	});
@@ -550,7 +541,7 @@ module.exports.fetchRelationships4Instances = async (
 module.exports.previousLayering = async (trackedEntityInstances) => {
 	try {
 		const data = await this.fetchAll({
-			query: `select trackedEntityInstances,qtr,quarter from layering`,
+			query: "select trackedEntityInstances,qtr,quarter from layering",
 			filter: {
 				terms: {
 					["trackedEntityInstance.keyword"]: trackedEntityInstances,
@@ -573,19 +564,13 @@ module.exports.previousLayering = async (trackedEntityInstances) => {
 module.exports.fetchGroupActivities4Instances = async (
 	trackedEntityInstances
 ) => {
-	const memberCodeColumnIndex = trackedEntityInstances.columns.findIndex(
-		(c) => c.name === "HLKc2AKR9jW"
-	);
-	const allMemberCodes = uniq(
-		trackedEntityInstances.rows.map((row) => row[memberCodeColumnIndex])
-	).filter((v) => v !== null && v !== undefined && v !== "");
 	const data = await this.fetchAll({
 		query: `select n20LkH4ZBF8,ypDUCAS6juy,eventDate from ${String(
-      "VzkQBBglj3O"
-    ).toLowerCase()}`,
+			"VzkQBBglj3O"
+		).toLowerCase()}`,
 		filter: {
 			terms: {
-				["ypDUCAS6juy.keyword"]: allMemberCodes,
+				"ypDUCAS6juy.keyword": trackedEntityInstances,
 			},
 		},
 	});
@@ -630,8 +615,8 @@ module.exports.processPrevention = async (
 			return [
 				unit.id,
 				{
-					subCounty: unit.parent?.name,
-					district: unit.parent?.parent?.name,
+					subCounty: unit.parent ? unit.parent.name : "",
+					district: unit.parent ? unit.parent.parent ? unit.parent.parent.name : "" : "",
 				},
 			];
 		})
@@ -660,10 +645,10 @@ module.exports.processPrevention = async (
 					const session = dataValues.find(
 						({dataElement}) => dataElement === "n20LkH4ZBF8"
 					);
-					return {session: session?.value, code: code?.value};
+					return {session: session ? session.value : undefined, code: code ? code.value : undefined};
 				});
 
-			const subType = instance?.["mWyp85xIzXR"];
+			const subType = instance ? instance["mWyp85xIzXR"] : undefined;
 			const allSubTypes = String(subType).split(",");
 			const completed = this.mapping[subType];
 			const groupedSessions = groupBy(doneSessions, "code");
@@ -674,13 +659,13 @@ module.exports.processPrevention = async (
 						event.dataValues.map((dv) => [dv.dataElement, dv.value])
 					);
 					const individualCode = elements.ypDUCAS6juy;
-					const participantSessions = groupedSessions[individualCode]?.filter(
+					const participantSessions = groupedSessions[individualCode] ? groupedSessions[individualCode].filter(
 						(i) => {
 							return sessions[allSubTypes[0]].indexOf(i.session) !== -1;
 						}
-					);
+					) : [];
 					const sess = fromPairs(
-						participantSessions?.map(({session}) => [session, 1])
+						participantSessions.map(({session}) => [session, 1])
 					);
 					return {
 						event: event.event,
@@ -690,11 +675,11 @@ module.exports.processPrevention = async (
 						...units,
 						parish: orgUnitName,
 						enrollmentDate,
-						[subType]: participantSessions?.length,
+						[subType]: participantSessions.length,
 						[completed]:
-							participantSessions?.length >= this.mapping2[subType] ? 1 : 0,
+							participantSessions.length >= this.mapping2[subType] ? 1 : 0,
 						completedPrevention:
-							participantSessions?.length >= this.mapping2[subType] ? 1 : 0,
+							participantSessions.length >= this.mapping2[subType] ? 1 : 0,
 					};
 				});
 		}
@@ -721,13 +706,13 @@ module.exports.getHEIInformation = (age, heiData) => {
 		const hivTestResults = this.findAnyEventValue(heiData, "lznDPbUscke");
 		const finalOutcome = this.findAnyEventValue(heiData, "fcAZR5zt9i3");
 
-		const pcr = !!hivTestResults
+		const pcr = hivTestResults
 			? "4"
-			: !!thirdPCRResults
+			: thirdPCRResults
 				? "3"
-				: !!secondPCRResults
+				: secondPCRResults
 					? "2"
-					: !!firstPCRResults
+					: firstPCRResults
 						? "1"
 						: "";
 
@@ -781,7 +766,7 @@ module.exports.getHIVStatus = (
 		return "+";
 	} else if (hivResult) {
 		return hivResult === "Positive" ? "+" : hivResult === "Negative" ? "-" : "";
-	} else if (!!hivTestResults) {
+	} else if (hivTestResults) {
 		return hivTestResults;
 	} else if (riskFactor === "HEI") {
 		return "DK";
@@ -812,22 +797,22 @@ module.exports.hivInformation = (
 	let ovcVL;
 	let VLSuppressed;
 	if (hivStatus === "+") {
-		if (!!artStartDate) {
+		if (artStartDate) {
 			const daysOnArt = differenceInMonths(quarterEnd, parseISO(artStartDate));
 			if (daysOnArt >= 6) {
 				ovcEligible = 1;
-			} else if (!!lastViralLoadDate) {
+			} else if (lastViralLoadDate) {
 				ovcEligible = 1;
 			} else {
 				ovcEligible = "NE";
 			}
-		} else if (!!lastViralLoadDate) {
+		} else if (lastViralLoadDate) {
 			ovcEligible = 1;
 		} else {
 			ovcEligible = "No VL";
 		}
 
-		if (!!lastViralLoadDate && ovcEligible === 1) {
+		if (lastViralLoadDate && ovcEligible === 1) {
 			const monthsSinceLastViralLoad = differenceInMonths(
 				quarterEnd,
 				parseISO(lastViralLoadDate)
@@ -842,7 +827,7 @@ module.exports.hivInformation = (
 		} else {
 			VLTestDone = 0;
 		}
-		if (!!viralLoadResultsReceived && VLTestDone === 1) {
+		if (viralLoadResultsReceived && VLTestDone === 1) {
 			ovcVL = viralLoadResultsReceived === "true" ? 1 : 0;
 		} else {
 			ovcVL = 0;
@@ -860,7 +845,14 @@ module.exports.hivInformation = (
 		VLStatus = "";
 	}
 
-	return {VLTestDone, ovcEligible, ovcVL, VLStatus, VLSuppressed, viralLoadCopies};
+	return {
+		VLTestDone,
+		ovcEligible,
+		ovcVL,
+		VLStatus,
+		VLSuppressed,
+		viralLoadCopies,
+	};
 };
 
 module.exports.processInstances = async (
@@ -872,51 +864,63 @@ module.exports.processInstances = async (
 	groupActivities
 ) => {
 	let layering = [];
-	const {columns, rows} = trackedEntityInstances;
-	const instances = rows
-		.map((r) => {
-			return fromPairs(columns.map((c, i) => [c.name, r[i]]));
-		})
-		.filter(
-			(x) =>
-				x.trackedEntityInstance !== null &&
-				x.trackedEntityInstance !== undefined &&
-				x.trackedEntityInstance !== ""
+
+	const trackedEntityInstanceIds = trackedEntityInstances.map(
+		(tei) => tei.trackedEntityInstance
+	);
+	const previousLayer = await this.previousLayering(trackedEntityInstanceIds);
+
+	const hVatAssessments = await this.getProgramStageData(
+		Object.keys(indexCases),
+		"sYE3K7fFM4Y",
+		"trackedEntityInstance,eventDate,zbAGBW6PsGd,kQCB9F39zWO,iRJUDyUBLQF"
+	);
+	for (const {enrollments, attributes, relationships, orgUnit, trackedEntityInstance} of trackedEntityInstances) {
+		const allEvents = enrollments.flatMap(
+			(enrollment) => {
+				return enrollment.events.filter(({deleted}) => deleted === false).map(
+					({eventDate, programStage, dataValues}) => {
+						return {
+							eventDate,
+							programStage,
+							...fromPairs(
+								dataValues.map(({dataElement, value}) => [dataElement, value])
+							),
+						};
+					}
+				);
+			}
 		);
-	const instanceIds = instances.map((i) => i.trackedEntityInstance);
+		const data = {
+			orgUnit,
+			enrollmentDate: enrollments.length > 0 ? enrollments[0]["enrollmentDate"] : "",
+			trackedEntityInstance,
+			...fromPairs(
+				attributes.map(({attribute, value}) => [
+					attribute,
+					value,
+				])
+			),
+			...fromPairs(
+				relationships.map((rel) => [
+					rel["relationshipType"],
+					rel.from.trackedEntityInstance.trackedEntityInstance,
+				])
+			)
+		};
 
-	const previousLayer = await this.previousLayering(instanceIds);
-	const [
-		// vulnerabilityAssessments,
-		homeVisits,
-		hivRiskAssessments,
-		viralLoads,
-		// casePlannings,
-		referrals,
-		serviceLinkages,
-		exposedInfants,
-		hVatAssessments,
-	] = await Promise.all([
-		// this.getProgramStageData(instanceIds, "TuLJEpHu0um"),
-		this.getProgramStageData(instanceIds, "HaaSLv2ur0l"),
-		this.getProgramStageData(instanceIds, "B9EI27lmQrZ"),
-		this.getProgramStageData(instanceIds, "kKlAyGUnCML"),
-		// this.getProgramStageData(instanceIds, "LATgKmbf7Yv"),
-		this.getProgramStageData(instanceIds, "yz3zh5IFEZm"),
-		this.getProgramStageData(instanceIds, "SxnXrDtSJZp"),
-		this.getProgramStageData(instanceIds, "KOFm3jJl7n7"),
-		this.getProgramStageData(
-			Object.keys(indexCases),
-			"sYE3K7fFM4Y",
-			"trackedEntityInstance,eventDate,zbAGBW6PsGd,kQCB9F39zWO,iRJUDyUBLQF"
-		),
-	]);
+		const availableEvents = groupBy(allEvents, "programStage");
+		// const vulnerabilityAssessments = availableEvents["TuLJEpHu0um"] || [];
+		const homeVisits = availableEvents["HaaSLv2ur0l"] || [];
+		const hivRiskAssessments = availableEvents["B9EI27lmQrZ"] || [];
+		const viralLoads = availableEvents["kKlAyGUnCML"] || [];
+		// const casePlannings = availableEvents["LATgKmbf7Yv"] || [];
+		const referrals = availableEvents["yz3zh5IFEZm"] || [];
+		const serviceLinkages = availableEvents["SxnXrDtSJZp"] || [];
+		const exposedInfants = availableEvents["KOFm3jJl7n7"] || [];
 
-	// console.log(viralLoads);
-	for (const instance of instances) {
 		const {
 			enrollmentDate,
-			orgUnit,
 			hly709n51z0,
 			HLKc2AKR9jW,
 			N1nMqKtYKvI,
@@ -929,18 +933,24 @@ module.exports.processInstances = async (
 			huFucxA3e5c,
 			CfpoFtRmK1z,
 			n7VQaJ8biOJ,
-			trackedEntityInstance,
-		} = instance;
+		} = data;
 		const {district, subCounty, orgUnitName, ...ous} = processedUnits[orgUnit] || {};
 		const hasEnrollment = !!enrollmentDate;
+		const hvat = hVatAssessments[hly709n51z0]
+			? orderBy(hVatAssessments[hly709n51z0], ["eventDate"], ["desc"]).filter(
+				(e) => e.eventDate
+			)[0]
+			: {};
 
-		const hvat = !!hVatAssessments[hly709n51z0]
-			? orderBy(hVatAssessments[hly709n51z0], ['eventDate'], ['desc']).filter((e) => !!e.eventDate)[0] : {};
-		const {eventDate, zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF} = hvat || {};
-		const {Xkwy5P2JG24, ExnzeYjgIaT} = !!indexCases[hly709n51z0] ? indexCases[hly709n51z0][0] : {};
+		const {eventDate, zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF} = hvat;
+		const {Xkwy5P2JG24, ExnzeYjgIaT} = indexCases
+			? indexCases[hly709n51z0][0]
+			: {};
 		let houseHoldType = "";
 
-		const score18 = [zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF].filter((v) => v !== null && v !== undefined && v !== "");
+		const score18 = [zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF].filter(
+			(v) => v !== null && v !== undefined && v !== ""
+		);
 		const yeses = score18.filter((v) => v === "Yes").length;
 		const noses = score18.filter((v) => v === "No").length;
 		if (score18.length === 3) {
@@ -957,91 +967,36 @@ module.exports.processInstances = async (
 		for (const period of periods) {
 			const quarterStart = period.startOf("quarter").toDate();
 			const quarterEnd = period.endOf("quarter").toDate();
-			const previousQuarter = moment(subQuarters(quarterStart, 1)).format(
-				"YYYY[Q]Q"
-			);
+			const previousQuarter = moment(subQuarters(quarterStart, 1)).format("YYYY[Q]Q");
 			const [financialQuarterStart, financialQuarterEnd] =
 				this.calculateQuarter(quarterStart.getFullYear(), period.quarter());
 			const qtr = period.format("YYYY[Q]Q");
-			const isWithin = isWithinInterval(parseISO(enrollmentDate), {
-				start: quarterStart,
-				end: quarterEnd,
-			});
+			const isWithin = isWithinInterval(parseISO(enrollmentDate), {start: quarterStart, end: quarterEnd});
+
 			const age = differenceInYears(quarterEnd, parseISO(N1nMqKtYKvI));
 			const ageGroup = this.findAgeGroup(age);
-			const heiData = this.eventsBeforePeriod(
-				this.getEvents(exposedInfants, trackedEntityInstance),
-				quarterEnd
-			);
-			const homeVisitsBe4Quarter = this.eventsBeforePeriod(
-				this.getEvents(homeVisits, trackedEntityInstance),
-				quarterEnd
-			);
-			const referralsDuringYear = this.eventsWithinPeriod(
-				this.getEvents(referrals, trackedEntityInstance),
-				financialQuarterStart,
-				financialQuarterEnd
-			);
+			const heiData = this.eventsBeforePeriod(exposedInfants, quarterEnd);
+
+			const homeVisitsBe4Quarter = this.eventsBeforePeriod(homeVisits, quarterEnd);
+			const referralsDuringYear = this.eventsWithinPeriod(referrals, financialQuarterStart, financialQuarterEnd);
 
 			const riskAssessmentsDuringYear = this.eventsWithinPeriod(
-				this.getEvents(hivRiskAssessments, trackedEntityInstance),
+				hivRiskAssessments,
 				financialQuarterStart,
 				financialQuarterEnd
 			);
 
-			const referralsDuringQuarter = this.eventsWithinPeriod(
-				this.getEvents(referrals, trackedEntityInstance),
-				quarterStart,
-				quarterEnd
-			);
-			const serviceLinkagesDuringQuarter = this.eventsWithinPeriod(
-				this.getEvents(serviceLinkages, trackedEntityInstance),
-				quarterStart,
-				quarterEnd
-			);
-
-			const homeVisitsDuringQuarter = this.eventsWithinPeriod(
-				this.getEvents(homeVisits, trackedEntityInstance),
-				quarterStart,
-				quarterEnd
-			);
-
-			const viralLoadsBe4Quarter = this.eventsBeforePeriod(
-				this.getEvents(viralLoads, trackedEntityInstance),
-				quarterEnd
-			);
-
-			const viralLoadDuringQuarter = this.eventsWithinPeriod(
-				this.getEvents(viralLoads, trackedEntityInstance),
-				quarterStart,
-				quarterEnd
-			);
-
+			const referralsDuringQuarter = this.eventsWithinPeriod(referrals, quarterStart, quarterEnd);
+			const serviceLinkagesDuringQuarter = this.eventsWithinPeriod(serviceLinkages, quarterStart, quarterEnd);
+			const homeVisitsDuringQuarter = this.eventsWithinPeriod(homeVisits, quarterStart, quarterEnd);
+			const viralLoadsBe4Quarter = this.eventsBeforePeriod(viralLoads, quarterEnd);
+			const viralLoadDuringQuarter = this.eventsWithinPeriod(viralLoads, quarterStart, quarterEnd);
 			const currentReferral = this.mostCurrentEvent(referralsDuringYear);
-			const currentRiskAssessment = this.mostCurrentEvent(
-				riskAssessmentsDuringYear
-			);
-			const serviceProvisionDuringQuarter = this.eventsWithinPeriod(
-				this.getEvents(referrals, trackedEntityInstance),
-				quarterStart,
-				quarterEnd
-			);
-
-			const previousViralLoads = this.eventsBeforePeriod(
-				this.getEvents(viralLoads, trackedEntityInstance),
-				quarterStart
-			);
-
-			const previousReferrals = this.eventsBeforePeriod(
-				this.getEvents(referrals, trackedEntityInstance),
-				quarterStart
-			);
-
-			const hivResult = this.specificDataElement(
-				currentReferral,
-				"XTdRWh5MqPw"
-			);
-
+			const currentRiskAssessment = this.mostCurrentEvent(riskAssessmentsDuringYear);
+			const serviceProvisionDuringQuarter = this.eventsWithinPeriod(referrals, quarterStart, quarterEnd);
+			const previousViralLoads = this.eventsBeforePeriod(viralLoads, quarterStart);
+			const previousReferrals = this.eventsBeforePeriod(referrals, quarterStart);
+			const hivResult = this.specificDataElement(currentReferral, "XTdRWh5MqPw");
 			const tbScreeningChild = this.checkRiskAssessment(currentRiskAssessment, [
 				"DgCXKSDPTWn",
 				"Rs5qrKay7Gq",
@@ -1117,15 +1072,8 @@ module.exports.processInstances = async (
 				],
 				"false"
 			);
-
-			const serviceProvided = this.specificDataElement(
-				currentReferral,
-				"XWudTD2LTUQ"
-			);
-			const unknownOther = this.findAnyEventValue(
-				riskAssessmentsDuringYear,
-				"cTV8aMqnVbe"
-			);
+			const serviceProvided = this.specificDataElement(currentReferral, "XWudTD2LTUQ");
+			const unknownOther = this.findAnyEventValue(riskAssessmentsDuringYear, "cTV8aMqnVbe");
 			const linked = this.deHasAnyValue(serviceProvided, [
 				"Started HIV treatment",
 				"PEP",
@@ -1134,39 +1082,15 @@ module.exports.processInstances = async (
 				"Viral Load Testing",
 				"Provided with ARVs",
 			]);
-			const artStartDate = this.findAnyEventValue(
-				viralLoadsBe4Quarter,
-				"epmIBD8gh7G"
-			);
+			const artStartDate = this.findAnyEventValue(viralLoadsBe4Quarter, "epmIBD8gh7G");
+			const lastViralLoadDate = this.findAnyEventValue(viralLoadsBe4Quarter, "Ti0huZXbAM0");
+			const viralTestDone = this.findAnyEventValue(viralLoadsBe4Quarter, "cM7dovIX2Dl");
+			const viralLoadResultsReceived = this.findAnyEventValue(viralLoadsBe4Quarter, "te2VwealaBT");
+			const viralLoadStatus = this.findAnyEventValue(viralLoadsBe4Quarter, "AmaNW7QDuOV");
+			const viralLoadCopies = this.findAnyEventValue(viralLoadsBe4Quarter, "b8p0uWaYRhY");
+			const regimen = this.findAnyEventValue(viralLoadsBe4Quarter, "nZ1omFVYFkT");
+			const weight = this.findAnyEventValue(viralLoadsBe4Quarter, "Kjtt7SV26zL");
 
-			const lastViralLoadDate = this.findAnyEventValue(
-				viralLoadsBe4Quarter,
-				"Ti0huZXbAM0"
-			);
-			const viralTestDone = this.findAnyEventValue(
-				viralLoadsBe4Quarter,
-				"cM7dovIX2Dl"
-			);
-			const viralLoadResultsReceived = this.findAnyEventValue(
-				viralLoadsBe4Quarter,
-				"te2VwealaBT"
-			);
-			const viralLoadStatus = this.findAnyEventValue(
-				viralLoadsBe4Quarter,
-				"AmaNW7QDuOV"
-			);
-			const viralLoadCopies = this.findAnyEventValue(
-				viralLoadsBe4Quarter,
-				"b8p0uWaYRhY"
-			);
-			const regimen = this.findAnyEventValue(
-				viralLoadsBe4Quarter,
-				"nZ1omFVYFkT"
-			);
-			const weight = this.findAnyEventValue(
-				viralLoadsBe4Quarter,
-				"Kjtt7SV26zL"
-			);
 			const {
 				eidEnrollmentDate,
 				motherArtNo,
@@ -1183,10 +1107,8 @@ module.exports.processInstances = async (
 				finalOutcome,
 				pcr,
 			} = this.getHEIInformation(age, heiData);
-			let riskFactor =
-				this.findAnyEventValue(homeVisitsBe4Quarter, "rQBaynepqjy") ||
-				nDUbdM2FjyP;
 
+			let riskFactor = this.findAnyEventValue(homeVisitsBe4Quarter, "rQBaynepqjy") || nDUbdM2FjyP;
 			const hivStatus = this.getHIVStatus(
 				HzUL8LTDPga,
 				hivResult,
@@ -1199,8 +1121,7 @@ module.exports.processInstances = async (
 
 			const testedForHIV = serviceProvided === "HCT/ Tested for HIV" ? 1 : 0;
 			const primaryCareGiver = nDUbdM2FjyP === "Primary caregiver" ? 1 : 0;
-			const OVC_TST_REFER =
-				serviceProvided && serviceProvided === "HCT/ Tested for HIV" ? 1 : 0;
+			const OVC_TST_REFER = serviceProvided && serviceProvided === "HCT/ Tested for HIV" ? 1 : 0;
 			const OVC_TST_REPORT = hivResult && OVC_TST_REFER === 1 ? 1 : 0;
 			const memberStatus =
 				this.findAnyEventValue(homeVisitsBe4Quarter, "tM67MBdox3O") === "true"
@@ -1208,10 +1129,7 @@ module.exports.processInstances = async (
 					: this.findAnyEventValue(homeVisitsBe4Quarter, "VEw6HHnx8mR")
 						? this.findAnyEventValue(homeVisitsBe4Quarter, "VEw6HHnx8mR")
 						: "No Home Visit";
-			const householdStatus = !!this.findAnyEventValue(
-				homeVisitsBe4Quarter,
-				"PpUByWk3p8N"
-			)
+			const householdStatus = this.findAnyEventValue(homeVisitsBe4Quarter, "PpUByWk3p8N")
 				? this.findAnyEventValue(homeVisitsBe4Quarter, "PpUByWk3p8N")
 				: hasEnrollment
 					? "Active"
@@ -1219,27 +1137,18 @@ module.exports.processInstances = async (
 
 			const enrolledInSchool = this.isAtSchool(age, "", h4pXErY01YR);
 
-			const homeVisitor = this.findAnyEventValue(
-				homeVisitsBe4Quarter,
-				"i6XGAmzx3Ri"
-			);
+			const homeVisitor = this.findAnyEventValue(homeVisitsBe4Quarter, "i6XGAmzx3Ri");
 
 			const dataEntrant1 = Xkwy5P2JG24;
 
-			const dataEntrant2 = this.findAnyEventValue(
-				viralLoadDuringQuarter,
-				"YY5zG4Bh898"
-			);
+			const dataEntrant2 = this.findAnyEventValue(viralLoadDuringQuarter, "YY5zG4Bh898");
 
 			const dataEntrant =
 				this.findAnyEventValue(homeVisitsDuringQuarter, "YY5zG4Bh898") ||
 				dataEntrant1 ||
 				dataEntrant2;
 
-			const homeVisitorContact = this.findAnyEventValue(
-				homeVisitsBe4Quarter,
-				"BMzryoryhtX"
-			);
+			const homeVisitorContact = this.findAnyEventValue(homeVisitsBe4Quarter, "BMzryoryhtX");
 			const newlyEnrolled = isWithin ? "Yes" : "No";
 
 			const {VLTestDone, ovcEligible, ovcVL, VLStatus, VLSuppressed} =
@@ -1255,7 +1164,10 @@ module.exports.processInstances = async (
 				);
 
 			let onArt = "";
-			let facility = this.findAnyEventValue(viralLoadsBe4Quarter, "usRWNcogGX7");
+			let facility = this.findAnyEventValue(
+				viralLoadsBe4Quarter,
+				"usRWNcogGX7"
+			);
 			let artNo = this.findAnyEventValue(viralLoadsBe4Quarter, "aBc9Lr1z25H");
 			let On_ART_HVAT = "";
 			if (this.findAnyEventValue(viralLoadsBe4Quarter, "xyDBnQTdZqS")) {
@@ -1281,14 +1193,7 @@ module.exports.processInstances = async (
 				? 1
 				: 0;
 
-			const fLiteracy = this.hadASession(
-				memberSessions,
-				quarterStart,
-				quarterEnd,
-				sessions["Financial Literacy"]
-			)
-				? 1
-				: 0;
+			const fLiteracy = this.hadASession(memberSessions, quarterStart, quarterEnd, sessions["Financial Literacy"]) ? 1 : 0;
 			const fHomeBasedLiteracy =
 				(this.anyEventWithDE(homeVisitsDuringQuarter, "PBiFAeCVnot") ||
 					this.anyEventWithDE(homeVisitsDuringQuarter, "Xlw16qiDxqk") ||
@@ -1306,15 +1211,7 @@ module.exports.processInstances = async (
 						"F2. Access saving services",
 						"F3. Insurance services/ Health Fund",
 					]
-				) ||
-				this.hadASession(
-					memberSessions,
-					quarterStart,
-					quarterEnd,
-					sessions["Bank Linkages"]
-				)
-					? 1
-					: 0;
+				) || this.hadASession(memberSessions, quarterStart, quarterEnd, sessions["Bank Linkages"]) ? 1 : 0;
 
 			const agriBusiness = this.anyEventWithAnyOfTheValue(
 				serviceLinkagesDuringQuarter,
@@ -1934,7 +1831,7 @@ module.exports.processInstances = async (
 			if (hivStatus !== "+" && hivStatus !== "-" && isNotAtRisk !== 1) {
 				if (riskFactor === "HEI" && hivStatus === "DK" && age <= 2) {
 					unknown = "HEI";
-				} else if (!!unknownOther) {
+				} else if (unknownOther) {
 					unknown = unknownOther;
 				} else {
 					unknown = "Other reasons";
@@ -1944,9 +1841,7 @@ module.exports.processInstances = async (
 			if (newlyEnrolled === "Yes" && hivStatus === "+") {
 				newlyPositive = 1;
 			} else if (hivStatus === "+") {
-				if (
-					instance.HzUL8LTDPga === "Negative" &&
-					previousViralLoads.length === 0 &&
+				if (HzUL8LTDPga === "Negative" && previousViralLoads.length === 0 &&
 					this.allValues4DataElement(
 						previousReferrals,
 						"XTdRWh5MqPw",
@@ -1961,7 +1856,7 @@ module.exports.processInstances = async (
 			let newlyTestedPositive = 0;
 			if (
 				newlyPositive &&
-				!!artStartDate &&
+				artStartDate &&
 				isWithinInterval(parseISO(artStartDate), {
 					start: financialQuarterStart,
 					end: financialQuarterEnd,
@@ -2040,7 +1935,6 @@ module.exports.processInstances = async (
 				CfpoFtRmK1z,
 				weight,
 				riskFactor,
-				houseHoldType,
 				householdStatus,
 				memberStatus,
 				enrolledInSchool,
@@ -2165,59 +2059,58 @@ module.exports.processInstances = async (
 				generated: new Date().toISOString(),
 			});
 		}
-	}
-
-	const inserted = await Promise.all(
-		chunk(layering, 100).map((c) => {
-			return this.api.post(`wal/index?index=layering`, {
-				data: c,
-			});
-		})
-	);
-	const total = sum(
-		inserted.map(({data: {items}}) => (!!items ? items.length : 0))
-	);
-	console.log(total);
-};
-
-module.exports.useProgramStage = async (
-	organisationUnits,
-	period,
-	sessions,
-	page,
-	pageSize
-) => {
-	if (organisationUnits.length > 0) {
-		const {
-			data: {trackedEntityInstances, pager},
-		} = await this.instance.get("trackedEntityInstances.json", {
-			params: {
-				fields: "*",
-				ou: organisationUnits.join(";"),
-				ouMode: "DESCENDANTS",
-				filter: `mWyp85xIzXR:IN:${[
-					"MOE Journeys Plus",
-					"MOH Journeys curriculum",
-					"No means No sessions (Boys)",
-					"No means No sessions (Girls)",
-					"No means No sessions (Boys) New Curriculum",
-				].join(";")}`,
-				page,
-				pageSize,
-				program: "IXxHJADVCkb",
-				totalPages: true,
-			},
-		});
-		const {total} = pager;
-		changeTotal(total);
-		return await this.processPrevention(
-			engine,
-			trackedEntityInstances,
-			sessions,
-			period
+		const inserted = await Promise.all(
+			chunk(layering, 100).map((c) => {
+				return this.api.post("wal/index?index=layering", {
+					data: c,
+				});
+			})
 		);
+		const total = sum(
+			inserted.map(({data: {items}}) => (items ? items.length : 0))
+		);
+		console.log(total);
 	}
 };
+
+// module.exports.useProgramStage = async (
+// 	organisationUnits,
+// 	period,
+// 	sessions,
+// 	page,
+// 	pageSize
+// ) => {
+// 	if (organisationUnits.length > 0) {
+// 		const {
+// 			data: {trackedEntityInstances, pager},
+// 		} = await this.instance.get("trackedEntityInstances.json", {
+// 			params: {
+// 				fields: "*",
+// 				ou: organisationUnits.join(";"),
+// 				ouMode: "DESCENDANTS",
+// 				filter: `mWyp85xIzXR:IN:${[
+// 					"MOE Journeys Plus",
+// 					"MOH Journeys curriculum",
+// 					"No means No sessions (Boys)",
+// 					"No means No sessions (Girls)",
+// 					"No means No sessions (Boys) New Curriculum",
+// 				].join(";")}`,
+// 				page,
+// 				pageSize,
+// 				program: "IXxHJADVCkb",
+// 				totalPages: true,
+// 			},
+// 		});
+// 		const {total} = pager;
+// 		changeTotal(total);
+// 		return await this.processPrevention(
+// 			engine,
+// 			trackedEntityInstances,
+// 			sessions,
+// 			period
+// 		);
+// 	}
+// };
 
 module.exports.generate = async (
 	trackedEntityInstances,
@@ -2225,13 +2118,23 @@ module.exports.generate = async (
 	periods,
 	sessions
 ) => {
-	const indexCases = await this.fetchRelationships4Instances(
-		trackedEntityInstances
-	);
-	const groupActivities = await this.fetchGroupActivities4Instances(
-		trackedEntityInstances
-	);
+	const relationships = trackedEntityInstances.flatMap((tei) => {
+		return tei["relationships"].map(
+			(rel) => rel.from.trackedEntityInstance.trackedEntityInstance
+		);
+	});
 
+	const allCodes = trackedEntityInstances.flatMap(({attributes}) => {
+		const code = attributes.find(
+			({attribute}) => attribute === "HLKc2AKR9jW"
+		);
+		if (code) {
+			return code.value;
+		}
+		return [];
+	});
+	const indexCases = await this.fetchRelationships4Instances(relationships);
+	const groupActivities = await this.fetchGroupActivities4Instances(allCodes);
 	await this.processInstances(
 		trackedEntityInstances,
 		periods,
@@ -2248,35 +2151,50 @@ module.exports.useTracker = async (
 		moment().subtract(1, "quarters"),
 		moment(),
 	],
-	instances = []
+	otherParams = {}
 ) => {
 	const processedUnits = await this.fetchUnits4Instances();
-	let query = {
-		query: `select * from "rdeklsxcd4c" order by hly709n51z0`,
-		fetch_size: 1000,
+
+	let params = {
+		fields: "*",
+		ouMode: "ALL",
+		program: "RDEklSXCD4C",
+		totalPages: true,
+		pageSize: 10,
+		page: 1,
+		...otherParams,
 	};
-	if (instances.length > 0) {
-		query = {
-			...query,
-			filter: {
-				terms: {
-					["trackedEntityInstance.keyword"]: instances,
-				},
-			},
-		};
-	}
-	const {data} = await this.api.post("wal/sql", query);
+	const {
+		data: {
+			trackedEntityInstances,
+			pager: {pageCount},
+		},
+	} = await this.instance.get("trackedEntityInstances.json", {params});
+
 	const {sessions} = await this.useLoader();
-	let {columns, rows, cursor: currentCursor} = data;
-	await this.generate({rows, columns}, processedUnits, periods, sessions);
-	if (currentCursor) {
-		do {
+
+	await this.generate(
+		trackedEntityInstances.filter(({inactive, deleted}) => deleted === false && inactive === false),
+		processedUnits,
+		periods,
+		sessions
+	);
+
+	if (pageCount > 1) {
+		for (let page = 2; page <= pageCount; page++) {
+			console.log(`Working on page ${page} of ${pageCount}`);
 			const {
-				data: {rows, cursor},
-			} = await this.api.post("wal/sql", {cursor: currentCursor});
-			await this.generate({rows, columns}, processedUnits, periods, sessions);
-			currentCursor = cursor;
-		} while (!!currentCursor);
+				data: {trackedEntityInstances},
+			} = await this.instance.get("trackedEntityInstances.json", {
+				params: {...params, page},
+			});
+			await this.generate(
+				trackedEntityInstances.filter(({inactive, deleted}) => deleted === false && inactive === false),
+				processedUnits,
+				periods,
+				sessions
+			);
+		}
 	}
 };
 
@@ -2302,7 +2220,7 @@ module.exports.flattenInstances = async (
 		const allRelations = fromPairs(
 			relationships.map((rel) => {
 				return [
-					rel.relationshipType,
+					rel["relationshipType"],
 					rel.from.trackedEntityInstance.trackedEntityInstance,
 				];
 			})
@@ -2335,12 +2253,12 @@ module.exports.flattenInstances = async (
 							dataValues,
 							dueDate,
 							eventDate,
-							trackedEntityType,
+							// trackedEntityType,
 							event,
-							relationships,
-							attributes,
-							geometry,
-							notes,
+							// relationships,
+							// attributes,
+							// geometry,
+							// notes,
 							...eventDetails
 						} of events) {
 							calculatedEvents.push({
@@ -2402,44 +2320,40 @@ module.exports.flattenInstances = async (
 	}
 };
 
-module.exports.flattenInstancesToAttributes = async (
-	trackedEntityInstances,
-	program,
-	chunkSize
-) => {
-	const data = trackedEntityInstances.map(
-		({
-			 trackedEntityInstance,
-			 orgUnit,
-			 attributes,
-			 enrollments,
-			 inactive,
-			 deleted,
-			 relationships,
-		 }) => {
-			const allRelations = fromPairs(
-				relationships.map((rel) => {
-					return [
-						rel.relationshipType,
-						rel.from.trackedEntityInstance.trackedEntityInstance,
-					];
-				})
-			);
-			const [{enrollmentDate}] = enrollments;
-			const processedAttributes = fromPairs(
-				attributes.map(({attribute, value}) => [attribute, value])
-			);
-			return {
-				trackedEntityInstance,
-				id: trackedEntityInstance,
-				orgUnit,
-				...processedAttributes,
-				...allRelations,
-				inactive,
-				deleted,
-				enrollmentDate,
-			};
-		}
+module.exports.flattenInstancesToAttributes = async (trackedEntityInstances, program, chunkSize) => {
+	const data = trackedEntityInstances.map((
+		{
+			trackedEntityInstance,
+			orgUnit,
+			attributes,
+			enrollments,
+			inactive,
+			deleted,
+			relationships,
+		}) => {
+		const allRelations = fromPairs(
+			relationships.map((rel) => {
+				return [
+					rel["relationshipType"],
+					rel.from.trackedEntityInstance.trackedEntityInstance,
+				];
+			})
+		);
+		const [{enrollmentDate}] = enrollments;
+		const processedAttributes = fromPairs(
+			attributes.map(({attribute, value}) => [attribute, value])
+		);
+		return {
+			trackedEntityInstance,
+			id: trackedEntityInstance,
+			orgUnit,
+			...processedAttributes,
+			...allRelations,
+			inactive,
+			deleted,
+			enrollmentDate,
+		};
+	}
 	);
 	try {
 		const inserted = await Promise.all(
@@ -2521,7 +2435,7 @@ module.exports.processTrackedEntityInstancesAttributes = async (
 		pageSize,
 		page: 1,
 	};
-	console.log(`Working on page 1`);
+	console.log("Working on page 1");
 	const {
 		data: {
 			trackedEntityInstances,

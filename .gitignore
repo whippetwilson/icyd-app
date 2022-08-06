@@ -61,4 +61,6 @@ typings/
 .next
 
 # JetBrains IDE
+.idea/
 .idea
+schedule.json
