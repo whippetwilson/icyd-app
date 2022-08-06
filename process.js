@@ -31,8 +31,8 @@ const risks = {
 };
 
 module.exports.api = axios.create({
-	// baseURL: "https://data.icyd.hispuganda.org/api/",
-	baseURL: "http://localhost:3001/api/",
+	baseURL: "https://data.icyd.hispuganda.org/api/",
+	// baseURL: "http://localhost:3001/api/",
 });
 
 module.exports.instance = axios.create({
@@ -944,10 +944,10 @@ module.exports.processInstances = async (
 
 		const {eventDate, zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF} = hvat;
 		const {Xkwy5P2JG24, ExnzeYjgIaT} = indexCases
-			? indexCases[hly709n51z0][0]
+			? indexCases[hly709n51z0] && indexCases[hly709n51z0].length > 0 ? indexCases[hly709n51z0][0] : {}
 			: {};
 		let houseHoldType = "";
-
+		console.log(Xkwy5P2JG24, ExnzeYjgIaT);
 		const score18 = [zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF].filter(
 			(v) => v !== null && v !== undefined && v !== ""
 		);
@@ -2059,18 +2059,18 @@ module.exports.processInstances = async (
 				generated: new Date().toISOString(),
 			});
 		}
-		const inserted = await Promise.all(
-			chunk(layering, 100).map((c) => {
-				return this.api.post("wal/index?index=layering", {
-					data: c,
-				});
-			})
-		);
-		const total = sum(
-			inserted.map(({data: {items}}) => (items ? items.length : 0))
-		);
-		console.log(total);
 	}
+	const inserted = await Promise.all(
+		chunk(layering, 100).map((c) => {
+			return this.api.post("wal/index?index=layering", {
+				data: c,
+			});
+		})
+	);
+	const total = sum(
+		inserted.map(({data: {items}}) => (items ? items.length : 0))
+	);
+	console.log(total);
 };
 
 // module.exports.useProgramStage = async (
@@ -2160,7 +2160,7 @@ module.exports.useTracker = async (
 		ouMode: "ALL",
 		program: "RDEklSXCD4C",
 		totalPages: true,
-		pageSize: 10,
+		pageSize: 250,
 		page: 1,
 		...otherParams,
 	};
