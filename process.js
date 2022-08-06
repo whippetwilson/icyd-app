@@ -1917,6 +1917,7 @@ module.exports.processInstances = async (
 			}
 			layering.push({
 				id: `${trackedEntityInstance}${qtr}`,
+				trackedEntityInstance,
 				qtr,
 				houseHoldType,
 				HLKc2AKR9jW,
