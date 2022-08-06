@@ -1,7 +1,6 @@
 "use strict";
 const {Client} = require("@elastic/elasticsearch");
 const {flatMap} = require("lodash");
-
 const client = new Client({ node: "http://localhost:9200" });
 // const client = new Client({node: "http://192.168.64.3:9200"});
 
