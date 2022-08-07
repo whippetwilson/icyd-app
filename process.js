@@ -626,7 +626,7 @@ module.exports.processPrevention = async (
 		({attributes, enrollments, orgUnit}) => {
 			const units = processedUnits[orgUnit];
 			const [{events, enrollmentDate, orgUnitName}] = enrollments;
-			const instance = fromPairs(attributes.map((a) => [a.attribute, a.value]));
+			const instance = fromPairs(attributes.map(({attribute, value}) => [attribute, value]));
 			const doneSessions = events
 				.filter((event) => {
 					return (
@@ -654,9 +654,9 @@ module.exports.processPrevention = async (
 			const groupedSessions = groupBy(doneSessions, "code");
 			return events
 				.filter((event) => event.programStage === "aTZwDRoJnxj")
-				.map((event) => {
+				.map((event, dataValues) => {
 					const elements = fromPairs(
-						event.dataValues.map((dv) => [dv.dataElement, dv.value])
+						dataValues.map(({dataElement, value}) => [dataElement, value])
 					);
 					const individualCode = elements.ypDUCAS6juy;
 					const participantSessions = groupedSessions[individualCode] ? groupedSessions[individualCode].filter(
@@ -668,7 +668,7 @@ module.exports.processPrevention = async (
 						participantSessions.map(({session}) => [session, 1])
 					);
 					return {
-						event: event.event,
+						event,
 						...elements,
 						...instance,
 						...sess,
@@ -2077,44 +2077,42 @@ module.exports.processInstances = async (
 	console.log(total);
 };
 
-// module.exports.useProgramStage = async (
-// 	organisationUnits,
-// 	period,
-// 	sessions,
-// 	page,
-// 	pageSize
-// ) => {
-// 	if (organisationUnits.length > 0) {
-// 		const {
-// 			data: {trackedEntityInstances, pager},
-// 		} = await this.instance.get("trackedEntityInstances.json", {
-// 			params: {
-// 				fields: "*",
-// 				ou: organisationUnits.join(";"),
-// 				ouMode: "DESCENDANTS",
-// 				filter: `mWyp85xIzXR:IN:${[
-// 					"MOE Journeys Plus",
-// 					"MOH Journeys curriculum",
-// 					"No means No sessions (Boys)",
-// 					"No means No sessions (Girls)",
-// 					"No means No sessions (Boys) New Curriculum",
-// 				].join(";")}`,
-// 				page,
-// 				pageSize,
-// 				program: "IXxHJADVCkb",
-// 				totalPages: true,
-// 			},
-// 		});
-// 		const {total} = pager;
-// 		changeTotal(total);
-// 		return await this.processPrevention(
-// 			engine,
-// 			trackedEntityInstances,
-// 			sessions,
-// 			period
-// 		);
-// 	}
-// };
+module.exports.useProgramStage = async (
+	organisationUnits,
+	period,
+	sessions,
+	page,
+	pageSize
+) => {
+	if (organisationUnits.length > 0) {
+		const {
+			data: {trackedEntityInstances, pager},
+		} = await this.instance.get("trackedEntityInstances.json", {
+			params: {
+				fields: "*",
+				ou: organisationUnits.join(";"),
+				ouMode: "DESCENDANTS",
+				filter: `mWyp85xIzXR:IN:${[
+					"MOE Journeys Plus",
+					"MOH Journeys curriculum",
+					"No means No sessions (Boys)",
+					"No means No sessions (Girls)",
+					"No means No sessions (Boys) New Curriculum",
+				].join(";")}`,
+				page,
+				pageSize,
+				program: "IXxHJADVCkb",
+				totalPages: true,
+			},
+		});
+		const {total} = pager;
+		return await this.processPrevention(
+			trackedEntityInstances,
+			sessions,
+			period
+		);
+	}
+};
 
 module.exports.generate = async (
 	trackedEntityInstances,
