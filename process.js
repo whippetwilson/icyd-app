@@ -166,15 +166,6 @@ module.exports.hasCompletedWithin = (
 	return doneSessions.length >= value;
 };
 
-module.exports.hasCompletedAtLeast1 = (memberSessions, endDate, sessions) => {
-	const doneSessions = memberSessions.filter((row) => {
-		return (
-			sessions.indexOf(row["n20LkH4ZBF8"]) !== -1 &&
-			parseISO(row.eventDate).getTime() <= endDate.getTime()
-		);
-	});
-	return doneSessions.length >= 1;
-};
 module.exports.isAtSchool = (age, homeVisitValue, enrollmentValue) => {
 	if (age >= 6 && age <= 17) {
 		if (homeVisitValue) {
@@ -208,9 +199,6 @@ module.exports.eventsBeforePeriod = (events, end) => {
 	});
 };
 
-module.exports.getEvents = (available, trackedEntityInstance) => {
-	return available[trackedEntityInstance] || [];
-};
 module.exports.eventsWithinPeriod = (events, start, end) => {
 	return events.filter((e) => {
 		return (
@@ -220,7 +208,7 @@ module.exports.eventsWithinPeriod = (events, start, end) => {
 };
 
 module.exports.findAnyEventValue = (events, dataElement) => {
-	const event = orderBy(events, ["eventDate", "desc"]).find(
+	const event = orderBy(events, ["eventDate"], ["desc"]).find(
 		({[dataElement]: de}) => de !== null && de !== undefined
 	);
 	if (event) {
@@ -250,13 +238,13 @@ module.exports.anyEventWithDE = (events, dataElement) => {
 	}
 	return events.find((event) => {
 		return has(event, dataElement) && event[dataElement];
-	});
+	}) !== undefined;
 };
 
 module.exports.anyEventWithAnyOfTheValue = (events, dataElement, values) => {
 	return events.find((event) => {
 		return values.indexOf(event[dataElement]) !== -1;
-	});
+	}) !== undefined;
 };
 
 module.exports.specificDataElement = (event, dataElement) => {
@@ -292,7 +280,7 @@ module.exports.checkRiskAssessment = (event, dataElements, value) => {
 };
 
 module.exports.hasDataElementWithinPeriod = (events, dataElement, value) => {
-	return events.find((e) => e[dataElement] === value);
+	return events.find((e) => e[dataElement] === value) !== undefined;
 };
 
 module.exports.deHasAnyValue = (de, values) => {
@@ -938,9 +926,9 @@ module.exports.processInstances = async (
 		const hasEnrollment = !!enrollmentDate;
 		let hvat = {};
 		if (hVatAssessments[hly709n51z0] && hVatAssessments[hly709n51z0] !== undefined) {
-			const filtered = orderBy(hVatAssessments[hly709n51z0], ["eventDate"], ["desc"]).filter(
+			const filtered = orderBy(hVatAssessments[hly709n51z0].filter(
 				(e) => e.eventDate
-			);
+			), ["eventDate"], ["desc"]);
 			if (filtered.length > 0) {
 				hvat = filtered[0];
 			}
@@ -2137,6 +2125,7 @@ module.exports.generate = async (
 	});
 	const indexCases = await this.fetchRelationships4Instances(relationships);
 	const groupActivities = await this.fetchGroupActivities4Instances(allCodes);
+	console.log(groupActivities);
 	await this.processInstances(
 		trackedEntityInstances,
 		periods,
@@ -2155,6 +2144,7 @@ module.exports.useTracker = async (
 	],
 	otherParams = {},
 ) => {
+	console.log("Fetching organisation units");
 	const processedUnits = await this.fetchUnits4Instances();
 	let startingPage = 1;
 	let realOtherParams = otherParams;
