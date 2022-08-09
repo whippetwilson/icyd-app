@@ -2125,7 +2125,6 @@ module.exports.generate = async (
 	});
 	const indexCases = await this.fetchRelationships4Instances(relationships);
 	const groupActivities = await this.fetchGroupActivities4Instances(allCodes);
-	console.log(groupActivities);
 	await this.processInstances(
 		trackedEntityInstances,
 		periods,
