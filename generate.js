@@ -1,7 +1,6 @@
 const {processTrackedEntityInstances, useTracker} = require("./process");
 const moment = require("moment");
 const generate = async () => {
-
 	try {
 
 		// console.log("Working on HVAT");
@@ -16,7 +15,7 @@ const generate = async () => {
 			moment().subtract(2, "quarters"),
 			moment().subtract(1, "quarters"),
 			moment(),
-		], {page});
+		], {page, trackedEntityInstance: "Dy5tmpdswEj"});
 	} catch (error) {
 		console.log(error.message);
 	}

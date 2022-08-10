@@ -31,8 +31,8 @@ const risks = {
 };
 
 module.exports.api = axios.create({
-	// baseURL: "https://data.icyd.hispuganda.org/api/",
-	baseURL: "http://localhost:3001/api/",
+	baseURL: "https://data.icyd.hispuganda.org/api/",
+	// baseURL: "http://localhost:3001/api/",
 });
 
 module.exports.instance = axios.create({
@@ -781,9 +781,17 @@ module.exports.hivInformation = (
 ) => {
 	let ovcEligible;
 	let VLTestDone;
-	let VLStatus = "";
+	let VLStatus;
 	let ovcVL;
 	let VLSuppressed;
+	console.log(artStartDate,
+		hivStatus,
+		quarterEnd,
+		lastViralLoadDate,
+		viralTestDone,
+		viralLoadResultsReceived,
+		viralLoadCopies,
+		viralLoadStatus);
 	if (hivStatus === "+") {
 		if (artStartDate) {
 			const daysOnArt = differenceInMonths(quarterEnd, parseISO(artStartDate));
@@ -906,6 +914,7 @@ module.exports.processInstances = async (
 		const referrals = availableEvents["yz3zh5IFEZm"] || [];
 		const serviceLinkages = availableEvents["SxnXrDtSJZp"] || [];
 		const exposedInfants = availableEvents["KOFm3jJl7n7"] || [];
+		console.log((viralLoads));
 
 		const {
 			enrollmentDate,
@@ -981,6 +990,7 @@ module.exports.processInstances = async (
 			const serviceLinkagesDuringQuarter = this.eventsWithinPeriod(serviceLinkages, quarterStart, quarterEnd);
 			const homeVisitsDuringQuarter = this.eventsWithinPeriod(homeVisits, quarterStart, quarterEnd);
 			const viralLoadsBe4Quarter = this.eventsBeforePeriod(viralLoads, quarterEnd);
+			const currentViralLoad = maxBy(viralLoadsBe4Quarter, "Ti0huZXbAM0");
 			const viralLoadDuringQuarter = this.eventsWithinPeriod(viralLoads, quarterStart, quarterEnd);
 			const currentReferral = this.mostCurrentEvent(referralsDuringYear);
 			const currentRiskAssessment = this.mostCurrentEvent(riskAssessmentsDuringYear);
@@ -1073,14 +1083,14 @@ module.exports.processInstances = async (
 				"Viral Load Testing",
 				"Provided with ARVs",
 			]);
-			const artStartDate = this.findAnyEventValue(viralLoadsBe4Quarter, "epmIBD8gh7G");
-			const lastViralLoadDate = this.findAnyEventValue(viralLoadsBe4Quarter, "Ti0huZXbAM0");
-			const viralTestDone = this.findAnyEventValue(viralLoadsBe4Quarter, "cM7dovIX2Dl");
-			const viralLoadResultsReceived = this.findAnyEventValue(viralLoadsBe4Quarter, "te2VwealaBT");
-			const viralLoadStatus = this.findAnyEventValue(viralLoadsBe4Quarter, "AmaNW7QDuOV");
-			const viralLoadCopies = this.findAnyEventValue(viralLoadsBe4Quarter, "b8p0uWaYRhY");
-			const regimen = this.findAnyEventValue(viralLoadsBe4Quarter, "nZ1omFVYFkT");
-			const weight = this.findAnyEventValue(viralLoadsBe4Quarter, "Kjtt7SV26zL");
+			const artStartDate = currentViralLoad["epmIBD8gh7G"];
+			const lastViralLoadDate = currentViralLoad["Ti0huZXbAM0"];
+			const viralTestDone = currentViralLoad["cM7dovIX2Dl"];
+			const viralLoadResultsReceived = currentViralLoad["te2VwealaBT"];
+			const viralLoadStatus = currentViralLoad["AmaNW7QDuOV"];
+			const viralLoadCopies = currentViralLoad["b8p0uWaYRhY"];
+			const regimen = currentViralLoad["nZ1omFVYFkT"];
+			const weight = currentViralLoad["Kjtt7SV26zL"];
 
 			const {
 				eidEnrollmentDate,
