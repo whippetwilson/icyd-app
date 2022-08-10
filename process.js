@@ -784,14 +784,6 @@ module.exports.hivInformation = (
 	let VLStatus;
 	let ovcVL;
 	let VLSuppressed;
-	console.log(artStartDate,
-		hivStatus,
-		quarterEnd,
-		lastViralLoadDate,
-		viralTestDone,
-		viralLoadResultsReceived,
-		viralLoadCopies,
-		viralLoadStatus);
 	if (hivStatus === "+") {
 		if (artStartDate) {
 			const daysOnArt = differenceInMonths(quarterEnd, parseISO(artStartDate));
@@ -914,8 +906,6 @@ module.exports.processInstances = async (
 		const referrals = availableEvents["yz3zh5IFEZm"] || [];
 		const serviceLinkages = availableEvents["SxnXrDtSJZp"] || [];
 		const exposedInfants = availableEvents["KOFm3jJl7n7"] || [];
-		console.log((viralLoads));
-
 		const {
 			enrollmentDate,
 			hly709n51z0,
