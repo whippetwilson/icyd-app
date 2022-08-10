@@ -1073,14 +1073,14 @@ module.exports.processInstances = async (
 				"Viral Load Testing",
 				"Provided with ARVs",
 			]);
-			const artStartDate = currentViralLoad["epmIBD8gh7G"];
-			const lastViralLoadDate = currentViralLoad["Ti0huZXbAM0"];
-			const viralTestDone = currentViralLoad["cM7dovIX2Dl"];
-			const viralLoadResultsReceived = currentViralLoad["te2VwealaBT"];
-			const viralLoadStatus = currentViralLoad["AmaNW7QDuOV"];
-			const viralLoadCopies = currentViralLoad["b8p0uWaYRhY"];
-			const regimen = currentViralLoad["nZ1omFVYFkT"];
-			const weight = currentViralLoad["Kjtt7SV26zL"];
+			const artStartDate = currentViralLoad ? currentViralLoad["epmIBD8gh7G"] : "";
+			const lastViralLoadDate = currentViralLoad ? currentViralLoad["Ti0huZXbAM0"] : "";
+			const viralTestDone = currentViralLoad ? currentViralLoad["cM7dovIX2Dl"] : "";
+			const viralLoadResultsReceived = currentViralLoad ? currentViralLoad["te2VwealaBT"] : "";
+			const viralLoadStatus = currentViralLoad ? currentViralLoad["AmaNW7QDuOV"] : "";
+			const viralLoadCopies = currentViralLoad ? currentViralLoad["b8p0uWaYRhY"] : "";
+			const regimen = currentViralLoad ? currentViralLoad["nZ1omFVYFkT"] : "";
+			const weight = currentViralLoad ? currentViralLoad["Kjtt7SV26zL"] : "";
 
 			const {
 				eidEnrollmentDate,
