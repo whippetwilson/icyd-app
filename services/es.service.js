@@ -116,11 +116,11 @@ module.exports = {
 				body: "object",
 			},
 			async handler(ctx) {
-				const response = await client.search({
+				const {aggregations} = await client.search({
 					index: ctx.params.index,
 					body: ctx.params.body,
 				});
-				return response;
+				return aggregations;
 			},
 		},
 		get: {
