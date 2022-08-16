@@ -236,15 +236,19 @@ module.exports.anyEventWithDE = (events, dataElement) => {
 	if (events.length === 0) {
 		return false;
 	}
-	return events.find((event) => {
-		return has(event, dataElement) && event[dataElement];
-	}) !== undefined;
+	return (
+		events.find((event) => {
+			return has(event, dataElement) && event[dataElement];
+		}) !== undefined
+	);
 };
 
 module.exports.anyEventWithAnyOfTheValue = (events, dataElement, values) => {
-	return events.find((event) => {
-		return values.indexOf(event[dataElement]) !== -1;
-	}) !== undefined;
+	return (
+		events.find((event) => {
+			return values.indexOf(event[dataElement]) !== -1;
+		}) !== undefined
+	);
 };
 
 module.exports.specificDataElement = (event, dataElement) => {
@@ -454,7 +458,11 @@ module.exports.syncOrganisations = async () => {
 		return {
 			subCounty: unit.parent ? unit.parent.name : "",
 			id: unit.id,
-			district: unit.parent ? unit.parent.parent ? unit.parent.parent.name : "" : "",
+			district: unit.parent
+				? unit.parent.parent
+					? unit.parent.parent.name
+					: ""
+				: "",
 			orgUnitName: unit.name,
 			...fromPairs(
 				String(unit.path)
@@ -496,7 +504,11 @@ module.exports.fetchUnits4Instances = async () => {
 				unit.id,
 				{
 					subCounty: unit.parent ? unit.parent.name : "",
-					district: unit.parent ? unit.parent.parent ? unit.parent.parent.name : "" : "",
+					district: unit.parent
+						? unit.parent.parent
+							? unit.parent.parent.name
+							: ""
+						: "",
 					orgUnitName: unit.name,
 					...fromPairs(
 						String(unit.path)
@@ -604,7 +616,11 @@ module.exports.processPrevention = async (
 				unit.id,
 				{
 					subCounty: unit.parent ? unit.parent.name : "",
-					district: unit.parent ? unit.parent.parent ? unit.parent.parent.name : "" : "",
+					district: unit.parent
+						? unit.parent.parent
+							? unit.parent.parent.name
+							: ""
+						: "",
 				},
 			];
 		})
@@ -614,7 +630,9 @@ module.exports.processPrevention = async (
 		({attributes, enrollments, orgUnit}) => {
 			const units = processedUnits[orgUnit];
 			const [{events, enrollmentDate, orgUnitName}] = enrollments;
-			const instance = fromPairs(attributes.map(({attribute, value}) => [attribute, value]));
+			const instance = fromPairs(
+				attributes.map(({attribute, value}) => [attribute, value])
+			);
 			const doneSessions = events
 				.filter((event) => {
 					return (
@@ -633,7 +651,10 @@ module.exports.processPrevention = async (
 					const session = dataValues.find(
 						({dataElement}) => dataElement === "n20LkH4ZBF8"
 					);
-					return {session: session ? session.value : undefined, code: code ? code.value : undefined};
+					return {
+						session: session ? session.value : undefined,
+						code: code ? code.value : undefined,
+					};
 				});
 
 			const subType = instance ? instance["mWyp85xIzXR"] : undefined;
@@ -647,11 +668,11 @@ module.exports.processPrevention = async (
 						dataValues.map(({dataElement, value}) => [dataElement, value])
 					);
 					const individualCode = elements.ypDUCAS6juy;
-					const participantSessions = groupedSessions[individualCode] ? groupedSessions[individualCode].filter(
-						(i) => {
+					const participantSessions = groupedSessions[individualCode]
+						? groupedSessions[individualCode].filter((i) => {
 							return sessions[allSubTypes[0]].indexOf(i.session) !== -1;
-						}
-					) : [];
+						})
+						: [];
 					const sess = fromPairs(
 						participantSessions.map(({session}) => [session, 1])
 					);
@@ -863,38 +884,40 @@ module.exports.processInstances = async (
 		"sYE3K7fFM4Y",
 		"trackedEntityInstance,eventDate,zbAGBW6PsGd,kQCB9F39zWO,iRJUDyUBLQF"
 	);
-	for (const {enrollments, attributes, relationships, orgUnit, trackedEntityInstance} of trackedEntityInstances) {
-		const allEvents = enrollments.flatMap(
-			(enrollment) => {
-				return enrollment.events.filter(({deleted}) => deleted === false).map(
-					({eventDate, programStage, dataValues}) => {
-						return {
-							eventDate,
-							programStage,
-							...fromPairs(
-								dataValues.map(({dataElement, value}) => [dataElement, value])
-							),
-						};
-					}
-				);
-			}
-		);
+	for (const {
+		enrollments,
+		attributes,
+		relationships,
+		orgUnit,
+		trackedEntityInstance,
+	} of trackedEntityInstances) {
+		const allEvents = enrollments.flatMap((enrollment) => {
+			return enrollment.events
+				.filter(({deleted}) => deleted === false)
+				.map(({eventDate, programStage, dataValues}) => {
+					return {
+						eventDate,
+						programStage,
+						...fromPairs(
+							dataValues.map(({dataElement, value}) => [dataElement, value])
+						),
+					};
+				});
+		});
 		const data = {
 			orgUnit,
-			enrollmentDate: enrollments.length > 0 ? enrollments[0]["enrollmentDate"] : "",
+			enrollmentDate:
+				enrollments.length > 0 ? enrollments[0]["enrollmentDate"] : "",
 			trackedEntityInstance,
 			...fromPairs(
-				attributes.map(({attribute, value}) => [
-					attribute,
-					value,
-				])
+				attributes.map(({attribute, value}) => [attribute, value])
 			),
 			...fromPairs(
 				relationships.map((rel) => [
 					rel["relationshipType"],
 					rel.from.trackedEntityInstance.trackedEntityInstance,
 				])
-			)
+			),
 		};
 
 		const availableEvents = groupBy(allEvents, "programStage");
@@ -921,13 +944,19 @@ module.exports.processInstances = async (
 			CfpoFtRmK1z,
 			n7VQaJ8biOJ,
 		} = data;
-		const {district, subCounty, orgUnitName, ...ous} = processedUnits[orgUnit] || {};
+		const {district, subCounty, orgUnitName, ...ous} =
+		processedUnits[orgUnit] || {};
 		const hasEnrollment = !!enrollmentDate;
 		let hvat = {};
-		if (hVatAssessments[hly709n51z0] && hVatAssessments[hly709n51z0] !== undefined) {
-			const filtered = orderBy(hVatAssessments[hly709n51z0].filter(
-				(e) => e.eventDate
-			), ["eventDate"], ["desc"]);
+		if (
+			hVatAssessments[hly709n51z0] &&
+			hVatAssessments[hly709n51z0] !== undefined
+		) {
+			const filtered = orderBy(
+				hVatAssessments[hly709n51z0].filter((e) => e.eventDate),
+				["eventDate"],
+				["desc"]
+			);
 			if (filtered.length > 0) {
 				hvat = filtered[0];
 			}
@@ -935,7 +964,9 @@ module.exports.processInstances = async (
 
 		const {eventDate, zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF} = hvat;
 		const {Xkwy5P2JG24, ExnzeYjgIaT} = indexCases
-			? indexCases[hly709n51z0] && indexCases[hly709n51z0].length > 0 ? indexCases[hly709n51z0][0] : {}
+			? indexCases[hly709n51z0] && indexCases[hly709n51z0].length > 0
+				? indexCases[hly709n51z0][0]
+				: {}
 			: {};
 		let houseHoldType = "";
 		const score18 = [zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF].filter(
@@ -957,18 +988,30 @@ module.exports.processInstances = async (
 		for (const period of periods) {
 			const quarterStart = period.startOf("quarter").toDate();
 			const quarterEnd = period.endOf("quarter").toDate();
-			const previousQuarter = moment(subQuarters(quarterStart, 1)).format("YYYY[Q]Q");
+			const previousQuarter = moment(subQuarters(quarterStart, 1)).format(
+				"YYYY[Q]Q"
+			);
 			const [financialQuarterStart, financialQuarterEnd] =
 				this.calculateQuarter(quarterStart.getFullYear(), period.quarter());
 			const qtr = period.format("YYYY[Q]Q");
-			const isWithin = isWithinInterval(parseISO(enrollmentDate), {start: quarterStart, end: quarterEnd});
+			const isWithin = isWithinInterval(parseISO(enrollmentDate), {
+				start: quarterStart,
+				end: quarterEnd,
+			});
 
 			const age = differenceInYears(quarterEnd, parseISO(N1nMqKtYKvI));
 			const ageGroup = this.findAgeGroup(age);
 			const heiData = this.eventsBeforePeriod(exposedInfants, quarterEnd);
 
-			const homeVisitsBe4Quarter = this.eventsBeforePeriod(homeVisits, quarterEnd);
-			const referralsDuringYear = this.eventsWithinPeriod(referrals, financialQuarterStart, financialQuarterEnd);
+			const homeVisitsBe4Quarter = this.eventsBeforePeriod(
+				homeVisits,
+				quarterEnd
+			);
+			const referralsDuringYear = this.eventsWithinPeriod(
+				referrals,
+				financialQuarterStart,
+				financialQuarterEnd
+			);
 
 			const riskAssessmentsDuringYear = this.eventsWithinPeriod(
 				hivRiskAssessments,
@@ -976,18 +1019,52 @@ module.exports.processInstances = async (
 				financialQuarterEnd
 			);
 
-			const referralsDuringQuarter = this.eventsWithinPeriod(referrals, quarterStart, quarterEnd);
-			const serviceLinkagesDuringQuarter = this.eventsWithinPeriod(serviceLinkages, quarterStart, quarterEnd);
-			const homeVisitsDuringQuarter = this.eventsWithinPeriod(homeVisits, quarterStart, quarterEnd);
-			const viralLoadsBe4Quarter = this.eventsBeforePeriod(viralLoads, quarterEnd);
+			const referralsDuringQuarter = this.eventsWithinPeriod(
+				referrals,
+				quarterStart,
+				quarterEnd
+			);
+			const serviceLinkagesDuringQuarter = this.eventsWithinPeriod(
+				serviceLinkages,
+				quarterStart,
+				quarterEnd
+			);
+			const homeVisitsDuringQuarter = this.eventsWithinPeriod(
+				homeVisits,
+				quarterStart,
+				quarterEnd
+			);
+			const viralLoadsBe4Quarter = this.eventsBeforePeriod(
+				viralLoads,
+				quarterEnd
+			);
 			const currentViralLoad = maxBy(viralLoadsBe4Quarter, "Ti0huZXbAM0");
-			const viralLoadDuringQuarter = this.eventsWithinPeriod(viralLoads, quarterStart, quarterEnd);
+			const viralLoadDuringQuarter = this.eventsWithinPeriod(
+				viralLoads,
+				quarterStart,
+				quarterEnd
+			);
 			const currentReferral = this.mostCurrentEvent(referralsDuringYear);
-			const currentRiskAssessment = this.mostCurrentEvent(riskAssessmentsDuringYear);
-			const serviceProvisionDuringQuarter = this.eventsWithinPeriod(referrals, quarterStart, quarterEnd);
-			const previousViralLoads = this.eventsBeforePeriod(viralLoads, quarterStart);
-			const previousReferrals = this.eventsBeforePeriod(referrals, quarterStart);
-			const hivResult = this.specificDataElement(currentReferral, "XTdRWh5MqPw");
+			const currentRiskAssessment = this.mostCurrentEvent(
+				riskAssessmentsDuringYear
+			);
+			const serviceProvisionDuringQuarter = this.eventsWithinPeriod(
+				referrals,
+				quarterStart,
+				quarterEnd
+			);
+			const previousViralLoads = this.eventsBeforePeriod(
+				viralLoads,
+				quarterStart
+			);
+			const previousReferrals = this.eventsBeforePeriod(
+				referrals,
+				quarterStart
+			);
+			const hivResult = this.specificDataElement(
+				currentReferral,
+				"XTdRWh5MqPw"
+			);
 			const tbScreeningChild = this.checkRiskAssessment(currentRiskAssessment, [
 				"DgCXKSDPTWn",
 				"Rs5qrKay7Gq",
@@ -1063,8 +1140,14 @@ module.exports.processInstances = async (
 				],
 				"false"
 			);
-			const serviceProvided = this.specificDataElement(currentReferral, "XWudTD2LTUQ");
-			const unknownOther = this.findAnyEventValue(riskAssessmentsDuringYear, "cTV8aMqnVbe");
+			const serviceProvided = this.specificDataElement(
+				currentReferral,
+				"XWudTD2LTUQ"
+			);
+			const unknownOther = this.findAnyEventValue(
+				riskAssessmentsDuringYear,
+				"cTV8aMqnVbe"
+			);
 			const linked = this.deHasAnyValue(serviceProvided, [
 				"Started HIV treatment",
 				"PEP",
@@ -1073,12 +1156,24 @@ module.exports.processInstances = async (
 				"Viral Load Testing",
 				"Provided with ARVs",
 			]);
-			const artStartDate = currentViralLoad ? currentViralLoad["epmIBD8gh7G"] : "";
-			const lastViralLoadDate = currentViralLoad ? currentViralLoad["Ti0huZXbAM0"] : "";
-			const viralTestDone = currentViralLoad ? currentViralLoad["cM7dovIX2Dl"] : "";
-			const viralLoadResultsReceived = currentViralLoad ? currentViralLoad["te2VwealaBT"] : "";
-			const viralLoadStatus = currentViralLoad ? currentViralLoad["AmaNW7QDuOV"] : "";
-			const viralLoadCopies = currentViralLoad ? currentViralLoad["b8p0uWaYRhY"] : "";
+			const artStartDate = currentViralLoad
+				? currentViralLoad["epmIBD8gh7G"]
+				: "";
+			const lastViralLoadDate = currentViralLoad
+				? currentViralLoad["Ti0huZXbAM0"]
+				: "";
+			const viralTestDone = currentViralLoad
+				? currentViralLoad["cM7dovIX2Dl"]
+				: "";
+			const viralLoadResultsReceived = currentViralLoad
+				? currentViralLoad["te2VwealaBT"]
+				: "";
+			const viralLoadStatus = currentViralLoad
+				? currentViralLoad["AmaNW7QDuOV"]
+				: "";
+			const viralLoadCopies = currentViralLoad
+				? currentViralLoad["b8p0uWaYRhY"]
+				: "";
 			const regimen = currentViralLoad ? currentViralLoad["nZ1omFVYFkT"] : "";
 			const weight = currentViralLoad ? currentViralLoad["Kjtt7SV26zL"] : "";
 
@@ -1099,7 +1194,9 @@ module.exports.processInstances = async (
 				pcr,
 			} = this.getHEIInformation(age, heiData);
 
-			let riskFactor = this.findAnyEventValue(homeVisitsBe4Quarter, "rQBaynepqjy") || nDUbdM2FjyP;
+			let riskFactor =
+				this.findAnyEventValue(homeVisitsBe4Quarter, "rQBaynepqjy") ||
+				nDUbdM2FjyP;
 			const hivStatus = this.getHIVStatus(
 				HzUL8LTDPga,
 				hivResult,
@@ -1112,7 +1209,8 @@ module.exports.processInstances = async (
 
 			const testedForHIV = serviceProvided === "HCT/ Tested for HIV" ? 1 : 0;
 			const primaryCareGiver = nDUbdM2FjyP === "Primary caregiver" ? 1 : 0;
-			const OVC_TST_REFER = serviceProvided && serviceProvided === "HCT/ Tested for HIV" ? 1 : 0;
+			const OVC_TST_REFER =
+				serviceProvided && serviceProvided === "HCT/ Tested for HIV" ? 1 : 0;
 			const OVC_TST_REPORT = hivResult && OVC_TST_REFER === 1 ? 1 : 0;
 			const memberStatus =
 				this.findAnyEventValue(homeVisitsBe4Quarter, "tM67MBdox3O") === "true"
@@ -1120,7 +1218,10 @@ module.exports.processInstances = async (
 					: this.findAnyEventValue(homeVisitsBe4Quarter, "VEw6HHnx8mR")
 						? this.findAnyEventValue(homeVisitsBe4Quarter, "VEw6HHnx8mR")
 						: "No Home Visit";
-			const householdStatus = this.findAnyEventValue(homeVisitsBe4Quarter, "PpUByWk3p8N")
+			const householdStatus = this.findAnyEventValue(
+				homeVisitsBe4Quarter,
+				"PpUByWk3p8N"
+			)
 				? this.findAnyEventValue(homeVisitsBe4Quarter, "PpUByWk3p8N")
 				: hasEnrollment
 					? "Active"
@@ -1128,18 +1229,27 @@ module.exports.processInstances = async (
 
 			const enrolledInSchool = this.isAtSchool(age, "", h4pXErY01YR);
 
-			const homeVisitor = this.findAnyEventValue(homeVisitsBe4Quarter, "i6XGAmzx3Ri");
+			const homeVisitor = this.findAnyEventValue(
+				homeVisitsBe4Quarter,
+				"i6XGAmzx3Ri"
+			);
 
 			const dataEntrant1 = Xkwy5P2JG24;
 
-			const dataEntrant2 = this.findAnyEventValue(viralLoadDuringQuarter, "YY5zG4Bh898");
+			const dataEntrant2 = this.findAnyEventValue(
+				viralLoadDuringQuarter,
+				"YY5zG4Bh898"
+			);
 
 			const dataEntrant =
 				this.findAnyEventValue(homeVisitsDuringQuarter, "YY5zG4Bh898") ||
 				dataEntrant1 ||
 				dataEntrant2;
 
-			const homeVisitorContact = this.findAnyEventValue(homeVisitsBe4Quarter, "BMzryoryhtX");
+			const homeVisitorContact = this.findAnyEventValue(
+				homeVisitsBe4Quarter,
+				"BMzryoryhtX"
+			);
 			const newlyEnrolled = isWithin ? "Yes" : "No";
 
 			const {VLTestDone, ovcEligible, ovcVL, VLStatus, VLSuppressed} =
@@ -1184,7 +1294,14 @@ module.exports.processInstances = async (
 				? 1
 				: 0;
 
-			const fLiteracy = this.hadASession(memberSessions, quarterStart, quarterEnd, sessions["Financial Literacy"]) ? 1 : 0;
+			const fLiteracy = this.hadASession(
+				memberSessions,
+				quarterStart,
+				quarterEnd,
+				sessions["Financial Literacy"]
+			)
+				? 1
+				: 0;
 			const fHomeBasedLiteracy =
 				(this.anyEventWithDE(homeVisitsDuringQuarter, "PBiFAeCVnot") ||
 					this.anyEventWithDE(homeVisitsDuringQuarter, "Xlw16qiDxqk") ||
@@ -1202,7 +1319,15 @@ module.exports.processInstances = async (
 						"F2. Access saving services",
 						"F3. Insurance services/ Health Fund",
 					]
-				) || this.hadASession(memberSessions, quarterStart, quarterEnd, sessions["Bank Linkages"]) ? 1 : 0;
+				) ||
+				this.hadASession(
+					memberSessions,
+					quarterStart,
+					quarterEnd,
+					sessions["Bank Linkages"]
+				)
+					? 1
+					: 0;
 
 			const agriBusiness = this.anyEventWithAnyOfTheValue(
 				serviceLinkagesDuringQuarter,
@@ -1832,7 +1957,9 @@ module.exports.processInstances = async (
 			if (newlyEnrolled === "Yes" && hivStatus === "+") {
 				newlyPositive = 1;
 			} else if (hivStatus === "+") {
-				if (HzUL8LTDPga === "Negative" && previousViralLoads.length === 0 &&
+				if (
+					HzUL8LTDPga === "Negative" &&
+					previousViralLoads.length === 0 &&
 					this.allValues4DataElement(
 						previousReferrals,
 						"XTdRWh5MqPw",
@@ -2141,7 +2268,7 @@ module.exports.useTracker = async (
 		moment().subtract(1, "quarters"),
 		moment(),
 	],
-	otherParams = {},
+	otherParams = {}
 ) => {
 	console.log("Fetching organisation units");
 	const processedUnits = await this.fetchUnits4Instances();
@@ -2175,7 +2302,9 @@ module.exports.useTracker = async (
 	console.log(`Finished fetching page ${startingPage}`);
 	console.log(`Generating layering for page ${startingPage}`);
 	await this.generate(
-		trackedEntityInstances.filter(({inactive, deleted}) => deleted === false && inactive === false),
+		trackedEntityInstances.filter(
+			({inactive, deleted}) => deleted === false && inactive === false
+		),
 		processedUnits,
 		periods,
 		sessions
@@ -2194,7 +2323,9 @@ module.exports.useTracker = async (
 			console.log(`Generating layering for page ${page}`);
 
 			await this.generate(
-				trackedEntityInstances.filter(({inactive, deleted}) => deleted === false && inactive === false),
+				trackedEntityInstances.filter(
+					({inactive, deleted}) => deleted === false && inactive === false
+				),
 				processedUnits,
 				periods,
 				sessions
@@ -2326,40 +2457,44 @@ module.exports.flattenInstances = async (
 	}
 };
 
-module.exports.flattenInstancesToAttributes = async (trackedEntityInstances, program, chunkSize) => {
-	const data = trackedEntityInstances.map((
-		{
-			trackedEntityInstance,
-			orgUnit,
-			attributes,
-			enrollments,
-			inactive,
-			deleted,
-			relationships,
-		}) => {
-		const allRelations = fromPairs(
-			relationships.map((rel) => {
-				return [
-					rel["relationshipType"],
-					rel.from.trackedEntityInstance.trackedEntityInstance,
-				];
-			})
-		);
-		const [{enrollmentDate}] = enrollments;
-		const processedAttributes = fromPairs(
-			attributes.map(({attribute, value}) => [attribute, value])
-		);
-		return {
-			trackedEntityInstance,
-			id: trackedEntityInstance,
-			orgUnit,
-			...processedAttributes,
-			...allRelations,
-			inactive,
-			deleted,
-			enrollmentDate,
-		};
-	}
+module.exports.flattenInstancesToAttributes = async (
+	trackedEntityInstances,
+	program,
+	chunkSize
+) => {
+	const data = trackedEntityInstances.map(
+		({
+			 trackedEntityInstance,
+			 orgUnit,
+			 attributes,
+			 enrollments,
+			 inactive,
+			 deleted,
+			 relationships,
+		 }) => {
+			const allRelations = fromPairs(
+				relationships.map((rel) => {
+					return [
+						rel["relationshipType"],
+						rel.from.trackedEntityInstance.trackedEntityInstance,
+					];
+				})
+			);
+			const [{enrollmentDate}] = enrollments;
+			const processedAttributes = fromPairs(
+				attributes.map(({attribute, value}) => [attribute, value])
+			);
+			return {
+				trackedEntityInstance,
+				id: trackedEntityInstance,
+				orgUnit,
+				...processedAttributes,
+				...allRelations,
+				inactive,
+				deleted,
+				enrollmentDate,
+			};
+		}
 	);
 	try {
 		const inserted = await Promise.all(

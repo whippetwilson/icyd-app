@@ -1,7 +1,7 @@
 "use strict";
 const {Client} = require("@elastic/elasticsearch");
 const {flatMap} = require("lodash");
-const client = new Client({ node: "http://localhost:9200" });
+const client = new Client({node: "http://localhost:9200"});
 // const client = new Client({node: "http://192.168.64.3:9200"});
 
 /**
@@ -116,13 +116,11 @@ module.exports = {
 				body: "object",
 			},
 			async handler(ctx) {
-				const {
-					body: {aggregations},
-				} = await client.search({
+				const response = await client.search({
 					index: ctx.params.index,
 					body: ctx.params.body,
 				});
-				return aggregations;
+				return response;
 			},
 		},
 		get: {
