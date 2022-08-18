@@ -1038,7 +1038,11 @@ module.exports.processInstances = async (
 				viralLoads,
 				quarterEnd
 			);
-			const currentViralLoad = maxBy(viralLoadsBe4Quarter, "Ti0huZXbAM0");
+			let currentViralLoad = maxBy(viralLoadsBe4Quarter, "Ti0huZXbAM0");
+
+			if (!currentViralLoad && viralLoadsBe4Quarter.length > 0) {
+				currentViralLoad = maxBy(viralLoadsBe4Quarter, "eventDate");
+			}
 			const viralLoadDuringQuarter = this.eventsWithinPeriod(
 				viralLoads,
 				quarterStart,
@@ -1174,7 +1178,7 @@ module.exports.processInstances = async (
 			const viralLoadCopies = currentViralLoad
 				? currentViralLoad["b8p0uWaYRhY"]
 				: "";
-			const regimen = currentViralLoad ? currentViralLoad["nZ1omFVYFkT"] : "";
+			const regimen = currentViralLoad ? currentViralLoad["nZ1omFVYFkT"] === "TDF+3TC+DTD" ? "TDF+3TC+DTG" : currentViralLoad["nZ1omFVYFkT"] : "";
 			const weight = currentViralLoad ? currentViralLoad["Kjtt7SV26zL"] : "";
 
 			const {
