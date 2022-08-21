@@ -2558,46 +2558,44 @@ module.exports.processTrackedEntityInstances = async (
 	chunkSize,
 	otherParams = {}
 ) => {
-	let processed = [];
-	let params = {
+	let startingPage = 1;
+	let realOtherParams = otherParams;
+	if (otherParams.page) {
+		const {page, ...rest} = otherParams;
+		startingPage = page;
+		realOtherParams = rest;
+	}
+	const params2 = {
 		fields: "*",
 		ouMode: "ALL",
 		program,
-		totalPages: true,
 		pageSize,
-		page: 1,
-		...otherParams,
+		page: startingPage,
+		...realOtherParams,
 	};
+	const params = {
+		...params2,
+		totalPages: true
+	};
+	console.log("Working on page 1");
 	const {
 		data: {
 			trackedEntityInstances,
 			pager: {pageCount},
 		},
 	} = await this.instance.get("trackedEntityInstances.json", {params});
-
 	await this.flattenInstances(trackedEntityInstances, program, chunkSize);
-	processed = [
-		...processed,
-		trackedEntityInstances.map(
-			({trackedEntityInstance}) => trackedEntityInstance
-		),
-	];
-	for (let page = 2; page <= pageCount; page++) {
-		console.log(`Working on page ${page} of ${pageCount}`);
-		const {
-			data: {trackedEntityInstances},
-		} = await this.instance.get("trackedEntityInstances.json", {
-			params: {...params, page},
-		});
-		await this.flattenInstances(trackedEntityInstances, program, chunkSize);
-		processed = [
-			...processed,
-			trackedEntityInstances.map(
-				({trackedEntityInstance}) => trackedEntityInstance
-			),
-		];
+	if (pageCount > startingPage) {
+		for (let page = Number(startingPage) + 1; page <= pageCount; page++) {
+			console.log(`Working on page ${page} of ${pageCount}`);
+			const {
+				data: {trackedEntityInstances},
+			} = await this.instance.get("trackedEntityInstances.json", {
+				params: {...params2, page},
+			});
+			await this.flattenInstances(trackedEntityInstances, program, chunkSize);
+		}
 	}
-	return processed;
 };
 
 module.exports.processTrackedEntityInstancesAttributes = async (
