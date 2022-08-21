@@ -2434,12 +2434,7 @@ module.exports.flattenInstances = async (
 							dataValues,
 							dueDate,
 							eventDate,
-							// trackedEntityType,
 							event,
-							// relationships,
-							// attributes,
-							// geometry,
-							// notes,
 							...eventDetails
 						} of events) {
 							calculatedEvents.push({
@@ -2501,63 +2496,13 @@ module.exports.flattenInstances = async (
 	}
 };
 
-module.exports.flattenInstancesToAttributes = async (
-	trackedEntityInstances,
-	program,
-	chunkSize
-) => {
-	const data = trackedEntityInstances.map(
-		({
-			 trackedEntityInstance, orgUnit, attributes, enrollments, inactive, deleted, relationships,
-		 }) => {
-			const allRelations = fromPairs(
-				relationships.map((rel) => {
-					return [
-						rel["relationshipType"],
-						rel.from.trackedEntityInstance.trackedEntityInstance,
-					];
-				})
-			);
-			const [{enrollmentDate}] = enrollments;
-			const processedAttributes = fromPairs(
-				attributes.map(({attribute, value}) => [attribute, value])
-			);
-			return {
-				trackedEntityInstance,
-				id: trackedEntityInstance,
-				orgUnit,
-				...processedAttributes,
-				...allRelations,
-				inactive,
-				deleted,
-				enrollmentDate,
-			};
-		}
-	);
-	try {
-		const inserted = await Promise.all(
-			chunk(data, chunkSize).map((c) => {
-				return this.api.post(
-					`wal/index?index=${String(program).toLowerCase()}-attributes`,
-					{
-						data: c,
-					}
-				);
-			})
-		);
-		const total = sum(inserted.map(({data: {items}}) => items.length));
-		console.log(total);
-	} catch (error) {
-		console.log(error.message);
-	}
-};
-
 module.exports.processTrackedEntityInstances = async (
 	program,
 	pageSize,
 	chunkSize,
 	otherParams = {}
 ) => {
+	let processed = [];
 	let startingPage = 1;
 	let realOtherParams = otherParams;
 	if (otherParams.page) {
@@ -2565,7 +2510,7 @@ module.exports.processTrackedEntityInstances = async (
 		startingPage = page;
 		realOtherParams = rest;
 	}
-	const params2 = {
+	const params = {
 		fields: "*",
 		ouMode: "ALL",
 		program,
@@ -2573,73 +2518,38 @@ module.exports.processTrackedEntityInstances = async (
 		page: startingPage,
 		...realOtherParams,
 	};
-	const params = {
-		...params2,
-		totalPages: true
-	};
-	console.log("Working on page 1");
 	const {
 		data: {
 			trackedEntityInstances,
 			pager: {pageCount},
 		},
-	} = await this.instance.get("trackedEntityInstances.json", {params});
+	} = await this.instance.get("trackedEntityInstances.json", {params: {...params, totalPages: true}});
+
 	await this.flattenInstances(trackedEntityInstances, program, chunkSize);
+	processed = [
+		...processed,
+		...trackedEntityInstances.map(
+			({trackedEntityInstance}) => trackedEntityInstance
+		),
+	];
 	if (pageCount > startingPage) {
 		for (let page = Number(startingPage) + 1; page <= pageCount; page++) {
 			console.log(`Working on page ${page} of ${pageCount}`);
 			const {
 				data: {trackedEntityInstances},
 			} = await this.instance.get("trackedEntityInstances.json", {
-				params: {...params2, page},
-			});
-			await this.flattenInstances(trackedEntityInstances, program, chunkSize);
-		}
-	}
-};
-
-module.exports.processTrackedEntityInstancesAttributes = async (
-	program,
-	pageSize,
-	chunkSize
-) => {
-	let params = {
-		fields:
-			"trackedEntityInstance,relationships,orgUnit,inactive,deleted,attributes,enrollments[enrollmentDate]",
-		ouMode: "ALL",
-		program,
-		totalPages: true,
-		pageSize,
-		page: 1,
-	};
-	console.log("Working on page 1");
-	const {
-		data: {
-			trackedEntityInstances,
-			pager: {pageCount},
-		},
-	} = await this.instance.get("trackedEntityInstances.json", {params});
-
-	await this.flattenInstancesToAttributes(
-		trackedEntityInstances,
-		program,
-		chunkSize
-	);
-	if (pageCount > 1) {
-		for (let page = 2; page <= pageCount; page++) {
-			console.log(`Working on page ${page} of ${pageCount}`);
-			const {
-				data: {trackedEntityInstances},
-			} = await this.instance.get("trackedEntityInstances.json", {
 				params: {...params, page},
 			});
-			await this.flattenInstancesToAttributes(
-				trackedEntityInstances,
-				program,
-				chunkSize
-			);
+			await this.flattenInstances(trackedEntityInstances, program, chunkSize);
+			processed = [
+				...processed,
+				...trackedEntityInstances.map(
+					({trackedEntityInstance}) => trackedEntityInstance
+				),
+			];
 		}
 	}
+	return processed;
 };
 
 
