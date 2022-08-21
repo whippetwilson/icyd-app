@@ -65,5 +65,4 @@ const generate = async () => {
 
 schedule.scheduleJob("*/10 * * * *", async () => {
 	await generate();
-
 });
