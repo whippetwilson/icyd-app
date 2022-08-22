@@ -543,7 +543,7 @@ module.exports.fetchRelationships4Instances = async (
 ) => {
 	const allInstances = uniq(
 		trackedEntityInstances.map(({hly709n51z0}) => hly709n51z0)
-	);
+	).filter((v) => v !== null && v !== undefined);
 	const data = await this.fetchAll({
 		query: `select * from ${String("HEWq6yr4cs5").toLowerCase()}`,
 		filter: {
@@ -2677,7 +2677,7 @@ module.exports.generatePrevention = async (periods = [
 		});
 		const groupedSessions = groupBy(doneSessions, "code");
 
-		const layering = realParticipants.flatMap(({ypDUCAS6juy,...rest1}) => {
+		const layering = realParticipants.flatMap(({ypDUCAS6juy, ...rest1}) => {
 
 			const participantSessions = groupedSessions[ypDUCAS6juy]
 				? groupedSessions[ypDUCAS6juy].filter((i) => {
