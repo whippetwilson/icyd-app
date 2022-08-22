@@ -599,7 +599,7 @@ module.exports.fetchGroupActivities4Instances = async (
 ) => {
 	const allMemberCodes = uniq(
 		trackedEntityInstances.map(({HLKc2AKR9jW}) => HLKc2AKR9jW)
-	);
+	).filter((val) => val !== null && val !== undefined);
 	const data = await this.fetchAll({
 		query: `select n20LkH4ZBF8,ypDUCAS6juy,eventDate from ${String(
 			"VzkQBBglj3O"
