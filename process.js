@@ -987,7 +987,6 @@ module.exports.processInstances = async (
 		const {district, subCounty, orgUnitName, ...ous} = processedUnits[orgUnit] || {};
 		const hasEnrollment = !!enrollmentDate;
 		let hvat = {};
-		console.log(allHVatAssessments[hly709n51z0]);
 		if (
 			allHVatAssessments[hly709n51z0] &&
 			allHVatAssessments[hly709n51z0] !== undefined
@@ -2237,18 +2236,17 @@ module.exports.processInstances = async (
 			});
 		}
 	}
-	console.log(layering);
-	// const inserted = await Promise.all(
-	// 	chunk(layering, 100).map((c) => {
-	// 		return this.api.post("wal/index?index=layering", {
-	// 			data: c,
-	// 		});
-	// 	})
-	// );
-	// const total = sum(
-	// 	inserted.map(({data: {items}}) => (items ? items.length : 0))
-	// );
-	// console.log(total);
+	const inserted = await Promise.all(
+		chunk(layering, 100).map((c) => {
+			return this.api.post("wal/index?index=layering", {
+				data: c,
+			});
+		})
+	);
+	const total = sum(
+		inserted.map(({data: {items}}) => (items ? items.length : 0))
+	);
+	console.log(total);
 };
 
 module.exports.useProgramStage = async (
@@ -2326,8 +2324,7 @@ module.exports.useTracker = async (
 		moment().subtract(2, "quarters"),
 		moment().subtract(1, "quarters"),
 		moment(),
-	],
-	otherParams = {}
+	]
 ) => {
 	console.log("Fetching organisation units");
 	const processedUnits = await this.fetchUnits4Instances();
@@ -2335,8 +2332,8 @@ module.exports.useTracker = async (
 	const {sessions} = await this.useLoader();
 	console.log("Fetching data for first cursor");
 	const {data} = await this.api.post("wal/sql", {
-		query: "select * from \"rdeklsxcd4c\" order by hly709n51z0",
-		fetch_size: 250,
+		query: "select * from rdeklsxcd4c order by hly709n51z0",
+		fetch_size: 1000,
 	});
 	let {columns, rows, cursor: currentCursor} = data;
 	const trackedEntityInstances = rows.map((row) => {
@@ -2354,10 +2351,10 @@ module.exports.useTracker = async (
 			const trackedEntityInstances = rows.map((row) => {
 				return fromPairs(columns.map(({name}, index) => [name, row[index]]));
 			});
-			this.generate(trackedEntityInstances, processedUnits, periods, sessions);
+			await this.generate(trackedEntityInstances, processedUnits, periods, sessions);
 			console.log("Finished generating layering for cursor");
 			currentCursor = cursor;
-		} while (!currentCursor);
+		} while (currentCursor !== undefined && currentCursor !== null);
 	}
 };
 
