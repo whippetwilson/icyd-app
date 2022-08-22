@@ -15,7 +15,7 @@ const {
 	orderBy,
 	uniqBy,
 	chunk,
-	sum,
+	sum, uniq,
 } = require("lodash");
 const moment = require("moment");
 const axios = require("axios");
@@ -524,14 +524,31 @@ module.exports.fetchUnits4Instances = async () => {
 	);
 };
 
+// module.exports.fetchRelationships4Instances = async (
+// 	trackedEntityInstances
+// ) => {
+// 	const data = await this.fetchAll({
+// 		query: `select * from ${String("HEWq6yr4cs5").toLowerCase()}`,
+// 		filter: {
+// 			terms: {
+// 				"trackedEntityInstance.keyword": trackedEntityInstances,
+// 			},
+// 		},
+// 	});
+// 	return groupBy(data, "trackedEntityInstance");
+// };
+
 module.exports.fetchRelationships4Instances = async (
 	trackedEntityInstances
 ) => {
+	const allInstances = uniq(
+		trackedEntityInstances.map(({hly709n51z0}) => hly709n51z0)
+	);
 	const data = await this.fetchAll({
 		query: `select * from ${String("HEWq6yr4cs5").toLowerCase()}`,
 		filter: {
 			terms: {
-				"trackedEntityInstance.keyword": trackedEntityInstances,
+				["trackedEntityInstance.keyword"]: allInstances,
 			},
 		},
 	});
@@ -561,16 +578,35 @@ module.exports.previousLayering = async (trackedEntityInstances) => {
 	}
 };
 
+// module.exports.fetchGroupActivities4Instances = async (
+// 	trackedEntityInstances
+// ) => {
+// 	const data = await this.fetchAll({
+// 		query: `select n20LkH4ZBF8,ypDUCAS6juy,eventDate from ${String(
+// 			"VzkQBBglj3O"
+// 		).toLowerCase()}`,
+// 		filter: {
+// 			terms: {
+// 				"ypDUCAS6juy.keyword": trackedEntityInstances,
+// 			},
+// 		},
+// 	});
+// 	return groupBy(data, "ypDUCAS6juy");
+// };
+
 module.exports.fetchGroupActivities4Instances = async (
 	trackedEntityInstances
 ) => {
+	const allMemberCodes = uniq(
+		trackedEntityInstances.map(({HLKc2AKR9jW}) => HLKc2AKR9jW)
+	);
 	const data = await this.fetchAll({
 		query: `select n20LkH4ZBF8,ypDUCAS6juy,eventDate from ${String(
 			"VzkQBBglj3O"
 		).toLowerCase()}`,
 		filter: {
 			terms: {
-				"ypDUCAS6juy.keyword": trackedEntityInstances,
+				["ypDUCAS6juy.keyword"]: allMemberCodes,
 			},
 		},
 	});
@@ -589,8 +625,30 @@ module.exports.getProgramStageData = async (
 				"trackedEntityInstance.keyword": trackedEntityInstances,
 			},
 		},
+		field_multi_value_leniency: true
 	});
 	return groupBy(data, "trackedEntityInstance");
+};
+
+module.exports.getAllData = async (
+	table,
+	columns = "*"
+) => {
+	return await this.fetchAll({
+		query: `select ${columns} from ${String(table).toLowerCase()}`,
+		field_multi_value_leniency: true,
+		filter: {
+			terms: {
+				"mWyp85xIzXR.keyword": [
+					"MOE Journeys Plus",
+					"MOH Journeys curriculum",
+					"No means No sessions (Boys)",
+					"No means No sessions (Girls)",
+					"No means No sessions (Boys) New Curriculum",
+				]
+			}
+		}
+	});
 };
 
 module.exports.processPrevention = async (
@@ -856,6 +914,10 @@ module.exports.hivInformation = (
 	};
 };
 
+module.exports.getEvents = (available, trackedEntityInstance) => {
+	return available[trackedEntityInstance] || [];
+};
+
 module.exports.processInstances = async (
 	trackedEntityInstances,
 	periods,
@@ -865,88 +927,73 @@ module.exports.processInstances = async (
 	groupActivities
 ) => {
 	let layering = [];
-
 	const trackedEntityInstanceIds = trackedEntityInstances.map(
 		(tei) => tei.trackedEntityInstance
 	);
 	const previousLayer = await this.previousLayering(trackedEntityInstanceIds);
-
-	const hVatAssessments = await this.getProgramStageData(
-		Object.keys(indexCases),
-		"sYE3K7fFM4Y",
-		"trackedEntityInstance,eventDate,zbAGBW6PsGd,kQCB9F39zWO,iRJUDyUBLQF"
-	);
+	const [
+		// vulnerabilityAssessments,
+		allHomeVisits,
+		allHivRiskAssessments,
+		allViralLoads,
+		// casePlannings,
+		allReferrals,
+		allServiceLinkages,
+		allExposedInfants,
+		allHVatAssessments,
+		allGraduationAssessments
+	] = await Promise.all([
+		// this.getProgramStageData(instanceIds, "TuLJEpHu0um"),
+		this.getProgramStageData(trackedEntityInstanceIds, "HaaSLv2ur0l"),
+		this.getProgramStageData(trackedEntityInstanceIds, "B9EI27lmQrZ"),
+		this.getProgramStageData(trackedEntityInstanceIds, "kKlAyGUnCML"),
+		// this.getProgramStageData(trackedEntityInstanceIds, "LATgKmbf7Yv"),
+		this.getProgramStageData(trackedEntityInstanceIds, "yz3zh5IFEZm"),
+		this.getProgramStageData(trackedEntityInstanceIds, "SxnXrDtSJZp"),
+		this.getProgramStageData(trackedEntityInstanceIds, "KOFm3jJl7n7"),
+		this.getProgramStageData(
+			Object.keys(indexCases),
+			"sYE3K7fFM4Y",
+			"trackedEntityInstance,eventDate,zbAGBW6PsGd,kQCB9F39zWO,iRJUDyUBLQF"
+		),
+		this.getProgramStageData(trackedEntityInstanceIds, "CS61IdHynTk"),
+	]);
 	for (const {
-		enrollments,
-		attributes,
-		relationships,
+		enrollmentDate,
+		hly709n51z0,
+		HLKc2AKR9jW,
+		N1nMqKtYKvI,
+		nDUbdM2FjyP,
+		h4pXErY01YR,
+		umqeJCVp4Zq,
+		HzUL8LTDPga,
+		tHCT4RKXoiU,
+		e0zEpTw7IH6,
+		huFucxA3e5c,
+		CfpoFtRmK1z,
+		n7VQaJ8biOJ,
 		orgUnit,
 		trackedEntityInstance,
 	} of trackedEntityInstances) {
-		const allEvents = enrollments.flatMap((enrollment) => {
-			return enrollment.events
-				.filter(({deleted}) => deleted === false)
-				.map(({eventDate, programStage, dataValues}) => {
-					return {
-						eventDate,
-						programStage,
-						...fromPairs(
-							dataValues.map(({dataElement, value}) => [dataElement, value])
-						),
-					};
-				});
-		});
-		const data = {
-			orgUnit,
-			enrollmentDate:
-				enrollments.length > 0 ? enrollments[0]["enrollmentDate"] : "",
-			trackedEntityInstance,
-			...fromPairs(
-				attributes.map(({attribute, value}) => [attribute, value])
-			),
-			...fromPairs(
-				relationships.map((rel) => [
-					rel["relationshipType"],
-					rel.from.trackedEntityInstance.trackedEntityInstance,
-				])
-			),
-		};
-
-		const availableEvents = groupBy(allEvents, "programStage");
 		// const vulnerabilityAssessments = availableEvents["TuLJEpHu0um"] || [];
-		const homeVisits = availableEvents["HaaSLv2ur0l"] || [];
-		const hivRiskAssessments = availableEvents["B9EI27lmQrZ"] || [];
-		const viralLoads = availableEvents["kKlAyGUnCML"] || [];
+		const homeVisits = this.getEvents(allHomeVisits, trackedEntityInstance);
+		const hivRiskAssessments = this.getEvents(allHivRiskAssessments, trackedEntityInstance);
+		const viralLoads = this.getEvents(allViralLoads, trackedEntityInstance);
 		// const casePlannings = availableEvents["LATgKmbf7Yv"] || [];
-		const referrals = availableEvents["yz3zh5IFEZm"] || [];
-		const serviceLinkages = availableEvents["SxnXrDtSJZp"] || [];
-		const exposedInfants = availableEvents["KOFm3jJl7n7"] || [];
-		const graduationAssessments = availableEvents["CS61IdHynTk"] || [];
-		const {
-			enrollmentDate,
-			hly709n51z0,
-			HLKc2AKR9jW,
-			N1nMqKtYKvI,
-			nDUbdM2FjyP,
-			h4pXErY01YR,
-			umqeJCVp4Zq,
-			HzUL8LTDPga,
-			tHCT4RKXoiU,
-			e0zEpTw7IH6,
-			huFucxA3e5c,
-			CfpoFtRmK1z,
-			n7VQaJ8biOJ,
-		} = data;
-		const {district, subCounty, orgUnitName, ...ous} =
-		processedUnits[orgUnit] || {};
+		const referrals = this.getEvents(allReferrals, trackedEntityInstance);
+		const serviceLinkages = this.getEvents(allServiceLinkages, trackedEntityInstance);
+		const exposedInfants = this.getEvents(allExposedInfants, trackedEntityInstance);
+		const graduationAssessments = this.getEvents(allGraduationAssessments, trackedEntityInstance);
+		const {district, subCounty, orgUnitName, ...ous} = processedUnits[orgUnit] || {};
 		const hasEnrollment = !!enrollmentDate;
 		let hvat = {};
+		console.log(allHVatAssessments[hly709n51z0]);
 		if (
-			hVatAssessments[hly709n51z0] &&
-			hVatAssessments[hly709n51z0] !== undefined
+			allHVatAssessments[hly709n51z0] &&
+			allHVatAssessments[hly709n51z0] !== undefined
 		) {
 			const filtered = orderBy(
-				hVatAssessments[hly709n51z0].filter((e) => e.eventDate),
+				allHVatAssessments[hly709n51z0].filter((e) => e.eventDate),
 				["eventDate"],
 				["desc"]
 			);
@@ -2190,20 +2237,22 @@ module.exports.processInstances = async (
 			});
 		}
 	}
-	const inserted = await Promise.all(
-		chunk(layering, 100).map((c) => {
-			return this.api.post("wal/index?index=layering", {
-				data: c,
-			});
-		})
-	);
-	const total = sum(
-		inserted.map(({data: {items}}) => (items ? items.length : 0))
-	);
-	console.log(total);
+	console.log(layering);
+	// const inserted = await Promise.all(
+	// 	chunk(layering, 100).map((c) => {
+	// 		return this.api.post("wal/index?index=layering", {
+	// 			data: c,
+	// 		});
+	// 	})
+	// );
+	// const total = sum(
+	// 	inserted.map(({data: {items}}) => (items ? items.length : 0))
+	// );
+	// console.log(total);
 };
 
 module.exports.useProgramStage = async (
+	allActivities,
 	periods = [
 		moment().subtract(3, "quarters"),
 		moment().subtract(2, "quarters"),
@@ -2215,62 +2264,39 @@ module.exports.useProgramStage = async (
 ) => {
 	console.log("Fetching organisation units");
 	const processedUnits = await this.fetchUnits4Instances();
-	let startingPage = 1;
-	let realOtherParams = otherParams;
-	if (otherParams.page) {
-		const {page, ...rest} = otherParams;
-		startingPage = page;
-		realOtherParams = rest;
-	}
 
-	let params = {
-		fields: "*",
-		ouMode: "ALL",
-		filter: `mWyp85xIzXR:IN:${[
-			"MOE Journeys Plus",
-			"MOH Journeys curriculum",
-			"No means No sessions (Boys)",
-			"No means No sessions (Girls)",
-			"No means No sessions (Boys) New Curriculum",
-		].join(";")}`,
-		page: startingPage,
-		program: "IXxHJADVCkb",
-		totalPages: true,
-		...realOtherParams
-	};
-	console.log(`Fetching page ${startingPage}`);
-	const {
-		data: {trackedEntityInstances, pager: {pageCount}},
-	} = await this.instance.get("trackedEntityInstances.json", {
-		params,
-	});
-	console.log(`Generating layering for page ${startingPage}`);
-	await this.processPrevention(
-		trackedEntityInstances,
-		processedUnits,
-		sessions,
-		periods
-	);
-	console.log(`Finished generating layering for page ${startingPage}`);
-	if (pageCount > Number(startingPage)) {
-		for (let page = Number(startingPage) + 1; page <= pageCount; page++) {
-			console.log(`Working on page ${page} of ${pageCount}`);
-			const {
-				data: {trackedEntityInstances},
-			} = await this.instance.get("trackedEntityInstances.json", {
-				params: {...params, page},
-			});
-			console.log(`Finished fetching page ${page} of ${pageCount}`);
-			console.log(`Generating layering for page ${page}`);
-			await this.processPrevention(
-				trackedEntityInstances,
-				processedUnits,
-				sessions,
-				periods
-			);
-			console.log(`Finished generating layering for page ${page}`);
-		}
-	}
+	// const {
+	// 	data: {trackedEntityInstances, pager: {pageCount}},
+	// } = await this.instance.get("trackedEntityInstances.json", {
+	// 	params,
+	// });
+	// console.log(`Generating layering for page ${startingPage}`);
+	// await this.processPrevention(
+	// 	trackedEntityInstances,
+	// 	processedUnits,
+	// 	sessions,
+	// 	periods
+	// );
+	// console.log(`Finished generating layering for page ${startingPage}`);
+	// if (pageCount > Number(startingPage)) {
+	// 	for (let page = Number(startingPage) + 1; page <= pageCount; page++) {
+	// 		console.log(`Working on page ${page} of ${pageCount}`);
+	// 		const {
+	// 			data: {trackedEntityInstances},
+	// 		} = await this.instance.get("trackedEntityInstances.json", {
+	// 			params: {...params, page},
+	// 		});
+	// 		console.log(`Finished fetching page ${page} of ${pageCount}`);
+	// 		console.log(`Generating layering for page ${page}`);
+	// 		await this.processPrevention(
+	// 			trackedEntityInstances,
+	// 			processedUnits,
+	// 			sessions,
+	// 			periods
+	// 		);
+	// 		console.log(`Finished generating layering for page ${page}`);
+	// 	}
+	// }
 };
 
 module.exports.generate = async (
@@ -2279,23 +2305,12 @@ module.exports.generate = async (
 	periods,
 	sessions
 ) => {
-	const relationships = trackedEntityInstances.flatMap((tei) => {
-		return tei["relationships"].map(
-			(rel) => rel.from.trackedEntityInstance.trackedEntityInstance
-		);
-	});
-
-	const allCodes = trackedEntityInstances.flatMap(({attributes}) => {
-		const code = attributes.find(
-			({attribute}) => attribute === "HLKc2AKR9jW"
-		);
-		if (code) {
-			return code.value;
-		}
-		return [];
-	});
-	const indexCases = await this.fetchRelationships4Instances(relationships);
-	const groupActivities = await this.fetchGroupActivities4Instances(allCodes);
+	const indexCases = await this.fetchRelationships4Instances(
+		trackedEntityInstances
+	);
+	const groupActivities = await this.fetchGroupActivities4Instances(
+		trackedEntityInstances
+	);
 	await this.processInstances(
 		trackedEntityInstances,
 		periods,
@@ -2316,66 +2331,33 @@ module.exports.useTracker = async (
 ) => {
 	console.log("Fetching organisation units");
 	const processedUnits = await this.fetchUnits4Instances();
-	let startingPage = 1;
-	let realOtherParams = otherParams;
-	if (otherParams.page) {
-		const {page, ...rest} = otherParams;
-		startingPage = page;
-		realOtherParams = rest;
-	}
-	let params = {
-		fields: "*",
-		ouMode: "ALL",
-		program: "RDEklSXCD4C",
-		totalPages: true,
-		pageSize: 1000,
-		order: "created",
-		page: startingPage,
-		...realOtherParams,
-	};
-	console.log(`Fetching page ${startingPage}`);
-	const {
-		data: {
-			trackedEntityInstances,
-			pager: {pageCount},
-		},
-	} = await this.instance.get("trackedEntityInstances.json", {params});
-
+	console.log("Fetching metadata");
 	const {sessions} = await this.useLoader();
-
-	console.log(`Finished fetching page ${startingPage}`);
-	console.log(`Generating layering for page ${startingPage}`);
-	await this.generate(
-		trackedEntityInstances.filter(
-			({inactive, deleted}) => deleted === false && inactive === false
-		),
-		processedUnits,
-		periods,
-		sessions
-	);
-	console.log(`Finished generating layering for page ${startingPage}`);
-
-	if (pageCount > startingPage) {
-		for (let page = Number(startingPage) + 1; page <= pageCount; page++) {
-			console.log(`Working on page ${page} of ${pageCount}`);
+	console.log("Fetching data for first cursor");
+	const {data} = await this.api.post("wal/sql", {
+		query: "select * from \"rdeklsxcd4c\" order by hly709n51z0",
+		fetch_size: 250,
+	});
+	let {columns, rows, cursor: currentCursor} = data;
+	const trackedEntityInstances = rows.map((row) => {
+		return fromPairs(columns.map(({name}, index) => [name, row[index]]));
+	});
+	console.log("Generating layering for first cursor");
+	await this.generate(trackedEntityInstances, processedUnits, periods, sessions);
+	console.log("Finished generating layering for first cursor");
+	if (currentCursor) {
+		do {
+			console.log("Fetching data for next cursor");
 			const {
-				data: {trackedEntityInstances},
-			} = await this.instance.get("trackedEntityInstances.json", {
-				params: {...params, page},
+				data: {rows, cursor},
+			} = await this.api.post("wal/sql", {cursor: currentCursor});
+			const trackedEntityInstances = rows.map((row) => {
+				return fromPairs(columns.map(({name}, index) => [name, row[index]]));
 			});
-			console.log(`Finished fetching page ${page} of ${pageCount}`);
-			console.log(`Generating layering for page ${page}`);
-
-			await this.generate(
-				trackedEntityInstances.filter(
-					({inactive, deleted}) => deleted === false && inactive === false
-				),
-				processedUnits,
-				periods,
-				sessions
-			);
-			console.log(`Finished generating layering for page ${page}`);
-		}
+			this.generate(trackedEntityInstances, processedUnits, periods, sessions);
+			console.log("Finished generating layering for cursor");
+			currentCursor = cursor;
+		} while (!currentCursor);
 	}
 };
 
@@ -2553,7 +2535,13 @@ module.exports.processTrackedEntityInstances = async (
 };
 
 
-module.exports.generatePrevention = async () => {
+module.exports.generatePrevention = async (periods = [
+	moment().subtract(3, "quarters"),
+	moment().subtract(2, "quarters"),
+	moment().subtract(1, "quarters"),
+	moment(),
+]) => {
+	const processedUnits = await this.fetchUnits4Instances();
 	const [
 		{data: {options}},
 		{data: {options: options1}},
@@ -2636,6 +2624,8 @@ module.exports.generatePrevention = async () => {
 		}),
 	]);
 
+	const allActivities = await this.getAllData("IXxHJADVCkb");
+
 	const sessions = {
 		"MOE Journeys Plus": options.map((o) => o.code),
 		"MOH Journeys curriculum": options1.map((o) => o.code),
@@ -2651,14 +2641,87 @@ module.exports.generatePrevention = async () => {
 		ECD: options10.map((o) => o.code),
 		"Saving and Borrowing": options11.map((o) => o.code),
 	};
-	await this.useProgramStage(
-		[
-			moment().subtract(3, "quarters"),
-			moment().subtract(2, "quarters"),
-			moment().subtract(1, "quarters"),
-			moment()
-		],
-		sessions,
-		{}
-	);
+
+	for (const {trackedEntityInstance, orgUnit, mWyp85xIzXR: subType, ...rest} of allActivities) {
+		const allSubTypes = String(subType).split(",");
+		const completed = this.mapping[subType];
+		const units = processedUnits[orgUnit];
+
+		const [
+			participants,
+			availableSession
+		] = await Promise.all([
+			this.getProgramStageData([trackedEntityInstance], "aTZwDRoJnxj"),
+			this.getProgramStageData([trackedEntityInstance], "VzkQBBglj3O"),
+		]);
+		const realParticipants = participants[trackedEntityInstance] || [];
+		const realSessions = availableSession[trackedEntityInstance] || [];
+
+		const doneSessions = periods.flatMap((period) => {
+			const start = period.startOf("quarter").toDate();
+			const end = period.endOf("quarter").toDate();
+			return realSessions.flat()
+				.filter((event) => {
+					return (
+						event.eventDate &&
+						isWithinInterval(new Date(event.eventDate), {
+							start,
+							end,
+						})
+					);
+				})
+				.map(({ypDUCAS6juy, n20LkH4ZBF8}) => {
+					return {
+						session: n20LkH4ZBF8 ? n20LkH4ZBF8 : undefined,
+						code: ypDUCAS6juy ? ypDUCAS6juy : undefined,
+						qtr: period.format("YYYY[Q]Q")
+					};
+				});
+		});
+		const groupedSessions = groupBy(doneSessions, "code");
+
+		const layering = realParticipants.flatMap(({ypDUCAS6juy,...rest1}) => {
+
+			const participantSessions = groupedSessions[ypDUCAS6juy]
+				? groupedSessions[ypDUCAS6juy].filter((i) => {
+					return sessions[allSubTypes[0]].indexOf(i.session) !== -1;
+				})
+				: [];
+			const groupedParticipantSessions = groupBy(participantSessions, "qtr");
+
+			return Object.entries(groupedParticipantSessions).map(([qtr, attendedSession]) => {
+				const uniqSessions = uniqBy(attendedSession, (v) => [v.session, v.code].join());
+				const sess = fromPairs(uniqSessions.map(({session}) => [session, 1]));
+				return {
+					id: `${ypDUCAS6juy}${qtr}`,
+					ypDUCAS6juy,
+					...rest1,
+					trackedEntityInstance,
+					orgUnit,
+					mWyp85xIzXR: subType,
+					...rest,
+					...sess,
+					...units,
+					qtr,
+					[subType]: uniqSessions.length,
+					[completed]:
+						uniqSessions.length >= this.mapping2[subType] ? 1 : 0,
+					completedPrevention:
+						uniqSessions.length >= this.mapping2[subType] ? 1 : 0,
+				};
+			});
+		});
+		console.log(layering);
+		const inserted = await Promise.all(
+			chunk(layering, 100).map((c) => {
+				return this.api.post("wal/index?index=prevention-layering", {
+					data: c,
+				});
+			})
+		);
+		const total = sum(
+			inserted.map(({data: {items}}) => (items ? items.length : 0))
+		);
+		console.log(total);
+	}
 };
