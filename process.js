@@ -2711,7 +2711,6 @@ module.exports.generatePrevention = async (periods = [
 				};
 			});
 		});
-		console.log(layering);
 		const inserted = await Promise.all(
 			chunk(layering, 100).map((c) => {
 				return this.api.post("wal/index?index=prevention-layering", {
