@@ -2653,7 +2653,6 @@ module.exports.generatePrevention = async (periods = [
 		]);
 		const realParticipants = participants[trackedEntityInstance] || [];
 		const realSessions = availableSession[trackedEntityInstance] || [];
-
 		const doneSessions = periods.flatMap((period) => {
 			const start = period.startOf("quarter").toDate();
 			const end = period.endOf("quarter").toDate();
@@ -2677,7 +2676,7 @@ module.exports.generatePrevention = async (periods = [
 		});
 		const groupedSessions = groupBy(doneSessions, "code");
 
-		const layering = realParticipants.flatMap(({ypDUCAS6juy, ...rest1}) => {
+		const layering = realParticipants.flatMap(({ypDUCAS6juy, eXWM3v3oIKu, ...rest1}) => {
 
 			const participantSessions = groupedSessions[ypDUCAS6juy]
 				? groupedSessions[ypDUCAS6juy].filter((i) => {
@@ -2685,6 +2684,7 @@ module.exports.generatePrevention = async (periods = [
 				})
 				: [];
 			const groupedParticipantSessions = groupBy(participantSessions, "qtr");
+			const ageGroup = this.findAgeGroup(Number(eXWM3v3oIKu));
 
 			return Object.entries(groupedParticipantSessions).map(([qtr, attendedSession]) => {
 				const uniqSessions = uniqBy(attendedSession, (v) => [v.session, v.code].join());
@@ -2696,6 +2696,8 @@ module.exports.generatePrevention = async (periods = [
 					trackedEntityInstance,
 					orgUnit,
 					mWyp85xIzXR: subType,
+					ageGroup,
+					eXWM3v3oIKu,
 					...rest,
 					...sess,
 					...units,
