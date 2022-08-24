@@ -1,4 +1,4 @@
-const {processTrackedEntityInstances, useTracker} = require("./process");
+const {useTracker} = require("./process");
 const moment = require("moment");
 const generate = async () => {
 	// try {
@@ -14,7 +14,7 @@ const generate = async () => {
 		moment().subtract(2, "quarters"),
 		moment().subtract(1, "quarters"),
 		moment(),
-	], ["VVKTC2rlJNO"]);
+	]);
 	// } catch (error) {
 	// 	console.log(error.message);
 	// }
