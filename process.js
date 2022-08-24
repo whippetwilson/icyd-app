@@ -524,20 +524,6 @@ module.exports.fetchUnits4Instances = async () => {
 	);
 };
 
-// module.exports.fetchRelationships4Instances = async (
-// 	trackedEntityInstances
-// ) => {
-// 	const data = await this.fetchAll({
-// 		query: `select * from ${String("HEWq6yr4cs5").toLowerCase()}`,
-// 		filter: {
-// 			terms: {
-// 				"trackedEntityInstance.keyword": trackedEntityInstances,
-// 			},
-// 		},
-// 	});
-// 	return groupBy(data, "trackedEntityInstance");
-// };
-
 module.exports.fetchRelationships4Instances = async (
 	trackedEntityInstances
 ) => {
@@ -558,7 +544,7 @@ module.exports.fetchRelationships4Instances = async (
 module.exports.previousLayering = async (trackedEntityInstances) => {
 	try {
 		const data = await this.fetchAll({
-			query: "select trackedEntityInstance,qtr,quarter from layering",
+			query: "select trackedEntityInstance,qtr,quarter,fullyGraduated,preGraduated from layering",
 			filter: {
 				terms: {
 					"trackedEntityInstance.keyword": trackedEntityInstances,
@@ -569,7 +555,7 @@ module.exports.previousLayering = async (trackedEntityInstances) => {
 			Object.entries(groupBy(data, "trackedEntityInstance")).map(
 				([instance, data]) => [
 					instance,
-					fromPairs(data.map((d) => [d["qtr"], d["quarter"]])),
+					fromPairs(data.map((d) => [d["qtr"], {fullyGraduated: d["fullyGraduated"], quarter: d["quarter"]}])),
 				]
 			)
 		);
@@ -577,22 +563,6 @@ module.exports.previousLayering = async (trackedEntityInstances) => {
 		return {};
 	}
 };
-
-// module.exports.fetchGroupActivities4Instances = async (
-// 	trackedEntityInstances
-// ) => {
-// 	const data = await this.fetchAll({
-// 		query: `select n20LkH4ZBF8,ypDUCAS6juy,eventDate from ${String(
-// 			"VzkQBBglj3O"
-// 		).toLowerCase()}`,
-// 		filter: {
-// 			terms: {
-// 				"ypDUCAS6juy.keyword": trackedEntityInstances,
-// 			},
-// 		},
-// 	});
-// 	return groupBy(data, "ypDUCAS6juy");
-// };
 
 module.exports.fetchGroupActivities4Instances = async (
 	trackedEntityInstances
@@ -621,32 +591,57 @@ module.exports.getProgramStageData = async (
 	const data = await this.fetchAll({
 		query: `select ${columns} from ${String(programStage).toLowerCase()}`,
 		filter: {
-			terms: {
-				"trackedEntityInstance.keyword": trackedEntityInstances,
+
+			bool: {
+				must: [
+					{
+						terms: {
+							"trackedEntityInstance.keyword": trackedEntityInstances,
+						},
+					},
+					{
+						match: {
+							deleted: false,
+						},
+					}
+				],
 			},
 		},
 		field_multi_value_leniency: true
 	});
+	console.log(data);
 	return groupBy(data, "trackedEntityInstance");
 };
 
 module.exports.getAllData = async (
 	table,
-	columns = "*"
+	columns = "*",
+	instances = []
 ) => {
+	let must = [{
+		terms: {
+			"mWyp85xIzXR.keyword": [
+				"MOE Journeys Plus",
+				"MOH Journeys curriculum",
+				"No means No sessions (Boys)",
+				"No means No sessions (Girls)",
+				"No means No sessions (Boys) New Curriculum",
+			]
+		}
+	}];
+
+	if (instances.length > 0) {
+		must = [...must, {
+			terms: {
+				"trackedEntityInstance.keyword": instances
+			}
+		}];
+	}
 	return await this.fetchAll({
 		query: `select ${columns} from ${String(table).toLowerCase()}`,
 		field_multi_value_leniency: true,
 		filter: {
-			terms: {
-				"mWyp85xIzXR.keyword": [
-					"MOE Journeys Plus",
-					"MOH Journeys curriculum",
-					"No means No sessions (Boys)",
-					"No means No sessions (Girls)",
-					"No means No sessions (Boys) New Curriculum",
-				]
-			}
+			bool: {must}
 		}
 	});
 };
@@ -956,7 +951,11 @@ module.exports.processInstances = async (
 			"sYE3K7fFM4Y",
 			"trackedEntityInstance,eventDate,zbAGBW6PsGd,kQCB9F39zWO,iRJUDyUBLQF"
 		),
-		this.getProgramStageData(trackedEntityInstanceIds, "CS61IdHynTk"),
+		this.getProgramStageData(
+			Object.keys(indexCases),
+			"Cx35Elpu330",
+			"trackedEntityInstance,eventDate,XPJtNCSNCdR"
+		),
 	]);
 	for (const {
 		enrollmentDate,
@@ -983,10 +982,10 @@ module.exports.processInstances = async (
 		const referrals = this.getEvents(allReferrals, trackedEntityInstance);
 		const serviceLinkages = this.getEvents(allServiceLinkages, trackedEntityInstance);
 		const exposedInfants = this.getEvents(allExposedInfants, trackedEntityInstance);
-		const graduationAssessments = this.getEvents(allGraduationAssessments, trackedEntityInstance);
 		const {district, subCounty, orgUnitName, ...ous} = processedUnits[orgUnit] || {};
 		const hasEnrollment = !!enrollmentDate;
 		let hvat = {};
+		let mostRecentGraduation = {};
 		if (
 			allHVatAssessments[hly709n51z0] &&
 			allHVatAssessments[hly709n51z0] !== undefined
@@ -998,6 +997,20 @@ module.exports.processInstances = async (
 			);
 			if (filtered.length > 0) {
 				hvat = filtered[0];
+			}
+		}
+
+		if (
+			allGraduationAssessments[hly709n51z0] &&
+			allGraduationAssessments[hly709n51z0] !== undefined
+		) {
+			const filtered = orderBy(
+				allGraduationAssessments[hly709n51z0].filter((e) => e.eventDate),
+				["eventDate"],
+				["desc"]
+			);
+			if (filtered.length > 0) {
+				mostRecentGraduation = filtered[0];
 			}
 		}
 
@@ -1023,7 +1036,9 @@ module.exports.processInstances = async (
 			}
 		}
 		const memberSessions = groupActivities[HLKc2AKR9jW] || [];
-		let servedInTheQuarter = previousLayer[trackedEntityInstance] || {};
+		let allPreviousLayering = previousLayer[trackedEntityInstance] || {};
+
+		// const
 		for (const period of periods) {
 			const quarterStart = period.startOf("quarter").toDate();
 			const quarterEnd = period.endOf("quarter").toDate();
@@ -1065,11 +1080,6 @@ module.exports.processInstances = async (
 			);
 			const serviceLinkagesDuringQuarter = this.eventsWithinPeriod(
 				serviceLinkages,
-				quarterStart,
-				quarterEnd
-			);
-			const graduationsDuringQuarter = this.eventsWithinPeriod(
-				graduationAssessments,
 				quarterStart,
 				quarterEnd
 			);
@@ -1526,12 +1536,6 @@ module.exports.processInstances = async (
 					: 0;
 
 
-			const hasGraduated = this.anyEventWithDataElement(
-				graduationsDuringQuarter,
-				"AsU0TYSEUU0",
-				"1"
-			) ? 1 : 0;
-
 			const iac =
 				this.anyEventWithDataElement(
 					viralLoadDuringQuarter,
@@ -1935,8 +1939,23 @@ module.exports.processInstances = async (
 				corePSS === 1
 					? 1
 					: 0;
-			servedInTheQuarter = {...servedInTheQuarter, [qtr]: quarter};
-			const servedInPreviousQuarter = servedInTheQuarter[previousQuarter] || 0;
+
+			let preGraduated = 0;
+			let fullyGraduated = 0;
+			if (mostRecentGraduation) {
+				const graduation = this.specificDataElement(mostRecentGraduation, "XPJtNCSNCdR");
+				if (graduation === "1") {
+					preGraduated = 1;
+				}
+				const monthsSinceGraduation = differenceInMonths(quarterEnd, parseISO(mostRecentGraduation.eventDate));
+				if (monthsSinceGraduation >= 6 && preGraduated === 1) {
+					fullyGraduated = 1;
+				}
+			}
+			allPreviousLayering = {...allPreviousLayering, [qtr]: {quarter, fullyGraduated}};
+			const servedInPreviousQuarter = allPreviousLayering[previousQuarter] ? allPreviousLayering[previousQuarter]["quarter"] : 0;
+			// const previouslyGraduatedFully = allPreviousLayering[previousQuarter] ? allPreviousLayering[previousQuarter]["fullyGraduated"] : 0;
+
 
 			let OVC_SERV = 0;
 			let OVC_ENROL = 0;
@@ -2217,7 +2236,7 @@ module.exports.processInstances = async (
 				psychosocialSupport,
 				corePSS,
 				quarter,
-				hasGraduated,
+				preGraduated,
 				servedInPreviousQuarter,
 				graduated: "",
 				OVC_SERV,
@@ -2262,39 +2281,6 @@ module.exports.useProgramStage = async (
 ) => {
 	console.log("Fetching organisation units");
 	const processedUnits = await this.fetchUnits4Instances();
-
-	// const {
-	// 	data: {trackedEntityInstances, pager: {pageCount}},
-	// } = await this.instance.get("trackedEntityInstances.json", {
-	// 	params,
-	// });
-	// console.log(`Generating layering for page ${startingPage}`);
-	// await this.processPrevention(
-	// 	trackedEntityInstances,
-	// 	processedUnits,
-	// 	sessions,
-	// 	periods
-	// );
-	// console.log(`Finished generating layering for page ${startingPage}`);
-	// if (pageCount > Number(startingPage)) {
-	// 	for (let page = Number(startingPage) + 1; page <= pageCount; page++) {
-	// 		console.log(`Working on page ${page} of ${pageCount}`);
-	// 		const {
-	// 			data: {trackedEntityInstances},
-	// 		} = await this.instance.get("trackedEntityInstances.json", {
-	// 			params: {...params, page},
-	// 		});
-	// 		console.log(`Finished fetching page ${page} of ${pageCount}`);
-	// 		console.log(`Generating layering for page ${page}`);
-	// 		await this.processPrevention(
-	// 			trackedEntityInstances,
-	// 			processedUnits,
-	// 			sessions,
-	// 			periods
-	// 		);
-	// 		console.log(`Finished generating layering for page ${page}`);
-	// 	}
-	// }
 };
 
 module.exports.generate = async (
@@ -2324,16 +2310,33 @@ module.exports.useTracker = async (
 		moment().subtract(2, "quarters"),
 		moment().subtract(1, "quarters"),
 		moment(),
-	]
+	],
+	searchInstances = []
 ) => {
 	console.log("Fetching organisation units");
 	const processedUnits = await this.fetchUnits4Instances();
 	console.log("Fetching metadata");
 	const {sessions} = await this.useLoader();
 	console.log("Fetching data for first cursor");
+	let must = [{
+		match: {
+			deleted: false,
+		}
+	}, {
+		match: {
+			inactive: false,
+		},
+	}];
+
+	if (searchInstances.length > 0) {
+		must = [...must, {terms: {"trackedEntityInstance.keyword": searchInstances}}];
+	}
 	const {data} = await this.api.post("wal/sql", {
 		query: "select * from rdeklsxcd4c order by hly709n51z0",
 		fetch_size: 1000,
+		filter: {
+			bool: {must}
+		}
 	});
 	let {columns, rows, cursor: currentCursor} = data;
 	const trackedEntityInstances = rows.map((row) => {
@@ -2537,7 +2540,7 @@ module.exports.generatePrevention = async (periods = [
 	moment().subtract(2, "quarters"),
 	moment().subtract(1, "quarters"),
 	moment(),
-]) => {
+], searchInstances = []) => {
 	const processedUnits = await this.fetchUnits4Instances();
 	const [
 		{data: {options}},

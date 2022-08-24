@@ -1,7 +1,8 @@
 const schedule = require("node-schedule");
 const fs = require("fs");
 const {differenceInMinutes, parseISO} = require("date-fns");
-const {processTrackedEntityInstances} = require("./process");
+const {processTrackedEntityInstances, useTracker, generatePrevention} = require("./process");
+const moment = require("moment");
 const args = process.argv.slice(2);
 const transfer = async (program) => {
 	let searches = JSON.parse(fs.readFileSync(`./${program}.json`, "utf8"));
@@ -18,7 +19,23 @@ const transfer = async (program) => {
 	}
 	console.log(`Fetching for ${lastUpdatedDuration}`);
 	try {
-		await processTrackedEntityInstances(program, 50, 100, {lastUpdatedDuration});
+		const instances = await processTrackedEntityInstances(program, 50, 100, {lastUpdatedDuration});
+		if (program === "HEWq6yr4cs5") {
+			await useTracker([
+				moment().subtract(3, "quarters"),
+				moment().subtract(2, "quarters"),
+				moment().subtract(1, "quarters"),
+				moment(),
+			], instances);
+		}
+		if (program === "IXxHJADVCkb") {
+			await generatePrevention([
+				moment().subtract(3, "quarters"),
+				moment().subtract(2, "quarters"),
+				moment().subtract(1, "quarters"),
+				moment(),
+			], instances);
+		}
 	} catch (error) {
 		console.log(error.message);
 	}

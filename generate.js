@@ -14,7 +14,7 @@ const generate = async () => {
 		moment().subtract(2, "quarters"),
 		moment().subtract(1, "quarters"),
 		moment(),
-	], {page, trackedEntityInstance: "YpVfdPltdD5"});
+	], ["VVKTC2rlJNO"]);
 	// } catch (error) {
 	// 	console.log(error.message);
 	// }
