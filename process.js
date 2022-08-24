@@ -2624,6 +2624,7 @@ module.exports.generatePrevention = async (periods = [
 	]);
 
 	const allActivities = await this.getAllData("IXxHJADVCkb", searchInstances);
+	console.log(allActivities);
 
 	const sessions = {
 		"MOE Journeys Plus": options.map((o) => o.code),
@@ -2640,7 +2641,6 @@ module.exports.generatePrevention = async (periods = [
 		ECD: options10.map((o) => o.code),
 		"Saving and Borrowing": options11.map((o) => o.code),
 	};
-
 	for (const {trackedEntityInstance, orgUnit, mWyp85xIzXR: subType, ...rest} of allActivities) {
 		const allSubTypes = String(subType).split(",");
 		const completed = this.mapping[subType];
