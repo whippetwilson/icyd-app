@@ -2623,8 +2623,7 @@ module.exports.generatePrevention = async (periods = [
 		}),
 	]);
 
-	const allActivities = await this.getAllData("IXxHJADVCkb", searchInstances);
-	console.log(allActivities);
+	const allActivities = await this.getAllData("IXxHJADVCkb", "*", searchInstances);
 
 	const sessions = {
 		"MOE Journeys Plus": options.map((o) => o.code),
