@@ -609,7 +609,6 @@ module.exports.getProgramStageData = async (
 		},
 		field_multi_value_leniency: true
 	});
-	console.log(data);
 	return groupBy(data, "trackedEntityInstance");
 };
 
