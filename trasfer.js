@@ -20,7 +20,7 @@ const transfer = async (program) => {
 	console.log(`Fetching for ${lastUpdatedDuration}`);
 	try {
 		const instances = await processTrackedEntityInstances(program, 50, 100, {lastUpdatedDuration});
-		if (program === "HEWq6yr4cs5") {
+		if (program === "RDEklSXCD4C") {
 			await useTracker([
 				moment().subtract(3, "quarters"),
 				moment().subtract(2, "quarters"),
