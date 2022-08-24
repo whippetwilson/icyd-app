@@ -2236,6 +2236,7 @@ module.exports.processInstances = async (
 				corePSS,
 				quarter,
 				preGraduated,
+				fullyGraduated,
 				servedInPreviousQuarter,
 				graduated: "",
 				OVC_SERV,
