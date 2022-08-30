@@ -31,8 +31,16 @@ const risks = {
 };
 
 module.exports.api = axios.create({
-	// baseURL: "https://data.icyd.hispuganda.org/api/",
-	baseURL: "http://localhost:3001/api/",
+	baseURL: "https://data.icyd.hispuganda.org/api/",
+	// baseURL: "http://localhost:3001/api/",
+});
+
+module.exports.mis = axios.create({
+	baseURL: process.env.OVC_HMIS_URL,
+	auth: {
+		username: process.env.OVC_MIS_USERNAME,
+		password: process.env.OVC_MIS_PASSWORD,
+	},
 });
 
 module.exports.instance = axios.create({
@@ -844,6 +852,7 @@ module.exports.hivInformation = (
 	viralLoadCopies,
 	viralLoadStatus
 ) => {
+	let copies = "";
 	let ovcEligible;
 	let VLTestDone;
 	let VLStatus;
@@ -870,7 +879,7 @@ module.exports.hivInformation = (
 				quarterEnd,
 				parseISO(lastViralLoadDate)
 			);
-			if (monthsSinceLastViralLoad <= 12) {
+			if (monthsSinceLastViralLoad < 12) {
 				VLTestDone =
 					viralTestDone === "true" ? 1 : viralTestDone === "false" ? 0 : 0;
 				VLStatus = viralLoadStatus;
@@ -882,6 +891,7 @@ module.exports.hivInformation = (
 		}
 		if (viralLoadResultsReceived && VLTestDone === 1) {
 			ovcVL = viralLoadResultsReceived === "true" ? 1 : 0;
+			copies = viralLoadCopies;
 		} else {
 			ovcVL = 0;
 		}
@@ -905,6 +915,7 @@ module.exports.hivInformation = (
 		VLStatus,
 		VLSuppressed,
 		viralLoadCopies,
+		copies
 	};
 };
 
@@ -1091,11 +1102,8 @@ module.exports.processInstances = async (
 				viralLoads,
 				quarterEnd
 			);
-			let currentViralLoad = maxBy(viralLoadsBe4Quarter, "Ti0huZXbAM0");
+			let currentViralLoad = maxBy(viralLoadsBe4Quarter, ({Ti0huZXbAM0, eventDate}) => `${Ti0huZXbAM0}${eventDate}`);
 
-			if (!currentViralLoad && viralLoadsBe4Quarter.length > 0) {
-				currentViralLoad = maxBy(viralLoadsBe4Quarter, "eventDate");
-			}
 			const viralLoadDuringQuarter = this.eventsWithinPeriod(
 				viralLoads,
 				quarterStart,
@@ -1309,7 +1317,7 @@ module.exports.processInstances = async (
 			);
 			const newlyEnrolled = isWithin ? "Yes" : "No";
 
-			const {VLTestDone, ovcEligible, ovcVL, VLStatus, VLSuppressed} =
+			const {VLTestDone, ovcEligible, ovcVL, VLStatus, VLSuppressed, copies} =
 				this.hivInformation(
 					artStartDate,
 					hivStatus,
@@ -2156,7 +2164,7 @@ module.exports.processInstances = async (
 				VLTestDone,
 				ovcVL,
 				VLStatus,
-				copies: viralLoadCopies,
+				copies,
 				VLSuppressed,
 				eidNo,
 				eidEnrollmentDate,
