@@ -851,7 +851,6 @@ module.exports.hivInformation = (
 	viralLoadCopies,
 	viralLoadStatus
 ) => {
-	console.log(artStartDate, lastViralLoadDate, viralLoadResultsReceived, viralLoadStatus, viralLoadCopies);
 	let copies = "";
 	let ovcEligible;
 	let VLTestDone;
@@ -2678,9 +2677,6 @@ module.exports.generatePrevention = async (periods = [
 			this.getProgramStageData([trackedEntityInstance], "aTZwDRoJnxj"),
 			this.getProgramStageData([trackedEntityInstance], "VzkQBBglj3O"),
 		]);
-
-		console.log(participants.length, availableSession.length, trackedEntityInstance);
-
 		const doneSessions = periods.flatMap((period) => {
 			const start = period.startOf("quarter").toDate();
 			const end = period.endOf("quarter").toDate();
