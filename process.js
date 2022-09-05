@@ -599,7 +599,6 @@ module.exports.getProgramStageData = async (
 	const data = await this.fetchAll({
 		query: `select ${columns} from ${String(programStage).toLowerCase()}`,
 		filter: {
-
 			bool: {
 				must: [
 					{
@@ -852,6 +851,7 @@ module.exports.hivInformation = (
 	viralLoadCopies,
 	viralLoadStatus
 ) => {
+	console.log(artStartDate, lastViralLoadDate, viralLoadResultsReceived, viralLoadStatus, viralLoadCopies);
 	let copies = "";
 	let ovcEligible;
 	let VLTestDone;
@@ -1102,7 +1102,12 @@ module.exports.processInstances = async (
 				viralLoads,
 				quarterEnd
 			);
-			let currentViralLoad = maxBy(viralLoadsBe4Quarter, ({Ti0huZXbAM0, eventDate}) => `${Ti0huZXbAM0}${eventDate}`);
+			let currentViralLoad = maxBy(
+				viralLoadsBe4Quarter.filter(({Ti0huZXbAM0}) => !!Ti0huZXbAM0),
+				({
+					 Ti0huZXbAM0,
+					 eventDate
+				 }) => `${Ti0huZXbAM0}${eventDate}`);
 
 			const viralLoadDuringQuarter = this.eventsWithinPeriod(
 				viralLoads,
@@ -1224,6 +1229,7 @@ module.exports.processInstances = async (
 			const artStartDate = currentViralLoad
 				? currentViralLoad["epmIBD8gh7G"]
 				: "";
+
 			const lastViralLoadDate = currentViralLoad
 				? currentViralLoad["Ti0huZXbAM0"]
 				: "";
@@ -2271,9 +2277,20 @@ module.exports.processInstances = async (
 		})
 	);
 	const total = sum(
-		inserted.map(({data: {items}}) => (items ? items.length : 0))
+		inserted.map(
+			({data: {items}}) =>
+				items.filter((i) => i.index.error === undefined).length
+		)
 	);
-	console.log(total);
+
+	const errors = sum(
+		inserted.map(
+			({data: {items}}) =>
+				items.filter((i) => i.index.error !== undefined).length
+		)
+	);
+	console.log(`total:${total}`);
+	console.log(`errors:${errors}`);
 };
 
 module.exports.useProgramStage = async (
@@ -2661,12 +2678,13 @@ module.exports.generatePrevention = async (periods = [
 			this.getProgramStageData([trackedEntityInstance], "aTZwDRoJnxj"),
 			this.getProgramStageData([trackedEntityInstance], "VzkQBBglj3O"),
 		]);
-		const realParticipants = participants[trackedEntityInstance] || [];
-		const realSessions = availableSession[trackedEntityInstance] || [];
+
+		console.log(participants.length, availableSession.length, trackedEntityInstance);
+
 		const doneSessions = periods.flatMap((period) => {
 			const start = period.startOf("quarter").toDate();
 			const end = period.endOf("quarter").toDate();
-			return realSessions.flat()
+			return availableSession.flat()
 				.filter((event) => {
 					return (
 						event.eventDate &&
@@ -2684,52 +2702,54 @@ module.exports.generatePrevention = async (periods = [
 					};
 				});
 		});
+
+		console.log(doneSessions.length);
 		const groupedSessions = groupBy(doneSessions, "code");
 
-		const layering = realParticipants.flatMap(({ypDUCAS6juy, eXWM3v3oIKu, ...rest1}) => {
-
-			const participantSessions = groupedSessions[ypDUCAS6juy]
-				? groupedSessions[ypDUCAS6juy].filter((i) => {
-					return sessions[allSubTypes[0]].indexOf(i.session) !== -1;
-				})
-				: [];
-			const groupedParticipantSessions = groupBy(participantSessions, "qtr");
-			const ageGroup = this.findAgeGroup(Number(eXWM3v3oIKu));
-
-			return Object.entries(groupedParticipantSessions).map(([qtr, attendedSession]) => {
-				const uniqSessions = uniqBy(attendedSession, (v) => [v.session, v.code].join());
-				const sess = fromPairs(uniqSessions.map(({session}) => [session, 1]));
-				return {
-					id: `${ypDUCAS6juy}${qtr}`,
-					ypDUCAS6juy,
-					...rest1,
-					trackedEntityInstance,
-					orgUnit,
-					mWyp85xIzXR: subType,
-					ageGroup,
-					eXWM3v3oIKu,
-					...rest,
-					...sess,
-					...units,
-					qtr,
-					[subType]: uniqSessions.length,
-					[completed]:
-						uniqSessions.length >= this.mapping2[subType] ? 1 : 0,
-					completedPrevention:
-						uniqSessions.length >= this.mapping2[subType] ? 1 : 0,
-				};
-			});
-		});
-		const inserted = await Promise.all(
-			chunk(layering, 100).map((c) => {
-				return this.api.post("wal/index?index=prevention-layering", {
-					data: c,
-				});
-			})
-		);
-		const total = sum(
-			inserted.map(({data: {items}}) => (items ? items.length : 0))
-		);
-		console.log(total);
+		// const layering = participants.flatMap(({ypDUCAS6juy, eXWM3v3oIKu, ...rest1}) => {
+		//
+		// 	const participantSessions = groupedSessions[ypDUCAS6juy]
+		// 		? groupedSessions[ypDUCAS6juy].filter((i) => {
+		// 			return sessions[allSubTypes[0]].indexOf(i.session) !== -1;
+		// 		})
+		// 		: [];
+		// 	const groupedParticipantSessions = groupBy(participantSessions, "qtr");
+		// 	const ageGroup = this.findAgeGroup(Number(eXWM3v3oIKu));
+		//
+		// 	return Object.entries(groupedParticipantSessions).map(([qtr, attendedSession]) => {
+		// 		const uniqSessions = uniqBy(attendedSession, (v) => [v.session, v.code].join());
+		// 		const sess = fromPairs(uniqSessions.map(({session}) => [session, 1]));
+		// 		return {
+		// 			id: `${ypDUCAS6juy}${qtr}`,
+		// 			ypDUCAS6juy,
+		// 			...rest1,
+		// 			trackedEntityInstance,
+		// 			orgUnit,
+		// 			mWyp85xIzXR: subType,
+		// 			ageGroup,
+		// 			eXWM3v3oIKu,
+		// 			...rest,
+		// 			...sess,
+		// 			...units,
+		// 			qtr,
+		// 			[subType]: uniqSessions.length,
+		// 			[completed]:
+		// 				uniqSessions.length >= this.mapping2[subType] ? 1 : 0,
+		// 			completedPrevention:
+		// 				uniqSessions.length >= this.mapping2[subType] ? 1 : 0,
+		// 		};
+		// 	});
+		// });
+		// const inserted = await Promise.all(
+		// 	chunk(layering, 100).map((c) => {
+		// 		return this.api.post("wal/index?index=prevention-layering", {
+		// 			data: c,
+		// 		});
+		// 	})
+		// );
+		// const total = sum(
+		// 	inserted.map(({data: {items}}) => (items ? items.length : 0))
+		// );
+		// console.log(total);
 	}
 };
