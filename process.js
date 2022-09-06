@@ -1101,12 +1101,19 @@ module.exports.processInstances = async (
 				viralLoads,
 				quarterEnd
 			);
+
 			let currentViralLoad = maxBy(
 				viralLoadsBe4Quarter.filter(({Ti0huZXbAM0}) => !!Ti0huZXbAM0),
 				({
 					 Ti0huZXbAM0,
 					 eventDate
 				 }) => `${Ti0huZXbAM0}${eventDate}`);
+
+
+			if (!currentViralLoad && viralLoadsBe4Quarter.length > 0) {
+				currentViralLoad = maxBy(viralLoadsBe4Quarter, ({eventDate}) => eventDate);
+			}
+
 
 			const viralLoadDuringQuarter = this.eventsWithinPeriod(
 				viralLoads,
