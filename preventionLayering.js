@@ -1,7 +1,7 @@
 const moment = require("moment");
-const {generatePrevention} = require("./process");
+const {useProgramStage} = require("./process");
 
-generatePrevention([
+useProgramStage([
 	moment().subtract(3, "quarters"),
 	moment().subtract(2, "quarters"),
 	moment().subtract(1, "quarters"),

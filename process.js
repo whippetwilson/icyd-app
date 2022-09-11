@@ -120,6 +120,12 @@ module.exports.mapping = {
 	"No means No sessions (Girls)": "Completed NMN Girls",
 	"No means No sessions (Boys) New Curriculum":
 		"Completed NMN Boys New Curriculum",
+	SINOVUYO: "Completed SINOVUYO",
+	ECD: "Completed SINOVUYO",
+	"Saving and Borrowing": "Completed Saving and Borrowing",
+	"SPM Training": "Completed SPM Training",
+	"Financial Literacy": "Completed Financial Literacy",
+	"VSLA Methodology": "Completed VSLA Methodology",
 };
 module.exports.mapping2 = {
 	"MOE Journeys Plus": 18,
@@ -624,17 +630,19 @@ module.exports.getAllData = async (
 	columns = "*",
 	instances = []
 ) => {
-	let must = [{
-		terms: {
-			"mWyp85xIzXR.keyword": [
-				"MOE Journeys Plus",
-				"MOH Journeys curriculum",
-				"No means No sessions (Boys)",
-				"No means No sessions (Girls)",
-				"No means No sessions (Boys) New Curriculum",
-			]
-		}
-	}];
+	let must = [
+		// 	{
+		// 	terms: {
+		// 		"mWyp85xIzXR.keyword": [
+		// 			"MOE Journeys Plus",
+		// 			"MOH Journeys curriculum",
+		// 			"No means No sessions (Boys)",
+		// 			"No means No sessions (Girls)",
+		// 			"No means No sessions (Boys) New Curriculum",
+		// 		]
+		// 	}
+		// }
+	];
 
 	if (instances.length > 0) {
 		must = [...must, {
@@ -694,7 +702,7 @@ module.exports.processPrevention = async (
 						};
 					});
 			});
-			const subType = instance ? instance["mWyp85xIzXR"] : undefined;
+			const subType = instance ? instance["mWyp85xIzXR"] : "";
 			const allSubTypes = String(subType).split(",");
 			const completed = this.mapping[subType];
 			const groupedSessions = groupBy(doneSessions, "code");
@@ -2300,18 +2308,161 @@ module.exports.processInstances = async (
 };
 
 module.exports.useProgramStage = async (
-	allActivities,
 	periods = [
 		moment().subtract(3, "quarters"),
 		moment().subtract(2, "quarters"),
 		moment().subtract(1, "quarters"),
 		moment(),
 	],
-	sessions,
-	otherParams = {}
+	searchInstances = []
 ) => {
 	console.log("Fetching organisation units");
 	const processedUnits = await this.fetchUnits4Instances();
+	console.log("Fetching metadata");
+	const [
+		{data: {options}},
+		{data: {options: options1}},
+		{data: {options: options2}},
+		{data: {options: options12}},
+		{data: {options: options3}},
+		{data: {options: options4}},
+		{data: {options: options5}},
+		{data: {options: options6}},
+		{data: {options: options7}},
+		{data: {options: options8}},
+		{data: {options: options9}},
+		{data: {options: options10}},
+		{data: {options: options11}},
+	] = await Promise.all([
+		this.instance.get("optionGroups/HkuYbbefaEM", {
+			params: {
+				fields: "options[code]"
+			}
+		}),
+		this.instance.get("optionGroups/P4tTIlhX1yB", {
+			params: {
+				fields: "options[code]",
+			},
+		}),
+		this.instance.get("optionGroups/WuPXlmvSfVJ", {
+			params: {
+				fields: "options[code]",
+			},
+		}),
+		this.instance.get("optionGroups/TIObJloCVdC", {
+			params: {
+				fields: "options[code]",
+			},
+		}),
+		this.instance.get("optionGroups/okgcyLQNVFe", {
+			params: {
+				fields: "options[code]",
+			},
+		}),
+		this.instance.get("optionGroups/XQ3eQax0uIk", {
+			params: {
+				fields: "options[code]",
+			},
+		}),
+		this.instance.get("optionGroups/qEium1Lrsc0", {
+			params: {
+				fields: "options[code]",
+			},
+		}),
+		this.instance.get("optionGroups/LUR9gZUkcrr", {
+			params: {
+				fields: "options[code]",
+			},
+		}),
+		this.instance.get("optionGroups/EYMKGdEeniO", {
+			params: {
+				fields: "options[code]",
+			},
+		}),
+		this.instance.get("optionGroups/gmEcQwHbivM", {
+			params: {
+				fields: "options[code]",
+			},
+		}),
+		this.instance.get("optionGroups/ptI9Geufl7R", {
+			params: {
+				fields: "options[code]",
+			},
+		}),
+		this.instance.get("optionGroups/QHaULS891IF", {
+			params: {
+				fields: "options[code]",
+			},
+		}),
+		this.instance.get("optionGroups/ZOAmd05j2t9", {
+			params: {
+				fields: "options[code]",
+			},
+		}),
+	]);
+
+	const sessions = {
+		"MOE Journeys Plus": options.map((o) => o.code),
+		"MOH Journeys curriculum": options1.map((o) => o.code),
+		"No means No sessions (Boys)": options2.map((o) => o.code),
+		"No means No sessions (Boys) New Curriculum": options12.map((o) => o.code),
+		"No means No sessions (Girls)": options3.map((o) => o.code),
+		"VSLA Methodology": options4.map((o) => o.code),
+		"VSLA TOT": options5.map((o) => o.code),
+		"Financial Literacy": options6.map((o) => o.code),
+		"SPM Training": options7.map((o) => o.code),
+		"Bank Linkages": options8.map((o) => o.code),
+		SINOVUYO: options9.map((o) => o.code),
+		ECD: options10.map((o) => o.code),
+		"Saving and Borrowing": options11.map((o) => o.code),
+	};
+
+	let must = [{
+		match: {
+			deleted: false,
+		}
+	}, {
+		match: {
+			inactive: false,
+		},
+	}];
+
+
+	let query = {
+		query: "select * from ixxhjadvckb",
+		fetch_size: 100,
+
+	};
+	if (searchInstances.length > 0) {
+		must = [...must, {terms: {"trackedEntityInstance.keyword": searchInstances}}];
+		query = {
+			...query, filter: {
+				bool: {must}
+			}
+		};
+	}
+	const {data} = await this.api.post("wal/sql", query);
+	let {columns, rows, cursor: currentCursor} = data;
+	const trackedEntityInstances = rows.map((row) => {
+		return fromPairs(columns.map(({name}, index) => [name, row[index]]));
+	});
+	console.log("Generating prevention layering for first cursor");
+	await this.generatePrevention(periods, trackedEntityInstances, processedUnits, sessions);
+	console.log("Finished prevention generating layering for first cursor");
+	if (currentCursor) {
+		do {
+			console.log("Fetching data for next cursor");
+			const {
+				data: {rows, cursor},
+			} = await this.api.post("wal/sql", {cursor: currentCursor});
+			const trackedEntityInstances = rows.map((row) => {
+				return fromPairs(columns.map(({name}, index) => [name, row[index]]));
+			});
+			await this.generatePrevention(periods, trackedEntityInstances, processedUnits, sessions);
+			console.log("Finished generating layering for cursor");
+			currentCursor = cursor;
+		} while (currentCursor !== undefined && currentCursor !== null);
+	}
 };
 
 module.exports.generate = async (
@@ -2566,193 +2717,108 @@ module.exports.processTrackedEntityInstances = async (
 };
 
 
-module.exports.generatePrevention = async (periods = [
-	moment().subtract(3, "quarters"),
-	moment().subtract(2, "quarters"),
-	moment().subtract(1, "quarters"),
-	moment(),
-], searchInstances = []) => {
-	const processedUnits = await this.fetchUnits4Instances();
+module.exports.generatePrevention = async (periods, instances, processedUnits, sessions) => {
+	const allInstances = instances.map(({trackedEntityInstance}) => trackedEntityInstance);
+	const groupedActivities = fromPairs(instances.map((instance) => [instance.trackedEntityInstance, instance]));
 	const [
-		{data: {options}},
-		{data: {options: options1}},
-		{data: {options: options2}},
-		{data: {options: options12}},
-		{data: {options: options3}},
-		{data: {options: options4}},
-		{data: {options: options5}},
-		{data: {options: options6}},
-		{data: {options: options7}},
-		{data: {options: options8}},
-		{data: {options: options9}},
-		{data: {options: options10}},
-		{data: {options: options11}},
+		participants,
+		availableSession
 	] = await Promise.all([
-		this.instance.get("optionGroups/HkuYbbefaEM", {
-			params: {
-				fields: "options[code]"
-			}
-		}),
-		this.instance.get("optionGroups/P4tTIlhX1yB", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/WuPXlmvSfVJ", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/TIObJloCVdC", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/okgcyLQNVFe", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/XQ3eQax0uIk", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/qEium1Lrsc0", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/LUR9gZUkcrr", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/EYMKGdEeniO", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/gmEcQwHbivM", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/ptI9Geufl7R", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/QHaULS891IF", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/ZOAmd05j2t9", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
+		this.getProgramStageData(allInstances, "aTZwDRoJnxj"),
+		this.getProgramStageData(allInstances, "VzkQBBglj3O"),
 	]);
-
-	const allActivities = await this.getAllData("IXxHJADVCkb", "*", searchInstances);
-
-	const sessions = {
-		"MOE Journeys Plus": options.map((o) => o.code),
-		"MOH Journeys curriculum": options1.map((o) => o.code),
-		"No means No sessions (Boys)": options2.map((o) => o.code),
-		"No means No sessions (Boys) New Curriculum": options12.map((o) => o.code),
-		"No means No sessions (Girls)": options3.map((o) => o.code),
-		"VSLA Methodology": options4.map((o) => o.code),
-		"VSLA TOT": options5.map((o) => o.code),
-		"Financial Literacy": options6.map((o) => o.code),
-		"SPM Training": options7.map((o) => o.code),
-		"Bank Linkages": options8.map((o) => o.code),
-		SINOVUYO: options9.map((o) => o.code),
-		ECD: options10.map((o) => o.code),
-		"Saving and Borrowing": options11.map((o) => o.code),
-	};
-	for (const {trackedEntityInstance, orgUnit, mWyp85xIzXR: subType, ...rest} of allActivities) {
-		const allSubTypes = String(subType).split(",");
-		const completed = this.mapping[subType];
-		const units = processedUnits[orgUnit];
-
-		const [
-			participants,
-			availableSession
-		] = await Promise.all([
-			this.getProgramStageData([trackedEntityInstance], "aTZwDRoJnxj"),
-			this.getProgramStageData([trackedEntityInstance], "VzkQBBglj3O"),
-		]);
-		const doneSessions = periods.flatMap((period) => {
-			const start = period.startOf("quarter").toDate();
-			const end = period.endOf("quarter").toDate();
-			return availableSession.flat()
-				.filter((event) => {
-					return (
-						event.eventDate &&
-						isWithinInterval(new Date(event.eventDate), {
-							start,
-							end,
-						})
-					);
+	const doneSessions = periods.flatMap((period) => {
+		const start = period.startOf("quarter").toDate();
+		const end = period.endOf("quarter").toDate();
+		return Object.values(availableSession).flat().filter((event) => {
+			return (
+				event.eventDate &&
+				isWithinInterval(new Date(event.eventDate), {
+					start,
+					end,
 				})
-				.map(({ypDUCAS6juy, n20LkH4ZBF8}) => {
-					return {
-						session: n20LkH4ZBF8 ? n20LkH4ZBF8 : undefined,
-						code: ypDUCAS6juy ? ypDUCAS6juy : undefined,
-						qtr: period.format("YYYY[Q]Q")
-					};
-				});
+			);
+		})
+			.map(({ypDUCAS6juy, n20LkH4ZBF8, trackedEntityInstance}) => {
+				return {
+					id: `${trackedEntityInstance}${ypDUCAS6juy || ""}`,
+					session: n20LkH4ZBF8 ? n20LkH4ZBF8 : undefined,
+					code: ypDUCAS6juy ? ypDUCAS6juy : undefined,
+					qtr: period.format("YYYY[Q]Q")
+				};
+			});
+	});
+
+	const groupedSessions = groupBy(doneSessions, "id");
+	const layering = Object.values(participants).flat().flatMap(({
+		                                                             ypDUCAS6juy,
+		                                                             trackedEntityInstance,
+		                                                             eXWM3v3oIKu,
+		                                                             ...rest1
+	                                                             }) => {
+		const {orgUnit, mWyp85xIzXR: subType, ...rest} = groupedActivities[trackedEntityInstance];
+		const allSubTypes = String(subType).split(",");
+		const units = processedUnits[orgUnit];
+		const foundSessions = groupedSessions[`${trackedEntityInstance}${ypDUCAS6juy || ""}`] || [];
+
+		const participantSessions = foundSessions.flatMap((i) => {
+			return allSubTypes.flatMap((sub) => {
+				const value = sessions[sub];
+				if (value && value.indexOf(i.session) !== -1) {
+					return {...i, sub};
+				}
+				return [];
+			});
 		});
-
-		console.log(doneSessions.length);
-		const groupedSessions = groupBy(doneSessions, "code");
-
-		// const layering = participants.flatMap(({ypDUCAS6juy, eXWM3v3oIKu, ...rest1}) => {
-		//
-		// 	const participantSessions = groupedSessions[ypDUCAS6juy]
-		// 		? groupedSessions[ypDUCAS6juy].filter((i) => {
-		// 			return sessions[allSubTypes[0]].indexOf(i.session) !== -1;
-		// 		})
-		// 		: [];
-		// 	const groupedParticipantSessions = groupBy(participantSessions, "qtr");
-		// 	const ageGroup = this.findAgeGroup(Number(eXWM3v3oIKu));
-		//
-		// 	return Object.entries(groupedParticipantSessions).map(([qtr, attendedSession]) => {
-		// 		const uniqSessions = uniqBy(attendedSession, (v) => [v.session, v.code].join());
-		// 		const sess = fromPairs(uniqSessions.map(({session}) => [session, 1]));
-		// 		return {
-		// 			id: `${ypDUCAS6juy}${qtr}`,
-		// 			ypDUCAS6juy,
-		// 			...rest1,
-		// 			trackedEntityInstance,
-		// 			orgUnit,
-		// 			mWyp85xIzXR: subType,
-		// 			ageGroup,
-		// 			eXWM3v3oIKu,
-		// 			...rest,
-		// 			...sess,
-		// 			...units,
-		// 			qtr,
-		// 			[subType]: uniqSessions.length,
-		// 			[completed]:
-		// 				uniqSessions.length >= this.mapping2[subType] ? 1 : 0,
-		// 			completedPrevention:
-		// 				uniqSessions.length >= this.mapping2[subType] ? 1 : 0,
-		// 		};
-		// 	});
-		// });
-		// const inserted = await Promise.all(
-		// 	chunk(layering, 100).map((c) => {
-		// 		return this.api.post("wal/index?index=prevention-layering", {
-		// 			data: c,
-		// 		});
-		// 	})
-		// );
-		// const total = sum(
-		// 	inserted.map(({data: {items}}) => (items ? items.length : 0))
-		// );
-		// console.log(total);
-	}
+		const groupedParticipantSessions = groupBy(participantSessions, "qtr");
+		const ageGroup = this.findAgeGroup(Number(eXWM3v3oIKu));
+		return Object.entries(groupedParticipantSessions).map(([qtr, attendedSession]) => {
+			let initial = {};
+			const uniqSessions = uniqBy(attendedSession, (v) => [v.session, v.code].join());
+			Object.entries(groupBy(uniqSessions, "sub")).forEach(([sub, sess]) => {
+				const completed = this.mapping[sub];
+				initial = {
+					...initial,
+					...fromPairs(sess.map(({session}) => [session, 1])),
+					[sub]: sess.length,
+					[completed]:
+						sess.length >= this.mapping2[sub] ? 1 : 0,
+					completedPrevention:
+						sess.length >= this.mapping2[sub] ? 1 : 0,
+				};
+			});
+			return {
+				ypDUCAS6juy,
+				...rest1,
+				trackedEntityInstance,
+				orgUnit,
+				mWyp85xIzXR: subType,
+				ageGroup,
+				eXWM3v3oIKu,
+				...rest,
+				...initial,
+				...units,
+				qtr,
+				id: `${String(ypDUCAS6juy).replaceAll("/", "")}${qtr}`,
+			};
+		});
+	});
+	const inserted = await Promise.all(
+		chunk(layering, 1000).map((c) => {
+			return this.api.post("wal/index?index=layering2", {
+				data: c,
+			});
+		})
+	);
+	const total = sum(
+		inserted.map(({data: {items}}) => (items ? items.length : 0))
+	);
+	const errors = sum(
+		inserted.map(
+			({data: {items}}) =>
+				items.filter((i) => i.index.error !== undefined).length
+		)
+	);
+	console.log(`total:${total}`);
+	console.log(`errors:${errors}`);
 };
