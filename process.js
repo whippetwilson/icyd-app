@@ -2804,7 +2804,7 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 		});
 	});
 	const inserted = await Promise.all(
-		chunk(layering, 1000).map((c) => {
+		chunk(layering, 100).map((c) => {
 			return this.api.post("wal/index?index=layering2", {
 				data: c,
 			});
