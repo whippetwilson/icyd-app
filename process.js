@@ -1253,6 +1253,7 @@ module.exports.processInstances = async (
 			const viralLoadResultsReceived = currentViralLoad
 				? currentViralLoad["te2VwealaBT"]
 				: "";
+			console.log(viralLoadResultsReceived);
 			const viralLoadStatus = currentViralLoad
 				? currentViralLoad["AmaNW7QDuOV"]
 				: "";

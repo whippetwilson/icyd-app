@@ -1,7 +1,7 @@
 const schedule = require("node-schedule");
 const fs = require("fs");
 const {differenceInMinutes, parseISO} = require("date-fns");
-const {processTrackedEntityInstances, useTracker, generatePrevention} = require("./process");
+const {processTrackedEntityInstances, useTracker, useProgramStage} = require("./process");
 const moment = require("moment");
 const args = process.argv.slice(2);
 const transfer = async (program) => {
@@ -29,11 +29,11 @@ const transfer = async (program) => {
 			], instances);
 		}
 		if (program === "IXxHJADVCkb") {
-			await generatePrevention([
+			await useProgramStage([
 				moment().subtract(3, "quarters"),
 				moment().subtract(2, "quarters"),
 				moment().subtract(1, "quarters"),
-				moment(),
+				moment()
 			], instances);
 		}
 	} catch (error) {
