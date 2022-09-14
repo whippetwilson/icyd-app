@@ -2430,22 +2430,18 @@ module.exports.useProgramStage = async (
 		terms: {
 			"bFnIjGJpf9t.keyword": ["3. Journeys Plus", "4. NMN"],
 		},
-	}
-	];
+	}];
 
+
+	if (searchInstances.length > 0) {
+		must = [...must, {terms: {"trackedEntityInstance.keyword": searchInstances}}];
+	}
 
 	let query = {
 		query: "select * from ixxhjadvckb",
 		fetch_size: 100,
+		bool: {must}
 	};
-	if (searchInstances.length > 0) {
-		must = [...must, {terms: {"trackedEntityInstance.keyword": searchInstances}}];
-		query = {
-			...query, filter: {
-				bool: {must}
-			}
-		};
-	}
 	const {data} = await this.api.post("wal/sql", query);
 	let {columns, rows, cursor: currentCursor} = data;
 	const trackedEntityInstances = rows.map((row) => {
