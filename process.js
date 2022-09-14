@@ -2440,7 +2440,9 @@ module.exports.useProgramStage = async (
 	let query = {
 		query: "select * from ixxhjadvckb",
 		fetch_size: 100,
-		bool: {must}
+		filter: {
+			bool: {must}
+		}
 	};
 	const {data} = await this.api.post("wal/sql", query);
 	let {columns, rows, cursor: currentCursor} = data;
