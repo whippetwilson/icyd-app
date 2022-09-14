@@ -2439,7 +2439,7 @@ module.exports.useProgramStage = async (
 
 	let query = {
 		query: "select * from ixxhjadvckb",
-		fetch_size: 100,
+		fetch_size: 50,
 		filter: {
 			bool: {must}
 		}
@@ -2679,7 +2679,8 @@ module.exports.processTrackedEntityInstances = async (
 	}
 	const params = {
 		fields: "*",
-		ouMode: "ALL",
+		ouMode: "DESCENDANTS",
+		ou:"aIahLLmtvgT",
 		program,
 		pageSize,
 		page: startingPage,
