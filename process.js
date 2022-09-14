@@ -15,7 +15,7 @@ const {
 	orderBy,
 	uniqBy,
 	chunk,
-	sum, uniq, unionBy,
+	sum, uniq, unionBy, isArray,
 } = require("lodash");
 const moment = require("moment");
 const axios = require("axios");
@@ -2439,7 +2439,7 @@ module.exports.useProgramStage = async (
 
 	let query = {
 		query: "select * from ixxhjadvckb",
-		fetch_size: 25,
+		fetch_size: 10,
 		filter: {
 			bool: {must}
 		}
@@ -2680,7 +2680,7 @@ module.exports.processTrackedEntityInstances = async (
 	const params = {
 		fields: "*",
 		ouMode: "DESCENDANTS",
-		ou:"aIahLLmtvgT",
+		ou: "aIahLLmtvgT",
 		program,
 		pageSize,
 		page: startingPage,
@@ -2803,22 +2803,21 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 			};
 		});
 	});
-	const inserted = await Promise.all(
-		chunk(layering, 100).map((c) => {
-			return this.api.post("wal/index?index=layering2", {
-				data: c,
-			});
-		})
-	);
-	const total = sum(
-		inserted.map(({data: {items}}) => (items ? items.length : 0))
-	);
-	const errors = sum(
-		inserted.map(
-			({data: {items}}) =>
-				items.filter((i) => i.index.error !== undefined).length
-		)
-	);
+
+	const {data: {items}} = await this.api.post("wal/index?index=layering2", {
+		data: layering,
+	});
+
+	const total = items ? items.filter((i) => i.index.error === undefined).length : 0;
+	const errors = items ? items.filter((i) => i.index.error !== undefined).length : 0;
+
+	console.log(`supposed:${layering.length}`);
 	console.log(`total:${total}`);
 	console.log(`errors:${errors}`);
+
+	if (total === 0 && errors === 0) {
+		console.log(JSON.stringify(allInstances));
+		console.log(participants);
+		console.log(availableSession);
+	}
 };
