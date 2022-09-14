@@ -2772,7 +2772,7 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 			const units = processedUnits[orgUnit];
 			let initial = {};
 			allSubTypes.forEach((sub) => {
-				const value = sessions[sub];
+				const value = sessions[sub] || [];
 				const completed = this.mapping[sub];
 				let foundSessions = (groupedSessions[`${trackedEntityInstance}${ypDUCAS6juy || ""}`] || [])
 					.filter((session) => session.qtr === qtr && value.indexOf(session.session) !== -1);
