@@ -2439,7 +2439,7 @@ module.exports.useProgramStage = async (
 
 	let query = {
 		query: "select * from ixxhjadvckb",
-		fetch_size: 50,
+		fetch_size: 25,
 		filter: {
 			bool: {must}
 		}
