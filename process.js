@@ -2806,7 +2806,7 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 
 	const inserted = await Promise.all(
 		chunk(layering, 100).map((c) => {
-			return this.api.post("wal/index?index=layering", {
+			return this.api.post("wal/index?index=layering2", {
 				data: c,
 			});
 		})
