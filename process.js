@@ -15,7 +15,7 @@ const {
 	orderBy,
 	uniqBy,
 	chunk,
-	sum, uniq,
+	sum, uniq, unionBy,
 } = require("lodash");
 const moment = require("moment");
 const axios = require("axios");
@@ -2426,13 +2426,17 @@ module.exports.useProgramStage = async (
 		match: {
 			inactive: false,
 		},
-	}];
+	}, {
+		terms: {
+			"bFnIjGJpf9t.keyword": ["3. Journeys Plus", "4. NMN"],
+		},
+	}
+	];
 
 
 	let query = {
 		query: "select * from ixxhjadvckb",
 		fetch_size: 100,
-
 	};
 	if (searchInstances.length > 0) {
 		must = [...must, {terms: {"trackedEntityInstance.keyword": searchInstances}}];
@@ -2718,7 +2722,7 @@ module.exports.processTrackedEntityInstances = async (
 };
 
 
-module.exports.generatePrevention = async (periods, instances, processedUnits, sessions) => {
+module.exports.generatePrevention = async (periods, instances, processedUnits, sessions, prevention = true) => {
 	const allInstances = instances.map(({trackedEntityInstance}) => trackedEntityInstance);
 	const groupedActivities = fromPairs(instances.map((instance) => [instance.trackedEntityInstance, instance]));
 	const [
@@ -2729,8 +2733,17 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 		this.getProgramStageData(allInstances, "VzkQBBglj3O"),
 	]);
 	const doneSessions = periods.flatMap((period) => {
-		const start = period.startOf("quarter").toDate();
-		const end = period.endOf("quarter").toDate();
+
+		let start = period.startOf("quarter").toDate();
+		let end = period.endOf("quarter").toDate();
+
+		if (prevention) {
+			const [financialQuarterStart, financialQuarterEnd] =
+				this.calculateQuarter(period.year(), period.quarter());
+			start = financialQuarterStart;
+			end = financialQuarterEnd;
+		}
+
 		return Object.values(availableSession).flat().filter((event) => {
 			return (
 				event.eventDate &&
@@ -2751,43 +2764,30 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 	});
 
 	const groupedSessions = groupBy(doneSessions, "id");
-	const layering = Object.values(participants).flat().flatMap(({
-		                                                             ypDUCAS6juy,
-		                                                             trackedEntityInstance,
-		                                                             eXWM3v3oIKu,
-		                                                             ...rest1
-	                                                             }) => {
-		const {orgUnit, mWyp85xIzXR: subType, ...rest} = groupedActivities[trackedEntityInstance];
-		const allSubTypes = String(subType).split(",");
-		const units = processedUnits[orgUnit];
-		const foundSessions = groupedSessions[`${trackedEntityInstance}${ypDUCAS6juy || ""}`] || [];
-
-		const participantSessions = foundSessions.flatMap((i) => {
-			return allSubTypes.flatMap((sub) => {
-				const value = sessions[sub];
-				if (value && value.indexOf(i.session) !== -1) {
-					return {...i, sub};
-				}
-				return [];
-			});
-		});
-		const groupedParticipantSessions = groupBy(participantSessions, "qtr");
-		const ageGroup = this.findAgeGroup(Number(eXWM3v3oIKu));
-		return Object.entries(groupedParticipantSessions).map(([qtr, attendedSession]) => {
+	const layering = periods.flatMap((period) => {
+		const qtr = period.format("YYYY[Q]Q");
+		return Object.values(participants).flat().map(({ypDUCAS6juy, trackedEntityInstance, eXWM3v3oIKu, ...rest1}) => {
+			const {orgUnit, mWyp85xIzXR: subType, ...rest} = groupedActivities[trackedEntityInstance];
+			const allSubTypes = String(subType).split(",");
+			const units = processedUnits[orgUnit];
 			let initial = {};
-			const uniqSessions = uniqBy(attendedSession, (v) => [v.session, v.code].join());
-			Object.entries(groupBy(uniqSessions, "sub")).forEach(([sub, sess]) => {
+			allSubTypes.forEach((sub) => {
+				const value = sessions[sub];
 				const completed = this.mapping[sub];
+				let foundSessions = (groupedSessions[`${trackedEntityInstance}${ypDUCAS6juy || ""}`] || [])
+					.filter((session) => session.qtr === qtr && value.indexOf(session.session) !== -1);
+				foundSessions = uniqBy(foundSessions, "session");
 				initial = {
 					...initial,
-					...fromPairs(sess.map(({session}) => [session, 1])),
-					[sub]: sess.length,
+					[sub]: foundSessions.length,
 					[completed]:
-						sess.length >= this.mapping2[sub] ? 1 : 0,
+						foundSessions.length >= this.mapping2[sub] ? 1 : 0,
 					completedPrevention:
-						sess.length >= this.mapping2[sub] ? 1 : 0,
+						foundSessions.length >= this.mapping2[sub] ? 1 : 0,
+					...fromPairs(foundSessions.map(({session}) => [`${session}`, 1]))
 				};
 			});
+			const ageGroup = this.findAgeGroup(Number(eXWM3v3oIKu));
 			return {
 				ypDUCAS6juy,
 				...rest1,

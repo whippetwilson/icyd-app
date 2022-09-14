@@ -50,26 +50,7 @@ module.exports = {
 					refresh: true,
 					body,
 				});
-
 				return response;
-				// const errorDocuments = [];
-				// if (bulkResponse.errors) {
-				//   bulkResponse.items.forEach((action, i) => {
-				//     const operation = Object.keys(action)[0];
-				//     if (action[operation].error) {
-				//       errorDocuments.push({
-				//         status: action[operation].status,
-				//         error: action[operation].error,
-				//         operation: body[i * 2],
-				//         document: body[i * 2 + 1],
-				//       });
-				//     }
-				//   });
-				// }
-				// return {
-				//   errorDocuments,
-				//   inserted: dataset.length - errorDocuments.length,
-				// };
 			},
 		},
 		sql: {
