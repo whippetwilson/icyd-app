@@ -2804,12 +2804,26 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 		});
 	});
 
-	const {data: {items}} = await this.api.post("wal/index?index=layering2", {
-		data: layering,
-	});
+	const inserted = await Promise.all(
+		chunk(layering, 100).map((c) => {
+			return this.api.post("wal/index?index=layering", {
+				data: c,
+			});
+		})
+	);
+	const total = sum(
+		inserted.map(
+			({data: {items}}) =>
+				items.filter((i) => i.index.error === undefined).length
+		)
+	);
 
-	const total = items ? items.filter((i) => i.index.error === undefined).length : 0;
-	const errors = items ? items.filter((i) => i.index.error !== undefined).length : 0;
+	const errors = sum(
+		inserted.map(
+			({data: {items}}) =>
+				items.filter((i) => i.index.error !== undefined).length
+		)
+	);
 
 	console.log(`supposed:${layering.length}`);
 	console.log(`total:${total}`);
@@ -2817,7 +2831,5 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 
 	if (total === 0 && errors === 0) {
 		console.log(JSON.stringify(allInstances));
-		console.log(participants);
-		console.log(availableSession);
 	}
 };
