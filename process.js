@@ -2679,8 +2679,7 @@ module.exports.processTrackedEntityInstances = async (
 	}
 	const params = {
 		fields: "*",
-		ouMode: "DESCENDANTS",
-		ou: "aIahLLmtvgT",
+		ouMode: "ALL",
 		program,
 		pageSize,
 		page: startingPage,
