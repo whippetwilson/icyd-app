@@ -2719,6 +2719,76 @@ module.exports.processTrackedEntityInstances = async (
 	return processed;
 };
 
+module.exports.calculate = async (trackedEntityInstances) => {
+	const {data: {rows}} = await this.api.post("wal/sql", {
+		query: `select COUNT(*) from ${String("aTZwDRoJnxj").toLowerCase()}`,
+		filter: {
+			bool: {
+				must: [
+					{
+						terms: {
+							"trackedEntityInstance.keyword": trackedEntityInstances,
+						},
+					},
+					{
+						match: {
+							deleted: false,
+						},
+					}
+				],
+			},
+		}
+	});
+
+	if (rows.length > 0) {
+		const [[total]] = rows;
+		return total;
+	}
+	// return 0;
+};
+
+module.exports.queryActivities = async () => {
+	let total = 0;
+	let must = [{
+		match: {
+			deleted: false,
+		}
+	}, {
+		match: {
+			inactive: false,
+		},
+	}, {
+		terms: {
+			"bFnIjGJpf9t.keyword": ["3. Journeys Plus", "4. NMN"],
+		},
+	}];
+
+	let query = {
+		query: "select trackedEntityInstance,oqabsHE0ZUI,cYDK0qZSri9 from ixxhjadvckb",
+		fetch_size: 1,
+		filter: {
+			bool: {must}
+		}
+	};
+	const {data} = await this.api.post("wal/sql", query);
+	let {rows: [[trackedEntityInstance, code, name]], cursor: currentCursor} = data;
+	const participants = await this.calculate([trackedEntityInstance]);
+	console.log(`${code},${name},${participants}`);
+	total = total + participants;
+
+	if (currentCursor) {
+		do {
+			const {
+				data: {rows: [[trackedEntityInstance, code, name]], cursor},
+			} = await this.api.post("wal/sql", {cursor: currentCursor});
+			const participants = await this.calculate([trackedEntityInstance]);
+			console.log(`${code},${name},${participants}`);
+			total = total + participants;
+			currentCursor = cursor;
+		} while (currentCursor !== undefined && currentCursor !== null);
+	}
+	console.log(`Total:${total}`);
+};
 
 module.exports.generatePrevention = async (periods, instances, processedUnits, sessions, prevention = true) => {
 	const allInstances = instances.map(({trackedEntityInstance}) => trackedEntityInstance);
@@ -2764,7 +2834,13 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 	const groupedSessions = groupBy(doneSessions, "id");
 	const layering = periods.flatMap((period) => {
 		const qtr = period.format("YYYY[Q]Q");
-		return Object.values(participants).flat().map(({ypDUCAS6juy, trackedEntityInstance, eXWM3v3oIKu, ...rest1}) => {
+		return Object.values(participants).flat().map(({
+			                                               ypDUCAS6juy,
+			                                               trackedEntityInstance,
+			                                               eXWM3v3oIKu,
+			                                               event,
+			                                               ...rest1
+		                                               }) => {
 			const {orgUnit, mWyp85xIzXR: subType, ...rest} = groupedActivities[trackedEntityInstance];
 			const allSubTypes = String(subType).split(",");
 			const units = processedUnits[orgUnit];
@@ -2798,7 +2874,8 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 				...initial,
 				...units,
 				qtr,
-				id: `${String(ypDUCAS6juy).replaceAll("/", "")}${qtr}`,
+				event,
+				id: `${event}${qtr}`,
 			};
 		});
 	});
@@ -2828,7 +2905,7 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 	console.log(`total:${total}`);
 	console.log(`errors:${errors}`);
 
-	if (total === 0 && errors === 0) {
-		console.log(JSON.stringify(allInstances));
+	if (errors > 0) {
+		console.log(inserted.flatMap(({data: {items}}) => items.filter((i) => i.index.error !== undefined).map((i) => i.index.error)));
 	}
 };
