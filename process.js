@@ -6,6 +6,8 @@ const {
 	parseISO,
 	subQuarters,
 } = require("date-fns");
+
+const {utils, writeFile} = require("xlsx");
 const {
 	every,
 	fromPairs,
@@ -966,7 +968,7 @@ module.exports.processInstances = async (
 		this.getProgramStageData(
 			Object.keys(indexCases),
 			"sYE3K7fFM4Y",
-			"trackedEntityInstance,eventDate,zbAGBW6PsGd,kQCB9F39zWO,iRJUDyUBLQF"
+			"*"
 		),
 		this.getProgramStageData(
 			Object.keys(indexCases),
@@ -1003,18 +1005,17 @@ module.exports.processInstances = async (
 		const hasEnrollment = !!enrollmentDate;
 		let hvat = {};
 		let mostRecentGraduation = {};
-		if (
-			allHVatAssessments[hly709n51z0] &&
-			allHVatAssessments[hly709n51z0] !== undefined
-		) {
-			const filtered = orderBy(
-				allHVatAssessments[hly709n51z0].filter((e) => e.eventDate),
-				["eventDate"],
-				["desc"]
-			);
-			if (filtered.length > 0) {
-				hvat = filtered[0];
-			}
+		const HVATAssessments = allHVatAssessments[hly709n51z0] || [];
+		const uniqHVATAssessments = uniqBy(HVATAssessments, "eventDate");
+
+		const filtered = orderBy(
+			uniqHVATAssessments.filter((e) => e.eventDate),
+			["eventDate"],
+			["desc"]
+		);
+
+		if (filtered.length > 0) {
+			hvat = filtered[0];
 		}
 
 		if (
@@ -1057,6 +1058,7 @@ module.exports.processInstances = async (
 
 		// const
 		for (const period of periods) {
+			let assetOwnership = "Not Reassessed";
 			const quarterStart = period.startOf("quarter").toDate();
 			const quarterEnd = period.endOf("quarter").toDate();
 			const previousQuarter = moment(subQuarters(quarterStart, 1)).format(
@@ -1065,10 +1067,25 @@ module.exports.processInstances = async (
 			const [financialQuarterStart, financialQuarterEnd] =
 				this.calculateQuarter(quarterStart.getFullYear(), period.quarter());
 			const qtr = period.format("YYYY[Q]Q");
+
 			const isWithin = isWithinInterval(parseISO(enrollmentDate), {
 				start: quarterStart,
 				end: quarterEnd,
 			});
+			const hVatsBeforePeriod = this.eventsBeforePeriod(filtered, quarterEnd);
+			if (hVatsBeforePeriod.length > 1) {
+				const elements = ["uhO8M5K9qIi", "CeugEZj51eF", "kSAAkvdbkhM", "cErI5PKyAHU", "OCpvfRcuwvz", "aEAF4v9lelU", "ncI6C5uZMfy", "wC0fo1gmoOy"];
+				const [current, previous] = hVatsBeforePeriod.slice(-2);
+				const currentAssets = sum(elements.map((e) => Number(current[e] || 0)));
+				const previousAssets = sum(elements.map((e) => Number(previous[e] || 0)));
+				if (currentAssets > previousAssets) {
+					assetOwnership = "Improved";
+				} else if (currentAssets < previousAssets) {
+					assetOwnership = "Regressed";
+				} else if (currentAssets === previousAssets) {
+					assetOwnership = "Stationary";
+				}
+			}
 
 			const age = differenceInYears(quarterEnd, parseISO(N1nMqKtYKvI));
 			const ageGroup = this.findAgeGroup(age);
@@ -1253,7 +1270,6 @@ module.exports.processInstances = async (
 			const viralLoadResultsReceived = currentViralLoad
 				? currentViralLoad["te2VwealaBT"]
 				: "";
-			console.log(viralLoadResultsReceived);
 			const viralLoadStatus = currentViralLoad
 				? currentViralLoad["AmaNW7QDuOV"]
 				: "";
@@ -2279,6 +2295,7 @@ module.exports.processInstances = async (
 				homeVisitor,
 				homeVisitorContact,
 				dataEntrant,
+				assetOwnership,
 				...ous,
 				generated: new Date().toISOString(),
 			});
@@ -2719,9 +2736,9 @@ module.exports.processTrackedEntityInstances = async (
 	return processed;
 };
 
-module.exports.calculate = async (trackedEntityInstances) => {
-	const {data: {rows}} = await this.api.post("wal/sql", {
-		query: `select COUNT(*) from ${String("aTZwDRoJnxj").toLowerCase()}`,
+module.exports.calculate = async (trackedEntityInstances, stage, attributes) => {
+	const data = await this.fetchAll({
+		query: `select ${attributes} from ${String(stage).toLowerCase()}`,
 		filter: {
 			bool: {
 				must: [
@@ -2739,16 +2756,21 @@ module.exports.calculate = async (trackedEntityInstances) => {
 			},
 		}
 	});
-
-	if (rows.length > 0) {
-		const [[total]] = rows;
-		return total;
-	}
-	// return 0;
+	return groupBy(data, "trackedEntityInstance");
 };
 
-module.exports.queryActivities = async () => {
-	let total = 0;
+module.exports.queryActivities = async (district) => {
+	let allRows = [];
+	let allParticipants = [];
+	let allSessions = [];
+	const {data: {organisationUnits}} = await this.instance.get("organisationUnits/" + district.value, {
+		params: {
+			level: 2,
+			fields: "id",
+			paging: false
+		},
+	});
+	const parishes = organisationUnits.map(({id}) => id);
 	let must = [{
 		match: {
 			deleted: false,
@@ -2761,33 +2783,54 @@ module.exports.queryActivities = async () => {
 		terms: {
 			"bFnIjGJpf9t.keyword": ["3. Journeys Plus", "4. NMN"],
 		},
+
+	}, {
+		terms: {
+			"orgUnit.keyword": parishes
+		}
 	}];
+
 
 	let query = {
 		query: "select trackedEntityInstance,oqabsHE0ZUI,cYDK0qZSri9 from ixxhjadvckb",
-		fetch_size: 1,
+		fetch_size: 100,
 		filter: {
 			bool: {must}
 		}
 	};
-	const {data} = await this.api.post("wal/sql", query);
-	let {rows: [[trackedEntityInstance, code, name]], cursor: currentCursor} = data;
-	const participants = await this.calculate([trackedEntityInstance]);
-	console.log(`${code},${name},${participants}`);
-	total = total + participants;
+	let {data: {rows, cursor: currentCursor}} = await this.api.post("wal/sql", query);
+	if (rows.length > 0) {
+		const trackedEntityInstances = rows.map(([instance]) => instance);
+		const participants = await this.calculate(trackedEntityInstances, "aTZwDRoJnxj", "trackedEntityInstance,ZUKC6mck81A sex,vfHaBC1ONln name,ypDUCAS6juy code,ibKkBuv4gX1 type,eXWM3v3oIKu age,orgUnitName,orgUnit,storedBy,eventDate");
+		const sessions = await this.calculate(trackedEntityInstances, "VzkQBBglj3O", "trackedEntityInstance,ypDUCAS6juy beneficiary,n20LkH4ZBF8 activity,RECl06RNilT date,orgUnitName,orgUnit,storedBy,eventDate");
+		allSessions = [...allSessions, ...Object.values(sessions).flat()];
+		allParticipants = [...allParticipants, ...Object.values(participants).flat()];
+		allRows = [...allRows, ...rows.map((row) => [...row, participants[row[0]] ? participants[row[0]].length : 0, sessions[row[0]] ? sessions[row[0]].length : 0])];
+		if (currentCursor) {
+			do {
+				const {
+					data: {rows, cursor},
+				} = await this.api.post("wal/sql", {cursor: currentCursor});
+				currentCursor = cursor;
+				const trackedEntityInstances = rows.map(([instance]) => instance);
+				const participants = await this.calculate(trackedEntityInstances, "aTZwDRoJnxj", "trackedEntityInstance,ZUKC6mck81A sex,vfHaBC1ONln name,ypDUCAS6juy code,ibKkBuv4gX1 type,eXWM3v3oIKu age,orgUnitName,orgUnit,storedBy,eventDate");
+				const sessions = await this.calculate(trackedEntityInstances, "VzkQBBglj3O", "trackedEntityInstance,ypDUCAS6juy beneficiary,n20LkH4ZBF8 activity,RECl06RNilT date,orgUnitName,orgUnit,storedBy,eventDate");
+				allSessions = [...allSessions, ...Object.values(sessions).flat()];
+				allParticipants = [...allParticipants, ...Object.values(participants).flat()];
+				allRows = [...allRows, ...rows.map((row) => [...row, participants[row[0]] ? participants[row[0]].length : 0, sessions[row[0]] ? sessions[row[0]].length : 0])];
+			} while (currentCursor);
+		}
 
-	if (currentCursor) {
-		do {
-			const {
-				data: {rows: [[trackedEntityInstance, code, name]], cursor},
-			} = await this.api.post("wal/sql", {cursor: currentCursor});
-			const participants = await this.calculate([trackedEntityInstance]);
-			console.log(`${code},${name},${participants}`);
-			total = total + participants;
-			currentCursor = cursor;
-		} while (currentCursor !== undefined && currentCursor !== null);
+		const activitySheet = utils.aoa_to_sheet([["trackedEntityInstance", "activityCode", "activityName", "totalParticipants", "totalSessionsAttended"], ...allRows]);
+		const participantsSheet = utils.json_to_sheet(allParticipants);
+		const sessionSheet = utils.json_to_sheet(allSessions);
+
+		const wb = utils.book_new();
+		utils.book_append_sheet(wb, activitySheet, "Activities");
+		utils.book_append_sheet(wb, participantsSheet, "Participants");
+		utils.book_append_sheet(wb, sessionSheet, "Sessions");
+		writeFile(wb, `${district.label}.xlsx`);
 	}
-	console.log(`Total:${total}`);
 };
 
 module.exports.generatePrevention = async (periods, instances, processedUnits, sessions, prevention = true) => {
