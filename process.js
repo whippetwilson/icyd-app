@@ -33,8 +33,8 @@ const risks = {
 };
 
 module.exports.api = axios.create({
-	// baseURL: "https://data.icyd.hispuganda.org/api/",
-	baseURL: "http://localhost:3001/api/",
+	baseURL: "https://data.icyd.hispuganda.org/api/",
+	// baseURL: "http://localhost:3001/api/",
 });
 
 module.exports.mis = axios.create({
@@ -493,7 +493,7 @@ module.exports.syncOrganisations = async () => {
 
 	const inserted = await Promise.all(
 		chunk(units, 1000).map((c) => {
-			return this.api.post("wal/index?index=units", {
+			return this.api.post("wal/bulk?index=units", {
 				data: c,
 			});
 		})
@@ -745,7 +745,7 @@ module.exports.processPrevention = async (
 		});
 	const inserted = await Promise.all(
 		chunk(processed, 100).map((c) => {
-			return this.api.post("wal/index?index=prevention-layering", {
+			return this.api.post("wal/bulk?index=prevention-layering", {
 				data: c,
 			});
 		})
@@ -2303,7 +2303,7 @@ module.exports.processInstances = async (
 	}
 	const inserted = await Promise.all(
 		chunk(layering, 100).map((c) => {
-			return this.api.post("wal/index?index=layering", {
+			return this.api.post("wal/bulk?index=layering", {
 				data: c,
 			});
 		})
@@ -2321,6 +2321,8 @@ module.exports.processInstances = async (
 				items.filter((i) => i.index.error !== undefined).length
 		)
 	);
+
+	console.log(JSON.stringify(inserted, null, 2));
 	console.log(`total:${total}`);
 	console.log(`errors:${errors}`);
 };
@@ -2647,14 +2649,14 @@ module.exports.flattenInstances = async (
 	try {
 		const requests = Object.entries(foundEvents).flatMap(([stage, events]) => {
 			return chunk(events, chunkSize).map((c) => {
-				return this.api.post(`wal/index?index=${stage.toLowerCase()}`, {
+				return this.api.post(`wal/bulk?index=${stage.toLowerCase()}`, {
 					data: c,
 				});
 			});
 		});
 		const inserted = await Promise.all([
 			...chunk(instances, chunkSize).map((c) => {
-				return this.api.post(`wal/index?index=${program.toLowerCase()}`, {
+				return this.api.post(`wal/bulk?index=${program.toLowerCase()}`, {
 					data: c,
 				});
 			}),
@@ -2925,7 +2927,7 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 
 	const inserted = await Promise.all(
 		chunk(layering, 100).map((c) => {
-			return this.api.post("wal/index?index=layering2", {
+			return this.api.post("wal/bulk?index=layering2", {
 				data: c,
 			});
 		})
