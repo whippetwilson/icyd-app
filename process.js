@@ -493,7 +493,7 @@ module.exports.syncOrganisations = async () => {
 
 	const inserted = await Promise.all(
 		chunk(units, 1000).map((c) => {
-			return this.api.post("wal/bulk?index=units", {
+			return this.api.post("wal/index?index=units", {
 				data: c,
 			});
 		})
@@ -745,7 +745,7 @@ module.exports.processPrevention = async (
 		});
 	const inserted = await Promise.all(
 		chunk(processed, 100).map((c) => {
-			return this.api.post("wal/bulk?index=prevention-layering", {
+			return this.api.post("wal/index?index=prevention-layering", {
 				data: c,
 			});
 		})
@@ -2303,7 +2303,7 @@ module.exports.processInstances = async (
 	}
 	const inserted = await Promise.all(
 		chunk(layering, 100).map((c) => {
-			return this.api.post("wal/bulk?index=layering", {
+			return this.api.post("wal/index?index=layering", {
 				data: c,
 			});
 		})
@@ -2649,14 +2649,14 @@ module.exports.flattenInstances = async (
 	try {
 		const requests = Object.entries(foundEvents).flatMap(([stage, events]) => {
 			return chunk(events, chunkSize).map((c) => {
-				return this.api.post(`wal/bulk?index=${stage.toLowerCase()}`, {
+				return this.api.post(`wal/index?index=${stage.toLowerCase()}`, {
 					data: c,
 				});
 			});
 		});
 		const inserted = await Promise.all([
 			...chunk(instances, chunkSize).map((c) => {
-				return this.api.post(`wal/bulk?index=${program.toLowerCase()}`, {
+				return this.api.post(`wal/index?index=${program.toLowerCase()}`, {
 					data: c,
 				});
 			}),
@@ -2927,7 +2927,7 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 
 	const inserted = await Promise.all(
 		chunk(layering, 100).map((c) => {
-			return this.api.post("wal/bulk?index=layering2", {
+			return this.api.post("wal/index?index=layering2", {
 				data: c,
 			});
 		})
