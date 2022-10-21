@@ -2301,33 +2301,21 @@ module.exports.processInstances = async (
 			});
 		}
 	}
-	try {
-		const inserted = await Promise.all(
-			chunk(layering, 10).map((c) => {
-				return this.api.post("wal/index?index=layering", {
-					data: c,
-				});
-			})
-		);
-		const total = sum(
-			inserted.map(
-				({data: {items}}) =>
-					items.filter((i) => i.index.error === undefined).length
-			)
-		);
-
-		const errors = sum(
-			inserted.map(
-				({data: {items}}) =>
-					items.filter((i) => i.index.error !== undefined).length
-			)
-		);
-
-		console.log(`total:${total}`);
-		console.log(`errors:${errors}`);
-	} catch (e) {
-		console.log(e);
+	const records = chunk(layering, 100);
+	for (const record of records) {
+		try {
+			const {data: {items}} = await this.api.post("wal/index?index=layering", {
+				data: record,
+			});
+			const total = items.filter((i) => i.index.error === undefined).length;
+			const errors = items.filter((i) => i.index.error !== undefined).length;
+			console.log(`total:${total}`);
+			console.log(`errors:${errors}`);
+		} catch (e) {
+			console.log(e);
+		}
 	}
+
 };
 
 module.exports.useProgramStage = async (
