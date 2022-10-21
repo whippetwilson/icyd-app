@@ -2301,30 +2301,33 @@ module.exports.processInstances = async (
 			});
 		}
 	}
-	const inserted = await Promise.all(
-		chunk(layering, 100).map((c) => {
-			return this.api.post("wal/index?index=layering", {
-				data: c,
-			});
-		})
-	);
-	const total = sum(
-		inserted.map(
-			({data: {items}}) =>
-				items.filter((i) => i.index.error === undefined).length
-		)
-	);
+	try {
+		const inserted = await Promise.all(
+			chunk(layering, 10).map((c) => {
+				return this.api.post("wal/index?index=layering", {
+					data: c,
+				});
+			})
+		);
+		const total = sum(
+			inserted.map(
+				({data: {items}}) =>
+					items.filter((i) => i.index.error === undefined).length
+			)
+		);
 
-	const errors = sum(
-		inserted.map(
-			({data: {items}}) =>
-				items.filter((i) => i.index.error !== undefined).length
-		)
-	);
+		const errors = sum(
+			inserted.map(
+				({data: {items}}) =>
+					items.filter((i) => i.index.error !== undefined).length
+			)
+		);
 
-	console.log(JSON.stringify(inserted, null, 2));
-	console.log(`total:${total}`);
-	console.log(`errors:${errors}`);
+		console.log(`total:${total}`);
+		console.log(`errors:${errors}`);
+	} catch (e) {
+		console.log(e);
+	}
 };
 
 module.exports.useProgramStage = async (
