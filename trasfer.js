@@ -6,7 +6,7 @@ const moment = require("moment");
 const args = process.argv.slice(2);
 const transfer = async (program) => {
 	let searches = {
-		last: moment().subtract(3, "months").format("YYYY-MM-DD")
+		last: moment().subtract(2, "weeks").format("YYYY-MM-DD")
 	};
 	try {
 		searches = JSON.parse(fs.readFileSync(`./${program}.json`, "utf8"));
