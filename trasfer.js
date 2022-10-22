@@ -5,7 +5,14 @@ const {processTrackedEntityInstances, useTracker, useProgramStage} = require("./
 const moment = require("moment");
 const args = process.argv.slice(2);
 const transfer = async (program) => {
-	let searches = JSON.parse(fs.readFileSync(`./${program}.json`, "utf8"));
+	let searches = {
+		last: moment().subtract(3, "months").format("YYYY-MM-DD")
+	};
+	try {
+		searches = JSON.parse(fs.readFileSync(`./${program}.json`, "utf8"));
+	} catch (e) {
+		console.log(e);
+	}
 	let lastUpdatedDuration = "1m";
 	if (searches.last) {
 		const minutes = differenceInMinutes(new Date(), parseISO(searches.last));
