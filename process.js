@@ -33,8 +33,8 @@ const risks = {
 };
 
 module.exports.api = axios.create({
-	// baseURL: "https://data.icyd.hispuganda.org/api/",
-	baseURL: "http://localhost:3001/api/",
+	baseURL: "https://data.icyd.hispuganda.org/api/",
+	// baseURL: "http://localhost:3001/api/",
 });
 
 module.exports.mis = axios.create({
@@ -2318,15 +2318,20 @@ module.exports.processInstances = async (
 
 };
 
-module.exports.useProgramStage = async (
-	periods = [
+module.exports.useProgramStage = async (args) => {
+	let periods = [
 		moment().subtract(3, "quarters"),
 		moment().subtract(2, "quarters"),
 		moment().subtract(1, "quarters"),
 		moment(),
-	],
-	searchInstances = []
-) => {
+	];
+	let searchInstances = [];
+	if (args && args["periods"]) {
+		periods = args["periods"];
+	}
+	if (args && args["searchInstances"]) {
+		searchInstances = args ["searchInstances"];
+	}
 	console.log("Fetching organisation units");
 	const processedUnits = await this.fetchUnits4Instances();
 	console.log("Fetching metadata");
@@ -2499,15 +2504,20 @@ module.exports.generate = async (
 		groupActivities
 	);
 };
-module.exports.useTracker = async (
-	periods = [
+module.exports.useTracker = async (args) => {
+	let periods = [
 		moment().subtract(3, "quarters"),
 		moment().subtract(2, "quarters"),
 		moment().subtract(1, "quarters"),
 		moment(),
-	],
-	searchInstances = []
-) => {
+	];
+	let searchInstances = [];
+	if (args && args["periods"]) {
+		periods = args["periods"];
+	}
+	if (args && args["searchInstances"]) {
+		searchInstances = args ["searchInstances"];
+	}
 	console.log("Fetching organisation units");
 	const processedUnits = await this.fetchUnits4Instances();
 	console.log("Fetching metadata");
@@ -2677,7 +2687,8 @@ module.exports.processTrackedEntityInstances = async (
 	program,
 	pageSize,
 	chunkSize,
-	otherParams = {}
+	callback,
+	otherParams = {},
 ) => {
 	let processed = [];
 	let startingPage = 1;
@@ -2703,12 +2714,10 @@ module.exports.processTrackedEntityInstances = async (
 	} = await this.instance.get("trackedEntityInstances.json", {params: {...params, totalPages: true}});
 
 	await this.flattenInstances(trackedEntityInstances, program, chunkSize);
-	processed = [
-		...processed,
-		...trackedEntityInstances.map(
-			({trackedEntityInstance}) => trackedEntityInstance
-		),
-	];
+	if (callback) {
+		console.log("Generating layering");
+		await callback({searchInstances: trackedEntityInstances.map(({trackedEntityInstance}) => trackedEntityInstance)});
+	}
 	if (pageCount > startingPage) {
 		for (let page = Number(startingPage) + 1; page <= pageCount; page++) {
 			console.log(`Working on page ${page} of ${pageCount}`);
@@ -2718,15 +2727,12 @@ module.exports.processTrackedEntityInstances = async (
 				params: {...params, page},
 			});
 			await this.flattenInstances(trackedEntityInstances, program, chunkSize);
-			processed = [
-				...processed,
-				...trackedEntityInstances.map(
-					({trackedEntityInstance}) => trackedEntityInstance
-				),
-			];
+			if (callback) {
+				console.log("Generating layering");
+				await callback({searchInstances: trackedEntityInstances.map(({trackedEntityInstance}) => trackedEntityInstance)});
+			}
 		}
 	}
-	return processed;
 };
 
 module.exports.calculate = async (trackedEntityInstances, stage, attributes) => {

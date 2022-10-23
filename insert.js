@@ -6,6 +6,6 @@ const processAll = async () => {
 	const otherArgs = fromPairs(args.slice(3).map((x) => {
 		return x.split("=");
 	}));
-	await processTrackedEntityInstances(args[0], args[1], args[2], otherArgs);
+	await processTrackedEntityInstances(args[0], args[1], args[2], null, otherArgs);
 };
 processAll().then(() => console.log("Done"));

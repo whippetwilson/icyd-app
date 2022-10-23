@@ -4,52 +4,47 @@ const {differenceInMinutes, parseISO} = require("date-fns");
 const {processTrackedEntityInstances, useTracker, useProgramStage} = require("./process");
 const moment = require("moment");
 const args = process.argv.slice(2);
+let running = {};
 const transfer = async (program) => {
-	let searches = {
-		last: moment().subtract(2, "weeks").format("YYYY-MM-DD")
-	};
-	try {
-		searches = JSON.parse(fs.readFileSync(`./${program}.json`, "utf8"));
-	} catch (e) {
-		console.log(e);
-	}
-	let lastUpdatedDuration = "1m";
-	if (searches.last) {
-		const minutes = differenceInMinutes(new Date(), parseISO(searches.last));
-		if (minutes > 0 && minutes < 60) {
-			lastUpdatedDuration = `${minutes}m`;
-		} else if (minutes >= 60 && minutes <= 60 * 24) {
-			lastUpdatedDuration = `${Math.floor(minutes / 60)}h`;
-		} else if (minutes > 60 * 24) {
-			lastUpdatedDuration = `${Math.floor(minutes / (60 * 24))}d`;
+	if (!running[program]) {
+		running = {...running, [program]: true};
+		let searches = {
+			last: moment().subtract(1, "quarters").format("YYYY-MM-DD")
+		};
+		try {
+			searches = JSON.parse(fs.readFileSync(`./${program}.json`, "utf8"));
+			fs.writeFileSync(`./${program}.json`, JSON.stringify({...searches, last: new Date()}));
+		} catch (e) {
+			fs.writeFileSync(`./${program}.json`, JSON.stringify({...searches, last: new Date()}));
+			console.log(e);
 		}
-	}
-	console.log(`Fetching for ${lastUpdatedDuration}`);
-	try {
-		const instances = await processTrackedEntityInstances(program, 50, 100, {lastUpdatedDuration});
-		if (program === "RDEklSXCD4C") {
-			await useTracker([
-				moment().subtract(3, "quarters"),
-				moment().subtract(2, "quarters"),
-				moment().subtract(1, "quarters"),
-				moment(),
-			], instances);
+		let lastUpdatedDuration = "1m";
+		if (searches.last) {
+			const minutes = differenceInMinutes(new Date(), parseISO(searches.last));
+			if (minutes > 0 && minutes < 60) {
+				lastUpdatedDuration = `${minutes}m`;
+			} else if (minutes >= 60 && minutes <= 60 * 24) {
+				lastUpdatedDuration = `${Math.floor(minutes / 60)}h`;
+			} else if (minutes > 60 * 24) {
+				lastUpdatedDuration = `${Math.floor(minutes / (60 * 24))}d`;
+			}
 		}
-		if (program === "IXxHJADVCkb") {
-			await useProgramStage([
-				moment().subtract(3, "quarters"),
-				moment().subtract(2, "quarters"),
-				moment().subtract(1, "quarters"),
-				moment()
-			], instances);
+		console.log(`Fetching for ${lastUpdatedDuration}`);
+		try {
+			if (program === "RDEklSXCD4C") {
+				await processTrackedEntityInstances(program, 50, 100, useTracker, {lastUpdatedDuration});
+			} else if (program === "IXxHJADVCkb") {
+				await processTrackedEntityInstances(program, 50, 100, useProgramStage, {lastUpdatedDuration});
+			} else {
+				await processTrackedEntityInstances(program, 50, 100, null, {lastUpdatedDuration});
+			}
+		} catch (error) {
+			console.log(error.message);
 		}
-	} catch (error) {
-		console.log(error.message);
+		running = {...running, [program]: false};
+	} else {
+		console.log("Already running");
 	}
-	fs.writeFileSync(
-		`./${program}.json`,
-		JSON.stringify({...searches, last: new Date()})
-	);
 };
 schedule.scheduleJob("*/1 * * * *", async () => {
 	await transfer(args[0]);

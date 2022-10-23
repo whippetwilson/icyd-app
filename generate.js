@@ -9,12 +9,7 @@ const generate = async () => {
 	// console.log("Generating the layering");
 	const args = process.argv.slice(2);
 	const page = args.length > 0 ? args[0] : 1;
-	await useTracker([
-		moment().subtract(3, "quarters"),
-		moment().subtract(2, "quarters"),
-		moment().subtract(1, "quarters"),
-		moment(),
-	]);
+	await useTracker({});
 	// } catch (error) {
 	// 	console.log(error.message);
 	// }
