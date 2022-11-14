@@ -7,7 +7,7 @@ const {
 	subQuarters,
 } = require("date-fns");
 
-const {utils, writeFile} = require("xlsx");
+const { utils, writeFile } = require("xlsx");
 const {
 	every,
 	fromPairs,
@@ -17,7 +17,10 @@ const {
 	orderBy,
 	uniqBy,
 	chunk,
-	sum, uniq, unionBy, isArray,
+	sum,
+	uniq,
+	unionBy,
+	isArray,
 } = require("lodash");
 const moment = require("moment");
 const axios = require("axios");
@@ -55,14 +58,14 @@ module.exports.instance = axios.create({
 
 module.exports.fetchAll = async (query) => {
 	let {
-		data: {rows: allRows, columns, cursor: currentCursor},
+		data: { rows: allRows, columns, cursor: currentCursor },
 	} = await this.api.post("wal/sql", query);
 
 	if (currentCursor) {
 		do {
 			let {
-				data: {rows, cursor},
-			} = await this.api.post("wal/sql", {cursor: currentCursor});
+				data: { rows, cursor },
+			} = await this.api.post("wal/sql", { cursor: currentCursor });
 			allRows = allRows.concat(rows);
 			currentCursor = cursor;
 		} while (currentCursor);
@@ -86,6 +89,14 @@ module.exports.calculateQuarter = (year, quarter) => {
 		return [new Date(`${year}-10-01`), new Date(`${year}-12-31`)];
 	}
 	return [new Date(`${year}-10-01`), new Date(`${year}-12-31`)];
+};
+
+module.exports.getFinancialYear = (year, month) => {
+	if (month < 10) {
+		return `${year}Oct`;
+	}
+
+	return `${year + 1}Oct`;
 };
 
 module.exports.findAgeGroup = (age) => {
@@ -133,7 +144,7 @@ module.exports.mapping2 = {
 	"MOE Journeys Plus": 18,
 	"MOH Journeys curriculum": 22,
 	"No means No sessions (Boys)": 4,
-	"No means No sessions (Girls)": 5,
+	"No means No sessions (Girls)": 4,
 	"No means No sessions (Boys) New Curriculum": 8,
 	SINOVUYO: 10,
 };
@@ -218,14 +229,14 @@ module.exports.eventsBeforePeriod = (events, end) => {
 module.exports.eventsWithinPeriod = (events, start, end) => {
 	return events.filter((e) => {
 		return (
-			e.eventDate && isWithinInterval(parseISO(e.eventDate), {start, end})
+			e.eventDate && isWithinInterval(parseISO(e.eventDate), { start, end })
 		);
 	});
 };
 
 module.exports.findAnyEventValue = (events, dataElement) => {
 	const event = orderBy(events, ["eventDate"], ["desc"]).find(
-		({[dataElement]: de}) => de !== null && de !== undefined
+		({ [dataElement]: de }) => de !== null && de !== undefined
 	);
 	if (event) {
 		return event[dataElement];
@@ -394,43 +405,43 @@ module.exports.useLoader = async () => {
 
 	const [
 		{
-			data: {options},
+			data: { options },
 		},
 		{
-			data: {options: options1},
+			data: { options: options1 },
 		},
 		{
-			data: {options: options2},
+			data: { options: options2 },
 		},
 		{
-			data: {options: options12},
+			data: { options: options12 },
 		},
 		{
-			data: {options: options3},
+			data: { options: options3 },
 		},
 		{
-			data: {options: options4},
+			data: { options: options4 },
 		},
 		{
-			data: {options: options5},
+			data: { options: options5 },
 		},
 		{
-			data: {options: options6},
+			data: { options: options6 },
 		},
 		{
-			data: {options: options7},
+			data: { options: options7 },
 		},
 		{
-			data: {options: options8},
+			data: { options: options8 },
 		},
 		{
-			data: {options: options9},
+			data: { options: options9 },
 		},
 		{
-			data: {options: options10},
+			data: { options: options10 },
 		},
 		{
-			data: {options: options11},
+			data: { options: options11 },
 		},
 	] = await Promise.all(
 		query.map((q) =>
@@ -462,7 +473,7 @@ module.exports.useLoader = async () => {
 
 module.exports.syncOrganisations = async () => {
 	const {
-		data: {organisationUnits},
+		data: { organisationUnits },
 	} = await this.instance.get("organisationUnits.json", {
 		params: {
 			fields: "id,path,name,parent[name,parent[name]]",
@@ -499,14 +510,14 @@ module.exports.syncOrganisations = async () => {
 		})
 	);
 	const total = sum(
-		inserted.map(({data: {items}}) => (items ? items.length : 0))
+		inserted.map(({ data: { items } }) => (items ? items.length : 0))
 	);
 	console.log(total);
 };
 
 module.exports.fetchUnits4Instances = async () => {
 	const {
-		data: {organisationUnits},
+		data: { organisationUnits },
 	} = await this.instance.get("organisationUnits.json", {
 		params: {
 			fields: "id,path,name,parent[name,parent[name]]",
@@ -544,7 +555,7 @@ module.exports.fetchRelationships4Instances = async (
 	trackedEntityInstances
 ) => {
 	const allInstances = uniq(
-		trackedEntityInstances.map(({hly709n51z0}) => hly709n51z0)
+		trackedEntityInstances.map(({ hly709n51z0 }) => hly709n51z0)
 	).filter((v) => v !== null && v !== undefined);
 	const data = await this.fetchAll({
 		query: `select * from ${String("HEWq6yr4cs5").toLowerCase()}`,
@@ -560,7 +571,8 @@ module.exports.fetchRelationships4Instances = async (
 module.exports.previousLayering = async (trackedEntityInstances) => {
 	try {
 		const data = await this.fetchAll({
-			query: "select trackedEntityInstance,qtr,quarter,fullyGraduated,preGraduated from layering",
+			query:
+				"select trackedEntityInstance,qtr,quarter,fullyGraduated,preGraduated from layering",
 			filter: {
 				terms: {
 					"trackedEntityInstance.keyword": trackedEntityInstances,
@@ -571,7 +583,12 @@ module.exports.previousLayering = async (trackedEntityInstances) => {
 			Object.entries(groupBy(data, "trackedEntityInstance")).map(
 				([instance, data]) => [
 					instance,
-					fromPairs(data.map((d) => [d["qtr"], {fullyGraduated: d["fullyGraduated"], quarter: d["quarter"]}])),
+					fromPairs(
+						data.map((d) => [
+							d["qtr"],
+							{ fullyGraduated: d["fullyGraduated"], quarter: d["quarter"] },
+						])
+					),
 				]
 			)
 		);
@@ -584,7 +601,7 @@ module.exports.fetchGroupActivities4Instances = async (
 	trackedEntityInstances
 ) => {
 	const allMemberCodes = uniq(
-		trackedEntityInstances.map(({HLKc2AKR9jW}) => HLKc2AKR9jW)
+		trackedEntityInstances.map(({ HLKc2AKR9jW }) => HLKc2AKR9jW)
 	).filter((val) => val !== null && val !== undefined);
 	const data = await this.fetchAll({
 		query: `select n20LkH4ZBF8,ypDUCAS6juy,eventDate from ${String(
@@ -618,20 +635,16 @@ module.exports.getProgramStageData = async (
 						match: {
 							deleted: false,
 						},
-					}
+					},
 				],
 			},
 		},
-		field_multi_value_leniency: true
+		field_multi_value_leniency: true,
 	});
 	return groupBy(data, "trackedEntityInstance");
 };
 
-module.exports.getAllData = async (
-	table,
-	columns = "*",
-	instances = []
-) => {
+module.exports.getAllData = async (table, columns = "*", instances = []) => {
 	let must = [
 		// 	{
 		// 	terms: {
@@ -647,18 +660,21 @@ module.exports.getAllData = async (
 	];
 
 	if (instances.length > 0) {
-		must = [...must, {
-			terms: {
-				"trackedEntityInstance.keyword": instances
-			}
-		}];
+		must = [
+			...must,
+			{
+				terms: {
+					"trackedEntityInstance.keyword": instances,
+				},
+			},
+		];
 	}
 	return await this.fetchAll({
 		query: `select ${columns} from ${String(table).toLowerCase()}`,
 		field_multi_value_leniency: true,
 		filter: {
-			bool: {must}
-		}
+			bool: { must },
+		},
 	});
 };
 
@@ -668,13 +684,12 @@ module.exports.processPrevention = async (
 	sessions,
 	periods
 ) => {
-
 	const processed = trackedEntityInstances.flatMap(
-		({attributes, enrollments, orgUnit}) => {
+		({ attributes, enrollments, orgUnit }) => {
 			const units = processedUnits[orgUnit];
-			const [{events, enrollmentDate, orgUnitName}] = enrollments;
+			const [{ events, enrollmentDate, orgUnitName }] = enrollments;
 			const instance = fromPairs(
-				attributes.map(({attribute, value}) => [attribute, value])
+				attributes.map(({ attribute, value }) => [attribute, value])
 			);
 			const doneSessions = periods.flatMap((period) => {
 				const start = period.startOf("quarter").toDate();
@@ -690,17 +705,17 @@ module.exports.processPrevention = async (
 							})
 						);
 					})
-					.map(({dataValues}) => {
+					.map(({ dataValues }) => {
 						const code = dataValues.find(
-							({dataElement}) => dataElement === "ypDUCAS6juy"
+							({ dataElement }) => dataElement === "ypDUCAS6juy"
 						);
 						const session = dataValues.find(
-							({dataElement}) => dataElement === "n20LkH4ZBF8"
+							({ dataElement }) => dataElement === "n20LkH4ZBF8"
 						);
 						return {
 							session: session ? session.value : undefined,
 							code: code ? code.value : undefined,
-							qtr: period.format("YYYY[Q]Q")
+							qtr: period.format("YYYY[Q]Q"),
 						};
 					});
 			});
@@ -710,39 +725,52 @@ module.exports.processPrevention = async (
 			const groupedSessions = groupBy(doneSessions, "code");
 			return events
 				.filter((event) => event.programStage === "aTZwDRoJnxj")
-				.flatMap(({event, dataValues}) => {
+				.flatMap(({ event, dataValues }) => {
 					const elements = fromPairs(
-						dataValues.map(({dataElement, value}) => [dataElement, value])
+						dataValues.map(({ dataElement, value }) => [dataElement, value])
 					);
 					const individualCode = elements.ypDUCAS6juy;
-					const participantSessions = groupedSessions[individualCode]
-						? groupedSessions[individualCode].filter((i) => {
-							return sessions[allSubTypes[0]].indexOf(i.session) !== -1;
-						})
-						: [];
-					const groupedParticipantSessions = groupBy(participantSessions, "qtr");
-					return Object.entries(groupedParticipantSessions).map(([qtr, attendedSession]) => {
-						const uniqSessions = uniqBy(attendedSession, (v) => [v.session, v.code].join());
-						const sess = fromPairs(uniqSessions.map(({session}) => [session, 1]));
-						return {
-							event,
-							id: `${individualCode}${qtr}`,
-							...elements,
-							...instance,
-							...sess,
-							...units,
-							parish: orgUnitName,
-							qtr,
-							enrollmentDate,
-							[subType]: uniqSessions.length,
-							[completed]:
-								uniqSessions.length >= this.mapping2[subType] ? 1 : 0,
-							completedPrevention:
-								uniqSessions.length >= this.mapping2[subType] ? 1 : 0,
-						};
-					});
+					let participantSessions = [];
+					if (groupedSessions[individualCode]) {
+						participantSessions = groupedSessions[individualCode].filter(
+							(i) => {
+								return sessions[allSubTypes[0]].indexOf(i.session) !== -1;
+							}
+						);
+					}
+					const groupedParticipantSessions = groupBy(
+						participantSessions,
+						"qtr"
+					);
+					return Object.entries(groupedParticipantSessions).map(
+						([qtr, attendedSession]) => {
+							const uniqSessions = uniqBy(attendedSession, (v) =>
+								[v.session, v.code].join()
+							);
+							const sess = fromPairs(
+								uniqSessions.map(({ session }) => [session, 1])
+							);
+							return {
+								event,
+								id: `${individualCode}${qtr}`,
+								...elements,
+								...instance,
+								...sess,
+								...units,
+								parish: orgUnitName,
+								qtr,
+								enrollmentDate,
+								[subType]: uniqSessions.length,
+								[completed]:
+									uniqSessions.length >= this.mapping2[subType] ? 1 : 0,
+								completedPrevention:
+									uniqSessions.length >= this.mapping2[subType] ? 1 : 0,
+							};
+						}
+					);
 				});
-		});
+		}
+	);
 	const inserted = await Promise.all(
 		chunk(processed, 100).map((c) => {
 			return this.api.post("wal/index?index=prevention-layering", {
@@ -751,7 +779,7 @@ module.exports.processPrevention = async (
 		})
 	);
 	const total = sum(
-		inserted.map(({data: {items}}) => (items ? items.length : 0))
+		inserted.map(({ data: { items } }) => (items ? items.length : 0))
 	);
 	console.log(total);
 };
@@ -775,17 +803,17 @@ module.exports.getHEIInformation = (age, heiData) => {
 		const dateHivTestDone = this.findAnyEventValue(heiData, "qitG6coAg3q");
 		const hivTestResults = this.findAnyEventValue(heiData, "lznDPbUscke");
 		const finalOutcome = this.findAnyEventValue(heiData, "fcAZR5zt9i3");
+		let pcr = "";
 
-		const pcr = hivTestResults
-			? "4"
-			: thirdPCRResults
-				? "3"
-				: secondPCRResults
-					? "2"
-					: firstPCRResults
-						? "1"
-						: "";
-
+		if (hivTestResults) {
+			pcr = "4";
+		} else if (thirdPCRResults) {
+			pcr = "3";
+		} else if (secondPCRResults) {
+			pcr = "2";
+		} else if (firstPCRResults) {
+			pcr = "1";
+		}
 		return {
 			eidEnrollmentDate,
 			motherArtNo,
@@ -841,13 +869,16 @@ module.exports.getHIVStatus = (
 	} else if (riskFactor === "HEI") {
 		return "DK";
 	} else {
-		return HzUL8LTDPga === "Positive"
-			? "+"
-			: HzUL8LTDPga === "Negative"
-				? "-"
-				: HzUL8LTDPga === "Dont Know (DK)"
-					? "DK"
-					: "";
+		if (HzUL8LTDPga === "Positive") {
+			return "+";
+		}
+		if (HzUL8LTDPga === "Negative") {
+			return "-";
+		}
+		if (HzUL8LTDPga === "Dont Know (DK)") {
+			return "DK";
+		}
+		return "";
 	}
 };
 
@@ -924,7 +955,7 @@ module.exports.hivInformation = (
 		VLStatus,
 		VLSuppressed,
 		viralLoadCopies,
-		copies
+		copies,
 	};
 };
 
@@ -955,7 +986,7 @@ module.exports.processInstances = async (
 		allServiceLinkages,
 		allExposedInfants,
 		allHVatAssessments,
-		allGraduationAssessments
+		allGraduationAssessments,
 	] = await Promise.all([
 		// this.getProgramStageData(instanceIds, "TuLJEpHu0um"),
 		this.getProgramStageData(trackedEntityInstanceIds, "HaaSLv2ur0l"),
@@ -965,11 +996,7 @@ module.exports.processInstances = async (
 		this.getProgramStageData(trackedEntityInstanceIds, "yz3zh5IFEZm"),
 		this.getProgramStageData(trackedEntityInstanceIds, "SxnXrDtSJZp"),
 		this.getProgramStageData(trackedEntityInstanceIds, "KOFm3jJl7n7"),
-		this.getProgramStageData(
-			Object.keys(indexCases),
-			"sYE3K7fFM4Y",
-			"*"
-		),
+		this.getProgramStageData(Object.keys(indexCases), "sYE3K7fFM4Y", "*"),
 		this.getProgramStageData(
 			Object.keys(indexCases),
 			"Cx35Elpu330",
@@ -995,13 +1022,23 @@ module.exports.processInstances = async (
 	} of trackedEntityInstances) {
 		// const vulnerabilityAssessments = availableEvents["TuLJEpHu0um"] || [];
 		const homeVisits = this.getEvents(allHomeVisits, trackedEntityInstance);
-		const hivRiskAssessments = this.getEvents(allHivRiskAssessments, trackedEntityInstance);
+		const hivRiskAssessments = this.getEvents(
+			allHivRiskAssessments,
+			trackedEntityInstance
+		);
 		const viralLoads = this.getEvents(allViralLoads, trackedEntityInstance);
 		// const casePlannings = availableEvents["LATgKmbf7Yv"] || [];
 		const referrals = this.getEvents(allReferrals, trackedEntityInstance);
-		const serviceLinkages = this.getEvents(allServiceLinkages, trackedEntityInstance);
-		const exposedInfants = this.getEvents(allExposedInfants, trackedEntityInstance);
-		const {district, subCounty, orgUnitName, ...ous} = processedUnits[orgUnit] || {};
+		const serviceLinkages = this.getEvents(
+			allServiceLinkages,
+			trackedEntityInstance
+		);
+		const exposedInfants = this.getEvents(
+			allExposedInfants,
+			trackedEntityInstance
+		);
+		const { district, subCounty, orgUnitName, ...ous } =
+			processedUnits[orgUnit] || {};
 		const hasEnrollment = !!enrollmentDate;
 		let hvat = {};
 		let mostRecentGraduation = {};
@@ -1032,8 +1069,8 @@ module.exports.processInstances = async (
 			}
 		}
 
-		const {eventDate, zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF} = hvat;
-		const {Xkwy5P2JG24, ExnzeYjgIaT, IyKRQFkfwMk} = indexCases
+		const { eventDate, zbAGBW6PsGd, kQCB9F39zWO, iRJUDyUBLQF } = hvat;
+		const { Xkwy5P2JG24, ExnzeYjgIaT, IyKRQFkfwMk } = indexCases
 			? indexCases[hly709n51z0] && indexCases[hly709n51z0].length > 0
 				? indexCases[hly709n51z0][0]
 				: {}
@@ -1074,10 +1111,21 @@ module.exports.processInstances = async (
 			});
 			const hVatsBeforePeriod = this.eventsBeforePeriod(filtered, quarterEnd);
 			if (hVatsBeforePeriod.length > 1) {
-				const elements = ["uhO8M5K9qIi", "CeugEZj51eF", "kSAAkvdbkhM", "cErI5PKyAHU", "OCpvfRcuwvz", "aEAF4v9lelU", "ncI6C5uZMfy", "wC0fo1gmoOy"];
+				const elements = [
+					"uhO8M5K9qIi",
+					"CeugEZj51eF",
+					"kSAAkvdbkhM",
+					"cErI5PKyAHU",
+					"OCpvfRcuwvz",
+					"aEAF4v9lelU",
+					"ncI6C5uZMfy",
+					"wC0fo1gmoOy",
+				];
 				const [current, previous] = hVatsBeforePeriod.slice(-2);
 				const currentAssets = sum(elements.map((e) => Number(current[e] || 0)));
-				const previousAssets = sum(elements.map((e) => Number(previous[e] || 0)));
+				const previousAssets = sum(
+					elements.map((e) => Number(previous[e] || 0))
+				);
 				if (currentAssets > previousAssets) {
 					assetOwnership = "Improved";
 				} else if (currentAssets < previousAssets) {
@@ -1128,17 +1176,16 @@ module.exports.processInstances = async (
 			);
 
 			let currentViralLoad = maxBy(
-				viralLoadsBe4Quarter.filter(({Ti0huZXbAM0}) => !!Ti0huZXbAM0),
-				({
-					 Ti0huZXbAM0,
-					 eventDate
-				 }) => `${Ti0huZXbAM0}${eventDate}`);
-
+				viralLoadsBe4Quarter.filter(({ Ti0huZXbAM0 }) => !!Ti0huZXbAM0),
+				({ Ti0huZXbAM0, eventDate }) => `${Ti0huZXbAM0}${eventDate}`
+			);
 
 			if (!currentViralLoad && viralLoadsBe4Quarter.length > 0) {
-				currentViralLoad = maxBy(viralLoadsBe4Quarter, ({eventDate}) => eventDate);
+				currentViralLoad = maxBy(
+					viralLoadsBe4Quarter,
+					({ eventDate }) => eventDate
+				);
 			}
-
 
 			const viralLoadDuringQuarter = this.eventsWithinPeriod(
 				viralLoads,
@@ -1276,7 +1323,11 @@ module.exports.processInstances = async (
 			const viralLoadCopies = currentViralLoad
 				? currentViralLoad["b8p0uWaYRhY"]
 				: "";
-			const regimen = currentViralLoad ? currentViralLoad["nZ1omFVYFkT"] === "TDF+3TC+DTD" ? "TDF+3TC+DTG" : currentViralLoad["nZ1omFVYFkT"] : "";
+			const regimen = currentViralLoad
+				? currentViralLoad["nZ1omFVYFkT"] === "TDF+3TC+DTD"
+					? "TDF+3TC+DTG"
+					: currentViralLoad["nZ1omFVYFkT"]
+				: "";
 			const weight = currentViralLoad ? currentViralLoad["Kjtt7SV26zL"] : "";
 
 			const {
@@ -1314,21 +1365,28 @@ module.exports.processInstances = async (
 			const OVC_TST_REFER =
 				serviceProvided && serviceProvided === "HCT/ Tested for HIV" ? 1 : 0;
 			const OVC_TST_REPORT = hivResult && OVC_TST_REFER === 1 ? 1 : 0;
-			const memberStatus =
-				this.findAnyEventValue(homeVisitsBe4Quarter, "tM67MBdox3O") === "true"
-					? "Active"
-					: this.findAnyEventValue(homeVisitsBe4Quarter, "VEw6HHnx8mR")
-						? this.findAnyEventValue(homeVisitsBe4Quarter, "VEw6HHnx8mR")
-						: "No Home Visit";
-			const householdStatus = this.findAnyEventValue(
-				homeVisitsBe4Quarter,
-				"PpUByWk3p8N"
-			)
-				? this.findAnyEventValue(homeVisitsBe4Quarter, "PpUByWk3p8N")
-				: hasEnrollment
-					? "Active"
-					: "Not Enrolled";
+			let memberStatus = "No Home Visit";
+			let householdStatus = "Not Enrolled";
 
+			if (
+				this.findAnyEventValue(homeVisitsBe4Quarter, "tM67MBdox3O") === "true"
+			) {
+				memberStatus = "Active";
+			} else if (this.findAnyEventValue(homeVisitsBe4Quarter, "VEw6HHnx8mR")) {
+				memberStatus = this.findAnyEventValue(
+					homeVisitsBe4Quarter,
+					"VEw6HHnx8mR"
+				);
+			}
+
+			if (this.findAnyEventValue(homeVisitsBe4Quarter, "PpUByWk3p8N")) {
+				householdStatus = this.findAnyEventValue(
+					homeVisitsBe4Quarter,
+					"PpUByWk3p8N"
+				);
+			} else if (hasEnrollment) {
+				householdStatus = "Active";
+			}
 			const enrolledInSchool = this.isAtSchool(age, "", h4pXErY01YR);
 
 			const homeVisitor = this.findAnyEventValue(
@@ -1354,7 +1412,7 @@ module.exports.processInstances = async (
 			);
 			const newlyEnrolled = isWithin ? "Yes" : "No";
 
-			const {VLTestDone, ovcEligible, ovcVL, VLStatus, VLSuppressed, copies} =
+			const { VLTestDone, ovcEligible, ovcVL, VLStatus, VLSuppressed, copies } =
 				this.hivInformation(
 					artStartDate,
 					hivStatus,
@@ -1578,7 +1636,6 @@ module.exports.processInstances = async (
 				this.anyEventWithDE(homeVisitsDuringQuarter, "NJZ13SXf8XV")
 					? 1
 					: 0;
-
 
 			const iac =
 				this.anyEventWithDataElement(
@@ -1987,19 +2044,29 @@ module.exports.processInstances = async (
 			let preGraduated = 0;
 			let fullyGraduated = 0;
 			if (mostRecentGraduation) {
-				const graduation = this.specificDataElement(mostRecentGraduation, "XPJtNCSNCdR");
+				const graduation = this.specificDataElement(
+					mostRecentGraduation,
+					"XPJtNCSNCdR"
+				);
 				if (graduation === "1") {
 					preGraduated = 1;
 				}
-				const monthsSinceGraduation = differenceInMonths(quarterEnd, parseISO(mostRecentGraduation.eventDate));
+				const monthsSinceGraduation = differenceInMonths(
+					quarterEnd,
+					parseISO(mostRecentGraduation.eventDate)
+				);
 				if (monthsSinceGraduation >= 6 && preGraduated === 1) {
 					fullyGraduated = 1;
 				}
 			}
-			allPreviousLayering = {...allPreviousLayering, [qtr]: {quarter, fullyGraduated}};
-			const servedInPreviousQuarter = allPreviousLayering[previousQuarter] ? allPreviousLayering[previousQuarter]["quarter"] : 0;
+			allPreviousLayering = {
+				...allPreviousLayering,
+				[qtr]: { quarter, fullyGraduated },
+			};
+			const servedInPreviousQuarter = allPreviousLayering[previousQuarter]
+				? allPreviousLayering[previousQuarter]["quarter"]
+				: 0;
 			// const previouslyGraduatedFully = allPreviousLayering[previousQuarter] ? allPreviousLayering[previousQuarter]["fullyGraduated"] : 0;
-
 
 			let OVC_SERV = 0;
 			let OVC_ENROL = 0;
@@ -2304,7 +2371,9 @@ module.exports.processInstances = async (
 	const records = chunk(layering, 100);
 	for (const record of records) {
 		try {
-			const {data: {items}} = await this.api.post("wal/index?index=layering", {
+			const {
+				data: { items },
+			} = await this.api.post("wal/index?index=layering", {
 				data: record,
 			});
 			const total = items.filter((i) => i.index.error === undefined).length;
@@ -2315,7 +2384,6 @@ module.exports.processInstances = async (
 			console.log(e);
 		}
 	}
-
 };
 
 module.exports.useProgramStage = async (args) => {
@@ -2326,157 +2394,81 @@ module.exports.useProgramStage = async (args) => {
 		moment(),
 	];
 	let searchInstances = [];
+	let processedUnits = [];
+	let sessions = [];
 	if (args && args["periods"]) {
 		periods = args["periods"];
 	}
 	if (args && args["searchInstances"]) {
-		searchInstances = args ["searchInstances"];
+		searchInstances = args["searchInstances"];
 	}
-	console.log("Fetching organisation units");
-	const processedUnits = await this.fetchUnits4Instances();
-	console.log("Fetching metadata");
-	const [
-		{data: {options}},
-		{data: {options: options1}},
-		{data: {options: options2}},
-		{data: {options: options12}},
-		{data: {options: options3}},
-		{data: {options: options4}},
-		{data: {options: options5}},
-		{data: {options: options6}},
-		{data: {options: options7}},
-		{data: {options: options8}},
-		{data: {options: options9}},
-		{data: {options: options10}},
-		{data: {options: options11}},
-	] = await Promise.all([
-		this.instance.get("optionGroups/HkuYbbefaEM", {
-			params: {
-				fields: "options[code]"
-			}
-		}),
-		this.instance.get("optionGroups/P4tTIlhX1yB", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/WuPXlmvSfVJ", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/TIObJloCVdC", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/okgcyLQNVFe", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/XQ3eQax0uIk", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/qEium1Lrsc0", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/LUR9gZUkcrr", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/EYMKGdEeniO", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/gmEcQwHbivM", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/ptI9Geufl7R", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/QHaULS891IF", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-		this.instance.get("optionGroups/ZOAmd05j2t9", {
-			params: {
-				fields: "options[code]",
-			},
-		}),
-	]);
+	if (args && args["processedUnits"]) {
+		processedUnits = args["processedUnits"];
+	}
+	if (args && args["sessions"]) {
+		sessions = args["sessions"];
+	}
 
-	const sessions = {
-		"MOE Journeys Plus": options.map((o) => o.code),
-		"MOH Journeys curriculum": options1.map((o) => o.code),
-		"No means No sessions (Boys)": options2.map((o) => o.code),
-		"No means No sessions (Boys) New Curriculum": options12.map((o) => o.code),
-		"No means No sessions (Girls)": options3.map((o) => o.code),
-		"VSLA Methodology": options4.map((o) => o.code),
-		"VSLA TOT": options5.map((o) => o.code),
-		"Financial Literacy": options6.map((o) => o.code),
-		"SPM Training": options7.map((o) => o.code),
-		"Bank Linkages": options8.map((o) => o.code),
-		SINOVUYO: options9.map((o) => o.code),
-		ECD: options10.map((o) => o.code),
-		"Saving and Borrowing": options11.map((o) => o.code),
-	};
-
-	let must = [{
-		match: {
-			deleted: false,
-		}
-	}, {
-		match: {
-			inactive: false,
+	let must = [
+		{
+			match: {
+				deleted: false,
+			},
 		},
-	}, {
-		terms: {
-			"bFnIjGJpf9t.keyword": ["3. Journeys Plus", "4. NMN"],
+		{
+			match: {
+				inactive: false,
+			},
 		},
-	}];
-
+		{
+			terms: {
+				"bFnIjGJpf9t.keyword": ["3. Journeys Plus", "4. NMN"],
+			},
+		},
+	];
 
 	if (searchInstances.length > 0) {
-		must = [...must, {terms: {"trackedEntityInstance.keyword": searchInstances}}];
+		must = [
+			...must,
+			{ terms: { "trackedEntityInstance.keyword": searchInstances } },
+		];
 	}
 
 	let query = {
 		query: "select * from ixxhjadvckb",
 		fetch_size: 10,
 		filter: {
-			bool: {must}
-		}
+			bool: { must },
+		},
 	};
-	const {data} = await this.api.post("wal/sql", query);
-	let {columns, rows, cursor: currentCursor} = data;
+	const { data } = await this.api.post("wal/sql", query);
+	let { columns, rows, cursor: currentCursor } = data;
 	const trackedEntityInstances = rows.map((row) => {
-		return fromPairs(columns.map(({name}, index) => [name, row[index]]));
+		return fromPairs(columns.map(({ name }, index) => [name, row[index]]));
 	});
 	console.log("Generating prevention layering for first cursor");
-	await this.generatePrevention(periods, trackedEntityInstances, processedUnits, sessions);
+	await this.generatePrevention(
+		periods,
+		trackedEntityInstances,
+		processedUnits,
+		sessions
+	);
 	console.log("Finished prevention generating layering for first cursor");
 	if (currentCursor) {
 		do {
 			console.log("Fetching data for next cursor");
 			const {
-				data: {rows, cursor},
-			} = await this.api.post("wal/sql", {cursor: currentCursor});
+				data: { rows, cursor },
+			} = await this.api.post("wal/sql", { cursor: currentCursor });
 			const trackedEntityInstances = rows.map((row) => {
-				return fromPairs(columns.map(({name}, index) => [name, row[index]]));
+				return fromPairs(columns.map(({ name }, index) => [name, row[index]]));
 			});
-			await this.generatePrevention(periods, trackedEntityInstances, processedUnits, sessions);
+			await this.generatePrevention(
+				periods,
+				trackedEntityInstances,
+				processedUnits,
+				sessions
+			);
 			console.log("Finished generating layering for cursor");
 			currentCursor = cursor;
 		} while (currentCursor !== undefined && currentCursor !== null);
@@ -2511,55 +2503,74 @@ module.exports.useTracker = async (args) => {
 		moment().subtract(1, "quarters"),
 		moment(),
 	];
+	let sessions = [];
+	let processedUnits = [];
 	let searchInstances = [];
 	if (args && args["periods"]) {
 		periods = args["periods"];
 	}
 	if (args && args["searchInstances"]) {
-		searchInstances = args ["searchInstances"];
+		searchInstances = args["searchInstances"];
 	}
-	console.log("Fetching organisation units");
-	const processedUnits = await this.fetchUnits4Instances();
-	console.log("Fetching metadata");
-	const {sessions} = await this.useLoader();
-	console.log("Fetching data for first cursor");
-	let must = [{
-		match: {
-			deleted: false,
-		}
-	}, {
-		match: {
-			inactive: false,
+	if (args && args["sessions"]) {
+		sessions = args["sessions"];
+	}
+	if (args && args["processedUnits"]) {
+		processedUnits = args["processedUnits"];
+	}
+	let must = [
+		{
+			match: {
+				deleted: false,
+			},
 		},
-	}];
+		{
+			match: {
+				inactive: false,
+			},
+		},
+	];
 
 	if (searchInstances.length > 0) {
-		must = [...must, {terms: {"trackedEntityInstance.keyword": searchInstances}}];
+		must = [
+			...must,
+			{ terms: { "trackedEntityInstance.keyword": searchInstances } },
+		];
 	}
-	const {data} = await this.api.post("wal/sql", {
+	const { data } = await this.api.post("wal/sql", {
 		query: "select * from rdeklsxcd4c order by hly709n51z0",
 		fetch_size: 1000,
 		filter: {
-			bool: {must}
-		}
+			bool: { must },
+		},
 	});
-	let {columns, rows, cursor: currentCursor} = data;
+	let { columns, rows, cursor: currentCursor } = data;
 	const trackedEntityInstances = rows.map((row) => {
-		return fromPairs(columns.map(({name}, index) => [name, row[index]]));
+		return fromPairs(columns.map(({ name }, index) => [name, row[index]]));
 	});
 	console.log("Generating layering for first cursor");
-	await this.generate(trackedEntityInstances, processedUnits, periods, sessions);
+	await this.generate(
+		trackedEntityInstances,
+		processedUnits,
+		periods,
+		sessions
+	);
 	console.log("Finished generating layering for first cursor");
 	if (currentCursor) {
 		do {
 			console.log("Fetching data for next cursor");
 			const {
-				data: {rows, cursor},
-			} = await this.api.post("wal/sql", {cursor: currentCursor});
+				data: { rows, cursor },
+			} = await this.api.post("wal/sql", { cursor: currentCursor });
 			const trackedEntityInstances = rows.map((row) => {
-				return fromPairs(columns.map(({name}, index) => [name, row[index]]));
+				return fromPairs(columns.map(({ name }, index) => [name, row[index]]));
 			});
-			await this.generate(trackedEntityInstances, processedUnits, periods, sessions);
+			await this.generate(
+				trackedEntityInstances,
+				processedUnits,
+				periods,
+				sessions
+			);
 			console.log("Finished generating layering for cursor");
 			currentCursor = cursor;
 		} while (currentCursor !== undefined && currentCursor !== null);
@@ -2583,7 +2594,7 @@ module.exports.flattenInstances = async (
 		relationships,
 	} of trackedEntityInstances) {
 		const processedAttributes = fromPairs(
-			attributes.map(({attribute, value}) => [attribute, value])
+			attributes.map(({ attribute, value }) => [attribute, value])
 		);
 		const allRelations = fromPairs(
 			relationships.map((rel) => {
@@ -2633,7 +2644,7 @@ module.exports.flattenInstances = async (
 								eventDate,
 								event,
 								...fromPairs(
-									dataValues.map(({dataElement, value}) => [
+									dataValues.map(({ dataElement, value }) => [
 										dataElement,
 										value,
 									])
@@ -2665,14 +2676,14 @@ module.exports.flattenInstances = async (
 		]);
 		const total = sum(
 			inserted.map(
-				({data: {items}}) =>
+				({ data: { items } }) =>
 					items.filter((i) => i.index.error === undefined).length
 			)
 		);
 
 		const errors = sum(
 			inserted.map(
-				({data: {items}}) =>
+				({ data: { items } }) =>
 					items.filter((i) => i.index.error !== undefined).length
 			)
 		);
@@ -2688,13 +2699,14 @@ module.exports.processTrackedEntityInstances = async (
 	pageSize,
 	chunkSize,
 	callback,
-	otherParams = {},
+	otherParams = {}
 ) => {
-	let processed = [];
 	let startingPage = 1;
-	let realOtherParams = otherParams;
+	const { processedUnits, sessions, ...rest } = otherParams;
+	let realOtherParams = rest;
+
 	if (otherParams.page) {
-		const {page, ...rest} = otherParams;
+		const { page, ...rest } = otherParams;
 		startingPage = page;
 		realOtherParams = rest;
 	}
@@ -2709,33 +2721,51 @@ module.exports.processTrackedEntityInstances = async (
 	const {
 		data: {
 			trackedEntityInstances,
-			pager: {pageCount},
+			pager: { pageCount },
 		},
-	} = await this.instance.get("trackedEntityInstances.json", {params: {...params, totalPages: true}});
+	} = await this.instance.get("trackedEntityInstances.json", {
+		params: { ...params, totalPages: true },
+	});
 
 	await this.flattenInstances(trackedEntityInstances, program, chunkSize);
 	if (callback) {
 		console.log("Generating layering");
-		await callback({searchInstances: trackedEntityInstances.map(({trackedEntityInstance}) => trackedEntityInstance)});
+		await callback({
+			searchInstances: trackedEntityInstances.map(
+				({ trackedEntityInstance }) => trackedEntityInstance
+			),
+			processedUnits,
+			sessions,
+		});
 	}
 	if (pageCount > startingPage) {
 		for (let page = Number(startingPage) + 1; page <= pageCount; page++) {
 			console.log(`Working on page ${page} of ${pageCount}`);
 			const {
-				data: {trackedEntityInstances},
+				data: { trackedEntityInstances },
 			} = await this.instance.get("trackedEntityInstances.json", {
-				params: {...params, page},
+				params: { ...params, page },
 			});
 			await this.flattenInstances(trackedEntityInstances, program, chunkSize);
 			if (callback) {
 				console.log("Generating layering");
-				await callback({searchInstances: trackedEntityInstances.map(({trackedEntityInstance}) => trackedEntityInstance)});
+				await callback({
+					searchInstances: trackedEntityInstances.map(
+						({ trackedEntityInstance }) => trackedEntityInstance
+					),
+					processedUnits,
+					sessions,
+				});
 			}
 		}
 	}
 };
 
-module.exports.calculate = async (trackedEntityInstances, stage, attributes) => {
+module.exports.calculate = async (
+	trackedEntityInstances,
+	stage,
+	attributes
+) => {
 	const data = await this.fetchAll({
 		query: `select ${attributes} from ${String(stage).toLowerCase()}`,
 		filter: {
@@ -2750,10 +2780,10 @@ module.exports.calculate = async (trackedEntityInstances, stage, attributes) => 
 						match: {
 							deleted: false,
 						},
-					}
+					},
 				],
 			},
-		}
+		},
 	});
 	return groupBy(data, "trackedEntityInstance");
 };
@@ -2762,65 +2792,118 @@ module.exports.queryActivities = async (district) => {
 	let allRows = [];
 	let allParticipants = [];
 	let allSessions = [];
-	const {data: {organisationUnits}} = await this.instance.get("organisationUnits/" + district.value, {
+	const {
+		data: { organisationUnits },
+	} = await this.instance.get("organisationUnits/" + district.value, {
 		params: {
 			level: 2,
 			fields: "id",
-			paging: false
+			paging: false,
 		},
 	});
-	const parishes = organisationUnits.map(({id}) => id);
-	let must = [{
-		match: {
-			deleted: false,
-		}
-	}, {
-		match: {
-			inactive: false,
+	const parishes = organisationUnits.map(({ id }) => id);
+	let must = [
+		{
+			match: {
+				deleted: false,
+			},
 		},
-	}, {
-		terms: {
-			"bFnIjGJpf9t.keyword": ["3. Journeys Plus", "4. NMN"],
+		{
+			match: {
+				inactive: false,
+			},
 		},
-
-	}, {
-		terms: {
-			"orgUnit.keyword": parishes
-		}
-	}];
-
+		{
+			terms: {
+				"bFnIjGJpf9t.keyword": ["3. Journeys Plus", "4. NMN"],
+			},
+		},
+		{
+			terms: {
+				"orgUnit.keyword": parishes,
+			},
+		},
+	];
 
 	let query = {
-		query: "select trackedEntityInstance,oqabsHE0ZUI,cYDK0qZSri9 from ixxhjadvckb",
+		query:
+			"select trackedEntityInstance,oqabsHE0ZUI,cYDK0qZSri9 from ixxhjadvckb",
 		fetch_size: 100,
 		filter: {
-			bool: {must}
-		}
+			bool: { must },
+		},
 	};
-	let {data: {rows, cursor: currentCursor}} = await this.api.post("wal/sql", query);
+	let {
+		data: { rows, cursor: currentCursor },
+	} = await this.api.post("wal/sql", query);
 	if (rows.length > 0) {
 		const trackedEntityInstances = rows.map(([instance]) => instance);
-		const participants = await this.calculate(trackedEntityInstances, "aTZwDRoJnxj", "trackedEntityInstance,ZUKC6mck81A sex,vfHaBC1ONln name,ypDUCAS6juy code,ibKkBuv4gX1 type,eXWM3v3oIKu age,orgUnitName,orgUnit,storedBy,eventDate");
-		const sessions = await this.calculate(trackedEntityInstances, "VzkQBBglj3O", "trackedEntityInstance,ypDUCAS6juy beneficiary,n20LkH4ZBF8 activity,RECl06RNilT date,orgUnitName,orgUnit,storedBy,eventDate");
+		const participants = await this.calculate(
+			trackedEntityInstances,
+			"aTZwDRoJnxj",
+			"trackedEntityInstance,ZUKC6mck81A sex,vfHaBC1ONln name,ypDUCAS6juy code,ibKkBuv4gX1 type,eXWM3v3oIKu age,orgUnitName,orgUnit,storedBy,eventDate"
+		);
+		const sessions = await this.calculate(
+			trackedEntityInstances,
+			"VzkQBBglj3O",
+			"trackedEntityInstance,ypDUCAS6juy beneficiary,n20LkH4ZBF8 activity,RECl06RNilT date,orgUnitName,orgUnit,storedBy,eventDate"
+		);
 		allSessions = [...allSessions, ...Object.values(sessions).flat()];
-		allParticipants = [...allParticipants, ...Object.values(participants).flat()];
-		allRows = [...allRows, ...rows.map((row) => [...row, participants[row[0]] ? participants[row[0]].length : 0, sessions[row[0]] ? sessions[row[0]].length : 0])];
+		allParticipants = [
+			...allParticipants,
+			...Object.values(participants).flat(),
+		];
+		allRows = [
+			...allRows,
+			...rows.map((row) => [
+				...row,
+				participants[row[0]] ? participants[row[0]].length : 0,
+				sessions[row[0]] ? sessions[row[0]].length : 0,
+			]),
+		];
 		if (currentCursor) {
 			do {
 				const {
-					data: {rows, cursor},
-				} = await this.api.post("wal/sql", {cursor: currentCursor});
+					data: { rows, cursor },
+				} = await this.api.post("wal/sql", { cursor: currentCursor });
 				currentCursor = cursor;
 				const trackedEntityInstances = rows.map(([instance]) => instance);
-				const participants = await this.calculate(trackedEntityInstances, "aTZwDRoJnxj", "trackedEntityInstance,ZUKC6mck81A sex,vfHaBC1ONln name,ypDUCAS6juy code,ibKkBuv4gX1 type,eXWM3v3oIKu age,orgUnitName,orgUnit,storedBy,eventDate");
-				const sessions = await this.calculate(trackedEntityInstances, "VzkQBBglj3O", "trackedEntityInstance,ypDUCAS6juy beneficiary,n20LkH4ZBF8 activity,RECl06RNilT date,orgUnitName,orgUnit,storedBy,eventDate");
+				const participants = await this.calculate(
+					trackedEntityInstances,
+					"aTZwDRoJnxj",
+					"trackedEntityInstance,ZUKC6mck81A sex,vfHaBC1ONln name,ypDUCAS6juy code,ibKkBuv4gX1 type,eXWM3v3oIKu age,orgUnitName,orgUnit,storedBy,eventDate"
+				);
+				const sessions = await this.calculate(
+					trackedEntityInstances,
+					"VzkQBBglj3O",
+					"trackedEntityInstance,ypDUCAS6juy beneficiary,n20LkH4ZBF8 activity,RECl06RNilT date,orgUnitName,orgUnit,storedBy,eventDate"
+				);
 				allSessions = [...allSessions, ...Object.values(sessions).flat()];
-				allParticipants = [...allParticipants, ...Object.values(participants).flat()];
-				allRows = [...allRows, ...rows.map((row) => [...row, participants[row[0]] ? participants[row[0]].length : 0, sessions[row[0]] ? sessions[row[0]].length : 0])];
+				allParticipants = [
+					...allParticipants,
+					...Object.values(participants).flat(),
+				];
+				allRows = [
+					...allRows,
+					...rows.map((row) => [
+						...row,
+						participants[row[0]] ? participants[row[0]].length : 0,
+						sessions[row[0]] ? sessions[row[0]].length : 0,
+					]),
+				];
 			} while (currentCursor);
 		}
 
-		const activitySheet = utils.aoa_to_sheet([["trackedEntityInstance", "activityCode", "activityName", "totalParticipants", "totalSessionsAttended"], ...allRows]);
+		const activitySheet = utils.aoa_to_sheet([
+			[
+				"trackedEntityInstance",
+				"activityCode",
+				"activityName",
+				"totalParticipants",
+				"totalSessionsAttended",
+			],
+			...allRows,
+		]);
 		const participantsSheet = utils.json_to_sheet(allParticipants);
 		const sessionSheet = utils.json_to_sheet(allSessions);
 
@@ -2832,18 +2915,46 @@ module.exports.queryActivities = async (district) => {
 	}
 };
 
-module.exports.generatePrevention = async (periods, instances, processedUnits, sessions, prevention = true) => {
-	const allInstances = instances.map(({trackedEntityInstance}) => trackedEntityInstance);
-	const groupedActivities = fromPairs(instances.map((instance) => [instance.trackedEntityInstance, instance]));
-	const [
-		participants,
-		availableSession
-	] = await Promise.all([
+module.exports.generatePrevention = async (
+	periods,
+	instances,
+	processedUnits,
+	sessions,
+	prevention = true
+) => {
+	const allInstances = instances.map(
+		({ trackedEntityInstance }) => trackedEntityInstance
+	);
+	const groupedActivities = fromPairs(
+		instances.map((instance) => [instance.trackedEntityInstance, instance])
+	);
+	const [participants, availableSession] = await Promise.all([
 		this.getProgramStageData(allInstances, "aTZwDRoJnxj"),
 		this.getProgramStageData(allInstances, "VzkQBBglj3O"),
 	]);
-	const doneSessions = periods.flatMap((period) => {
 
+	const allSessions = Object.values(availableSession)
+		.flat()
+		.map(({ ypDUCAS6juy, n20LkH4ZBF8, trackedEntityInstance, eventDate }) => {
+			const qtr = moment(eventDate).format("YYYY[Q]Q");
+			const year = moment(eventDate).year();
+			const month = moment(eventDate).month();
+			let financialYear = `FY${year}`;
+			if (month >= 9) {
+				financialYear = `FY${year + 1}`;
+			}
+			console.log(financialYear);
+			return {
+				id: `${trackedEntityInstance}${ypDUCAS6juy || ""}`,
+				session: n20LkH4ZBF8 ? n20LkH4ZBF8 : undefined,
+				code: ypDUCAS6juy ? ypDUCAS6juy : undefined,
+				qtr,
+				financialYear,
+				eventDate,
+			};
+		});
+
+	const doneSessions = periods.flatMap((period) => {
 		let start = period.startOf("quarter").toDate();
 		let end = period.endOf("quarter").toDate();
 
@@ -2854,7 +2965,7 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 			end = financialQuarterEnd;
 		}
 
-		return Object.values(availableSession).flat().filter((event) => {
+		return allSessions.filter((event) => {
 			return (
 				event.eventDate &&
 				isWithinInterval(new Date(event.eventDate), {
@@ -2862,64 +2973,104 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 					end,
 				})
 			);
-		})
-			.map(({ypDUCAS6juy, n20LkH4ZBF8, trackedEntityInstance}) => {
-				return {
-					id: `${trackedEntityInstance}${ypDUCAS6juy || ""}`,
-					session: n20LkH4ZBF8 ? n20LkH4ZBF8 : undefined,
-					code: ypDUCAS6juy ? ypDUCAS6juy : undefined,
-					qtr: period.format("YYYY[Q]Q")
-				};
-			});
+		});
 	});
 
 	const groupedSessions = groupBy(doneSessions, "id");
+	const allGroupedSessions = groupBy(allSessions, "id");
 	const layering = periods.flatMap((period) => {
 		const qtr = period.format("YYYY[Q]Q");
-		return Object.values(participants).flat().map(({
-			                                               ypDUCAS6juy,
-			                                               trackedEntityInstance,
-			                                               eXWM3v3oIKu,
-			                                               event,
-			                                               ...rest1
-		                                               }) => {
-			const {orgUnit, mWyp85xIzXR: subType, ...rest} = groupedActivities[trackedEntityInstance];
-			const allSubTypes = String(subType).split(",");
-			const units = processedUnits[orgUnit];
-			let initial = {};
-			allSubTypes.forEach((sub) => {
-				const value = sessions[sub] || [];
-				const completed = this.mapping[sub];
-				let foundSessions = (groupedSessions[`${trackedEntityInstance}${ypDUCAS6juy || ""}`] || [])
-					.filter((session) => session.qtr === qtr && value.indexOf(session.session) !== -1);
-				foundSessions = uniqBy(foundSessions, "session");
-				initial = {
-					...initial,
-					[sub]: foundSessions.length,
-					[completed]:
-						foundSessions.length >= this.mapping2[sub] ? 1 : 0,
-					completedPrevention:
-						foundSessions.length >= this.mapping2[sub] ? 1 : 0,
-					...fromPairs(foundSessions.map(({session}) => [`${session}`, 1]))
-				};
-			});
-			const ageGroup = this.findAgeGroup(Number(eXWM3v3oIKu));
-			return {
-				ypDUCAS6juy,
-				...rest1,
-				trackedEntityInstance,
-				orgUnit,
-				mWyp85xIzXR: subType,
-				ageGroup,
-				eXWM3v3oIKu,
-				...rest,
-				...initial,
-				...units,
-				qtr,
-				event,
-				id: `${event}${qtr}`,
-			};
-		});
+		const month = period.month();
+		const year = period.year();
+		let fy = `FY${year - 1}`;
+		if (month >= 9) {
+			fy = `FY${year}`;
+		}
+
+		return Object.values(participants)
+			.flat()
+			.map(
+				({
+					ypDUCAS6juy,
+					trackedEntityInstance,
+					eXWM3v3oIKu,
+					event,
+					...rest1
+				}) => {
+					const {
+						orgUnit,
+						mWyp85xIzXR: subType,
+						...rest
+					} = groupedActivities[trackedEntityInstance];
+					const allSubTypes = String(subType).split(",");
+					const units = processedUnits[orgUnit];
+					let initial = {};
+					allSubTypes.forEach((sub) => {
+						const value = sessions[sub] || [];
+						const completed = this.mapping[sub];
+						let foundSessions = (
+							groupedSessions[`${trackedEntityInstance}${ypDUCAS6juy || ""}`] ||
+							[]
+						).filter(
+							(session) =>
+								session.qtr === qtr && value.indexOf(session.session) !== -1 //
+						);
+
+						let financialSessions = (
+							allGroupedSessions[
+								`${trackedEntityInstance}${ypDUCAS6juy || ""}`
+							] || []
+						).filter(
+							(session) =>
+								session.financialYear === fy &&
+								value.indexOf(session.session) !== -1
+						);
+
+						let allSessions = (
+							allGroupedSessions[
+								`${trackedEntityInstance}${ypDUCAS6juy || ""}`
+							] || []
+						).filter(
+							(session) =>
+								session.eventDate &&
+								isBefore(new Date(session.eventDate), period.toDate()) &&
+								value.indexOf(session.session) !== -1
+						);
+
+						foundSessions = uniqBy(foundSessions, "session");
+						financialSessions = uniqBy(financialSessions, "session");
+						initial = {
+							...initial,
+							[sub]: foundSessions.length,
+							[completed]: foundSessions.length >= this.mapping2[sub] ? 1 : 0,
+							completedPrevention:
+								foundSessions.length >= this.mapping2[sub] ? 1 : 0,
+							completedLastFinancialYear:
+								financialSessions.length >= this.mapping2[sub] ? 1 : 0,
+							everCompleted: allSessions.length >= this.mapping2[sub] ? 1 : 0,
+							...fromPairs(
+								foundSessions.map(({ session }) => [`${session}`, 1])
+							),
+						};
+					});
+					const ageGroup = this.findAgeGroup(Number(eXWM3v3oIKu));
+					return {
+						ypDUCAS6juy,
+						...rest1,
+						trackedEntityInstance,
+						orgUnit,
+						mWyp85xIzXR: subType,
+						ageGroup,
+						eXWM3v3oIKu,
+						...rest,
+						...initial,
+						...units,
+						qtr,
+						event,
+						id: `${event}${qtr}`,
+					};
+				}
+			);
 	});
 
 	const inserted = await Promise.all(
@@ -2931,14 +3082,14 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 	);
 	const total = sum(
 		inserted.map(
-			({data: {items}}) =>
+			({ data: { items } }) =>
 				items.filter((i) => i.index.error === undefined).length
 		)
 	);
 
 	const errors = sum(
 		inserted.map(
-			({data: {items}}) =>
+			({ data: { items } }) =>
 				items.filter((i) => i.index.error !== undefined).length
 		)
 	);
@@ -2948,6 +3099,12 @@ module.exports.generatePrevention = async (periods, instances, processedUnits, s
 	console.log(`errors:${errors}`);
 
 	if (errors > 0) {
-		console.log(inserted.flatMap(({data: {items}}) => items.filter((i) => i.index.error !== undefined).map((i) => i.index.error)));
+		console.log(
+			inserted.flatMap(({ data: { items } }) =>
+				items
+					.filter((i) => i.index.error !== undefined)
+					.map((i) => i.index.error)
+			)
+		);
 	}
 };
