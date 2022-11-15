@@ -2370,19 +2370,19 @@ module.exports.processInstances = async (
 	}
 	const records = chunk(layering, 100);
 	for (const record of records) {
-		try {
-			const {
-				data: { items },
-			} = await this.api.post("wal/index?index=layering", {
-				data: record,
-			});
-			const total = items.filter((i) => i.index.error === undefined).length;
-			const errors = items.filter((i) => i.index.error !== undefined).length;
-			console.log(`total:${total}`);
-			console.log(`errors:${errors}`);
-		} catch (e) {
-			console.log(e);
-		}
+		// try {
+		const {
+			data: { items },
+		} = await this.api.post("wal/index?index=layering", {
+			data: record,
+		});
+		const total = items.filter((i) => i.index.error === undefined).length;
+		const errors = items.filter((i) => i.index.error !== undefined).length;
+		console.log(`total:${total}`);
+		console.log(`errors:${errors}`);
+		// } catch (e) {
+		// 	console.log(e);
+		// }
 	}
 };
 
