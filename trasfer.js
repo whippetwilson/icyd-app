@@ -1,6 +1,6 @@
 const schedule = require("node-schedule");
 const fs = require("fs");
-const { differenceInMinutes, parseISO } = require("date-fns");
+const { parseISO, differenceInHours } = require("date-fns");
 const {
 	processTrackedEntityInstances,
 	useTracker,
@@ -30,15 +30,13 @@ const transfer = async (program) => {
 			);
 			console.log(e);
 		}
-		let lastUpdatedDuration = "1m";
+		let lastUpdatedDuration = "3h";
 		if (searches.last) {
-			const minutes = differenceInMinutes(new Date(), parseISO(searches.last));
-			if (minutes > 0 && minutes < 60) {
-				lastUpdatedDuration = `${minutes}m`;
-			} else if (minutes >= 60 && minutes <= 60 * 24) {
-				lastUpdatedDuration = `${Math.floor(minutes / 60)}h`;
-			} else if (minutes > 60 * 24) {
-				lastUpdatedDuration = `${Math.floor(minutes / (60 * 24))}d`;
+			const minutes = differenceInHours(new Date(), parseISO(searches.last));
+			if (minutes > 3 && minutes < 24) {
+				lastUpdatedDuration = `${minutes}h`;
+			} else if (minutes >= 24) {
+				lastUpdatedDuration = `${Math.floor(minutes / 24)}d`;
 			}
 		}
 		console.log(`Fetching for ${lastUpdatedDuration}`);
@@ -79,6 +77,6 @@ const transfer = async (program) => {
 		console.log("Already running");
 	}
 };
-schedule.scheduleJob("*/15 * * * *", async () => {
+schedule.scheduleJob("*/5 * * * *", async () => {
 	await transfer(args[0]);
 });
