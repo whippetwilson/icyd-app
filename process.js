@@ -961,6 +961,60 @@ module.exports.getEvents = (available, trackedEntityInstance) => {
 	return available[trackedEntityInstance] || [];
 };
 
+module.exports.searchEventByDateDataElement = (
+	events,
+	dataElement,
+	start,
+	end
+) => {
+	const filteredEvents = events.filter((event) => {
+		return (
+			has(event, dataElement) &&
+			event[dataElement] &&
+			isWithinInterval(parseISO(event[dataElement]), { start, end })
+		);
+	});
+
+	if (filteredEvents.length > 0) {
+		return maxBy(filteredEvents, "eventDate");
+	}
+
+	return undefined;
+};
+
+module.exports.searchEventBe4DateDataElement = (events, dataElement, end) => {
+	const filteredEvents = events.filter((event) => {
+		return (
+			has(event, dataElement) &&
+			event[dataElement] &&
+			isBefore(parseISO(event[dataElement]), end)
+		);
+	});
+
+	return maxBy(
+		filteredEvents,
+		({ [dataElement]: val, eventDate }) => `${val}${eventDate}`
+	);
+};
+
+module.exports.everMissed = (events, dataElement, end) => {
+	return (
+		events.filter((event) => {
+			return (
+				has(event, dataElement) &&
+				has(event, "vnxQFpwvu67") &&
+				event[dataElement] &&
+				isBefore(parseISO(event[dataElement]), end) &&
+				[
+					"CLHIV Identified but not yet returned to Care",
+					"Beneficiary Still Missing",
+					"Rescheduled appointment",
+				].indexOf(event["vnxQFpwvu67"]) !== -1
+			);
+		}).length > 0
+	);
+};
+
 module.exports.processInstances = async (
 	trackedEntityInstances,
 	periods,
@@ -985,6 +1039,7 @@ module.exports.processInstances = async (
 		allExposedInfants,
 		allHVatAssessments,
 		allGraduationAssessments,
+		allMissedAppointments,
 	] = await Promise.all([
 		// this.getProgramStageData(instanceIds, "TuLJEpHu0um"),
 		this.getProgramStageData(trackedEntityInstanceIds, "HaaSLv2ur0l"),
@@ -1000,6 +1055,7 @@ module.exports.processInstances = async (
 			"Cx35Elpu330",
 			"trackedEntityInstance,eventDate,XPJtNCSNCdR"
 		),
+		this.getProgramStageData(trackedEntityInstanceIds, "qNxRoC1wIYA"),
 	]);
 	for (const {
 		enrollmentDate,
@@ -1037,6 +1093,11 @@ module.exports.processInstances = async (
 			allExposedInfants,
 			trackedEntityInstance
 		);
+		const missedAppointments = this.getEvents(
+			allMissedAppointments,
+			trackedEntityInstance
+		);
+
 		const { district, subCounty, orgUnitName, ...ous } =
 			processedUnits[orgUnit] || {};
 		const hasEnrollment = !!enrollmentDate;
@@ -1098,6 +1159,44 @@ module.exports.processInstances = async (
 			let assetOwnership = "Not Reassessed";
 			const quarterStart = period.startOf("quarter").toDate();
 			const quarterEnd = period.endOf("quarter").toDate();
+			let missedAppointmentDate = "";
+			let missedAnAppointment = 0;
+			let missedAnAppointmentReason = "";
+			let missedAnAppointmentFollowupOutcome = "";
+			const latestMissedAppointment = this.searchEventBe4DateDataElement(
+				missedAppointments,
+				"XTl5dE2AcVM",
+				quarterEnd
+			);
+
+			const hasEverMissedAnAppointment = this.everMissed(
+				missedAppointments,
+				"XTl5dE2AcVM",
+				quarterEnd
+			)
+				? 1
+				: 0;
+			console.log(hasEverMissedAnAppointment);
+			if (
+				latestMissedAppointment &&
+				[
+					"CLHIV Identified but not yet returned to Care",
+					"Beneficiary Still Missing",
+					"Rescheduled appointment",
+				].indexOf(latestMissedAppointment["vnxQFpwvu67"]) !== -1
+			) {
+				missedAppointmentDate = latestMissedAppointment["XTl5dE2AcVM"] || "";
+				missedAnAppointment = 1;
+				missedAnAppointmentReason =
+					latestMissedAppointment["UZWtGlGfNFq"] || "";
+				missedAnAppointmentFollowupOutcome =
+					latestMissedAppointment["vnxQFpwvu67"] || "";
+			} else if (latestMissedAppointment) {
+				missedAnAppointmentReason =
+					latestMissedAppointment["UZWtGlGfNFq"] || "";
+				missedAnAppointmentFollowupOutcome =
+					latestMissedAppointment["vnxQFpwvu67"] || "";
+			}
 			const previousQuarter = moment(subQuarters(quarterStart, 1)).format(
 				"YYYY[Q]Q"
 			);
@@ -1170,6 +1269,7 @@ module.exports.processInstances = async (
 				quarterStart,
 				quarterEnd
 			);
+
 			const viralLoadsBe4Quarter = this.eventsBeforePeriod(
 				viralLoads,
 				quarterEnd
@@ -2365,6 +2465,11 @@ module.exports.processInstances = async (
 				assetOwnership,
 				deleted,
 				inactive,
+				missedAppointmentDate,
+				missedAnAppointment,
+				missedAnAppointmentReason,
+				missedAnAppointmentFollowupOutcome,
+				hasEverMissedAnAppointment,
 				...ous,
 				generated: new Date().toISOString(),
 			});
@@ -2521,18 +2626,7 @@ module.exports.useTracker = async (args) => {
 		processedUnits = args["processedUnits"];
 	}
 
-	let must = [
-		// {
-		// 	match: {
-		// 		deleted: false,
-		// 	},
-		// },
-		// {
-		// 	match: {
-		// 		inactive: false,
-		// 	},
-		// },
-	];
+	let must = [];
 
 	if (searchInstances.length > 0) {
 		must = [{ terms: { "trackedEntityInstance.keyword": searchInstances } }];
@@ -2641,6 +2735,7 @@ module.exports.flattenInstances = async (
 							dueDate,
 							eventDate,
 							event,
+							deleted,
 							...eventDetails
 						} of events) {
 							calculatedEvents.push({
@@ -2650,6 +2745,7 @@ module.exports.flattenInstances = async (
 								incidentDate,
 								dueDate,
 								eventDate,
+								deleted,
 								event,
 								...fromPairs(
 									dataValues.map(({ dataElement, value }) => [

@@ -21,7 +21,12 @@ const generateLayering = async () => {
 		moment().subtract(1, "quarters"),
 		moment(),
 	];
-	await useTracker({ processedUnits, sessions, periods });
+	await useTracker({
+		processedUnits,
+		sessions,
+		periods,
+		searchInstances: ["hHtgczvS75k"],
+	});
 };
 
 generateLayering().then(() => console.log("Done"));
