@@ -19,8 +19,6 @@ const {
 	chunk,
 	sum,
 	uniq,
-	unionBy,
-	isArray,
 } = require("lodash");
 const moment = require("moment");
 const axios = require("axios");
@@ -1017,6 +1015,8 @@ module.exports.processInstances = async (
 		huFucxA3e5c,
 		CfpoFtRmK1z,
 		n7VQaJ8biOJ,
+		deleted,
+		inactive,
 		orgUnit,
 		trackedEntityInstance,
 	} of trackedEntityInstances) {
@@ -2363,6 +2363,8 @@ module.exports.processInstances = async (
 				homeVisitorContact,
 				dataEntrant,
 				assetOwnership,
+				deleted,
+				inactive,
 				...ous,
 				generated: new Date().toISOString(),
 			});
@@ -2518,32 +2520,38 @@ module.exports.useTracker = async (args) => {
 	if (args && args["processedUnits"]) {
 		processedUnits = args["processedUnits"];
 	}
+
 	let must = [
-		{
-			match: {
-				deleted: false,
-			},
-		},
-		{
-			match: {
-				inactive: false,
-			},
-		},
+		// {
+		// 	match: {
+		// 		deleted: false,
+		// 	},
+		// },
+		// {
+		// 	match: {
+		// 		inactive: false,
+		// 	},
+		// },
 	];
 
 	if (searchInstances.length > 0) {
-		must = [
-			...must,
-			{ terms: { "trackedEntityInstance.keyword": searchInstances } },
-		];
+		must = [{ terms: { "trackedEntityInstance.keyword": searchInstances } }];
 	}
-	const { data } = await this.api.post("wal/sql", {
+
+	let query = {
 		query: "select * from rdeklsxcd4c order by hly709n51z0",
 		fetch_size: 1000,
-		filter: {
-			bool: { must },
-		},
-	});
+	};
+
+	if (must.length > 0) {
+		query = {
+			...query,
+			filter: {
+				bool: { must },
+			},
+		};
+	}
+	const { data } = await this.api.post("wal/sql", query);
 	let { columns, rows, cursor: currentCursor } = data;
 	const trackedEntityInstances = rows.map((row) => {
 		return fromPairs(columns.map(({ name }, index) => [name, row[index]]));
