@@ -567,32 +567,32 @@ module.exports.fetchRelationships4Instances = async (
 };
 
 module.exports.previousLayering = async (trackedEntityInstances) => {
-	try {
-		const data = await this.fetchAll({
-			query:
-				"select trackedEntityInstance,qtr,quarter,fullyGraduated,preGraduated from layering",
-			filter: {
-				terms: {
-					"trackedEntityInstance.keyword": trackedEntityInstances,
-				},
+	// try {
+	const data = await this.fetchAll({
+		query:
+			"select trackedEntityInstance,qtr,quarter,fullyGraduated,preGraduated from layering",
+		filter: {
+			terms: {
+				"trackedEntityInstance.keyword": trackedEntityInstances,
 			},
-		});
-		return fromPairs(
-			Object.entries(groupBy(data, "trackedEntityInstance")).map(
-				([instance, data]) => [
-					instance,
-					fromPairs(
-						data.map((d) => [
-							d["qtr"],
-							{ fullyGraduated: d["fullyGraduated"], quarter: d["quarter"] },
-						])
-					),
-				]
-			)
-		);
-	} catch (error) {
-		return {};
-	}
+		},
+	});
+	return fromPairs(
+		Object.entries(groupBy(data, "trackedEntityInstance")).map(
+			([instance, data]) => [
+				instance,
+				fromPairs(
+					data.map((d) => [
+						d["qtr"],
+						{ fullyGraduated: d["fullyGraduated"], quarter: d["quarter"] },
+					])
+				),
+			]
+		)
+	);
+	// } catch (error) {
+	// 	return {};
+	// }
 };
 
 module.exports.fetchGroupActivities4Instances = async (

@@ -31,9 +31,6 @@ curl -X DELETE "localhost:9200/cs61idhyntk?pretty"
 curl -X DELETE "localhost:9200/kofm3jjl7n7?pretty"
 curl -X DELETE "localhost:9200/qnxroc1wiya?pretty"
 curl -X DELETE "localhost:9200/layering?pretty"
-
-
-
 curl -X DELETE "localhost:9200/ixxhjadvckb?pretty"
 curl -X DELETE "localhost:9200/atzwdrojnxj?pretty"
 curl -X DELETE "localhost:9200/vzkqbbglj3o?pretty"
@@ -51,8 +48,6 @@ curl -X PUT "localhost:9200/sxnxrdtsjzp?pretty"
 curl -X PUT "localhost:9200/cs61idhyntk?pretty"
 curl -X PUT "localhost:9200/kofm3jjl7n7?pretty"
 curl -X PUT "localhost:9200/layering?pretty"
-
-
 curl -X PUT "localhost:9200/ixxhjadvckb?pretty"
 curl -X PUT "localhost:9200/atzwdrojnxj?pretty"
 curl -X PUT "localhost:9200/vzkqbbglj3o?pretty"
