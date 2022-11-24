@@ -567,32 +567,32 @@ module.exports.fetchRelationships4Instances = async (
 };
 
 module.exports.previousLayering = async (trackedEntityInstances) => {
-	// try {
-	const data = await this.fetchAll({
-		query:
-			"select trackedEntityInstance,qtr,quarter,fullyGraduated,preGraduated from layering",
-		filter: {
-			terms: {
-				"trackedEntityInstance.keyword": trackedEntityInstances,
+	try {
+		const data = await this.fetchAll({
+			query:
+				"select trackedEntityInstance,qtr,quarter,fullyGraduated,preGraduated from layering",
+			filter: {
+				terms: {
+					"trackedEntityInstance.keyword": trackedEntityInstances,
+				},
 			},
-		},
-	});
-	return fromPairs(
-		Object.entries(groupBy(data, "trackedEntityInstance")).map(
-			([instance, data]) => [
-				instance,
-				fromPairs(
-					data.map((d) => [
-						d["qtr"],
-						{ fullyGraduated: d["fullyGraduated"], quarter: d["quarter"] },
-					])
-				),
-			]
-		)
-	);
-	// } catch (error) {
-	// 	return {};
-	// }
+		});
+		return fromPairs(
+			Object.entries(groupBy(data, "trackedEntityInstance")).map(
+				([instance, data]) => [
+					instance,
+					fromPairs(
+						data.map((d) => [
+							d["qtr"],
+							{ fullyGraduated: d["fullyGraduated"], quarter: d["quarter"] },
+						])
+					),
+				]
+			)
+		);
+	} catch (error) {
+		return {};
+	}
 };
 
 module.exports.fetchGroupActivities4Instances = async (
@@ -1027,6 +1027,7 @@ module.exports.processInstances = async (
 	const trackedEntityInstanceIds = trackedEntityInstances.map(
 		(tei) => tei.trackedEntityInstance
 	);
+	console.log("Fetching previous layering");
 	const previousLayer = await this.previousLayering(trackedEntityInstanceIds);
 	const [
 		// vulnerabilityAssessments,
@@ -1176,7 +1177,6 @@ module.exports.processInstances = async (
 			)
 				? 1
 				: 0;
-			console.log(hasEverMissedAnAppointment);
 			if (
 				latestMissedAppointment &&
 				[
@@ -2477,19 +2477,19 @@ module.exports.processInstances = async (
 	}
 	const records = chunk(layering, 100);
 	for (const record of records) {
-		// try {
-		const {
-			data: { items },
-		} = await this.api.post("wal/index?index=layering", {
-			data: record,
-		});
-		const total = items.filter((i) => i.index.error === undefined).length;
-		const errors = items.filter((i) => i.index.error !== undefined).length;
-		console.log(`total:${total}`);
-		console.log(`errors:${errors}`);
-		// } catch (e) {
-		// 	console.log(e);
-		// }
+		try {
+			const {
+				data: { items },
+			} = await this.api.post("wal/index?index=layering", {
+				data: record,
+			});
+			const total = items.filter((i) => i.index.error === undefined).length;
+			const errors = items.filter((i) => i.index.error !== undefined).length;
+			console.log(`total:${total}`);
+			console.log(`errors:${errors}`);
+		} catch (e) {
+			console.log(e);
+		}
 	}
 };
 
@@ -2588,9 +2588,11 @@ module.exports.generate = async (
 	periods,
 	sessions
 ) => {
+	console.log("Fetching relationships");
 	const indexCases = await this.fetchRelationships4Instances(
 		trackedEntityInstances
 	);
+	console.log("Fetching group activities");
 	const groupActivities = await this.fetchGroupActivities4Instances(
 		trackedEntityInstances
 	);
@@ -2822,6 +2824,7 @@ module.exports.processTrackedEntityInstances = async (
 		page: startingPage,
 		...realOtherParams,
 	};
+	console.log("Pulling from ICYD");
 	const {
 		data: {
 			trackedEntityInstances,
@@ -2830,7 +2833,7 @@ module.exports.processTrackedEntityInstances = async (
 	} = await this.instance.get("trackedEntityInstances.json", {
 		params: { ...params, totalPages: true },
 	});
-
+	console.log("Processing and inserting");
 	await this.flattenInstances(trackedEntityInstances, program, chunkSize);
 	if (callback) {
 		console.log("Generating layering");
