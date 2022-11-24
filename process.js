@@ -2808,11 +2808,10 @@ module.exports.processTrackedEntityInstances = async (
 	otherParams = {}
 ) => {
 	let startingPage = 1;
-	const { processedUnits, sessions, ...rest } = otherParams;
-	let realOtherParams = rest;
+	let { processedUnits, sessions, ...realOtherParams } = otherParams;
 
 	if (otherParams.page) {
-		const { page, ...rest } = otherParams;
+		const { page, ...rest } = realOtherParams;
 		startingPage = page;
 		realOtherParams = rest;
 	}
