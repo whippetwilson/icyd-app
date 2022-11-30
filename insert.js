@@ -46,7 +46,6 @@ const processAll = async () => {
 		processedUnits,
 		sessions,
 		periods,
-		page: 90,
 	});
 };
 processAll().then(() => console.log("Done"));
