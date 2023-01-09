@@ -2786,11 +2786,12 @@ module.exports.flattenInstances = async (
 					items.filter((i) => i.index.error === undefined).length
 			)
 		);
-		// const allErrors = inserted.flatMap(({ data: { items } }) =>
-		// 	items
-		// 		.filter((i) => i.index.error !== undefined)
-		// 		.map(({ index: { error } }) => error)
-		// );
+		const allErrors = inserted.flatMap(({ data: { items } }) =>
+			items
+				.filter((i) => i.index.error !== undefined)
+				.map(({ index: { error } }) => error)
+		);
+		console.log(allErrors);
 		const errors = sum(
 			inserted.map(
 				({ data: { items } }) =>
