@@ -2527,11 +2527,11 @@ module.exports.useProgramStage = async (args) => {
 				inactive: false,
 			},
 		},
-		{
-			terms: {
-				"bFnIjGJpf9t.keyword": ["3. Journeys Plus", "4. NMN"],
-			},
-		},
+		// {
+		// 	terms: {
+		// 		"bFnIjGJpf9t.keyword": ["3. Journeys Plus", "4. NMN"],
+		// 	},
+		// },
 	];
 
 	if (searchInstances.length > 0) {
@@ -2786,7 +2786,11 @@ module.exports.flattenInstances = async (
 					items.filter((i) => i.index.error === undefined).length
 			)
 		);
-
+		// const allErrors = inserted.flatMap(({ data: { items } }) =>
+		// 	items
+		// 		.filter((i) => i.index.error !== undefined)
+		// 		.map(({ index: { error } }) => error)
+		// );
 		const errors = sum(
 			inserted.map(
 				({ data: { items } }) =>
@@ -3049,7 +3053,6 @@ module.exports.generatePrevention = async (
 			if (month >= 9) {
 				financialYear = `FY${year + 1}`;
 			}
-			console.log(financialYear);
 			return {
 				id: `${trackedEntityInstance}${ypDUCAS6juy || ""}`,
 				session: n20LkH4ZBF8 ? n20LkH4ZBF8 : undefined,
@@ -3119,7 +3122,7 @@ module.exports.generatePrevention = async (
 							[]
 						).filter(
 							(session) =>
-								session.qtr === qtr && value.indexOf(session.session) !== -1 //
+								session.qtr === qtr && value.indexOf(session.session) !== -1
 						);
 
 						let financialSessions = (
