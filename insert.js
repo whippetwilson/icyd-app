@@ -37,14 +37,15 @@ const processAll = async () => {
 	// 	page: 32,
 	// 	// lastUpdatedDuration: "5d",
 	// });
-	console.log("Processing program IXxHJADVCkb ");
-	await processTrackedEntityInstances("IXxHJADVCkb", 50, 100, useProgramStage, {
-		processedUnits,
-		sessions,
-		periods,
-		// page: 26,
-		// lastUpdatedDuration: "5d",
-	});
+	// console.log("Processing program IXxHJADVCkb ");
+	// await processTrackedEntityInstances("IXxHJADVCkb", 50, 100, useProgramStage, {
+	// 	processedUnits,
+	// 	sessions,
+	// 	periods,
+	// 	// page: 26,
+	// 	// lastUpdatedDuration: "5d",
+	// });
+	console.log("Processing program RDEklSXCD4C ");
 	await processTrackedEntityInstances("RDEklSXCD4C", 500, 100, useTracker, {
 		processedUnits,
 		sessions,
