@@ -34,21 +34,21 @@ const processAll = async () => {
 		processedUnits,
 		sessions,
 		periods,
-		lastUpdatedDuration: "2d",
+		lastUpdatedDuration: "90d",
 	});
 	console.log("Processing program IXxHJADVCkb ");
 	await processTrackedEntityInstances("IXxHJADVCkb", 50, 100, useProgramStage, {
 		processedUnits,
 		sessions,
 		periods,
-		lastUpdatedDuration: "2d",
+		lastUpdatedDuration: "90d",
 	});
 	console.log("Processing program RDEklSXCD4C ");
 	await processTrackedEntityInstances("RDEklSXCD4C", 500, 100, useTracker, {
 		processedUnits,
 		sessions,
 		periods,
-		lastUpdatedDuration: "2d",
+		lastUpdatedDuration: "90d",
 	});
 };
 processAll().then(() => console.log("Done"));
