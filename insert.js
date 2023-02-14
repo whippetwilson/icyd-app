@@ -29,26 +29,27 @@ const processAll = async () => {
 	console.log("Fetching metadata");
 	const { sessions } = await useLoader();
 
-	console.log("Processing program HEWq6yr4cs5 ");
-	await processTrackedEntityInstances("HEWq6yr4cs5", 250, 100, null, {
-		processedUnits,
-		sessions,
-		periods,
-		lastUpdatedDuration: "90d",
-	});
+	// console.log("Processing program HEWq6yr4cs5 ");
+	// await processTrackedEntityInstances("HEWq6yr4cs5", 250, 100, null, {
+	// 	processedUnits,
+	// 	sessions,
+	// 	periods,
+	// });
+
 	console.log("Processing program IXxHJADVCkb ");
 	await processTrackedEntityInstances("IXxHJADVCkb", 50, 100, useProgramStage, {
 		processedUnits,
 		sessions,
 		periods,
-		lastUpdatedDuration: "90d",
+		// lastUpdatedDuration: "90d",
+		// searchInstances: ["p9Wxpol3FrX"],
 	});
-	console.log("Processing program RDEklSXCD4C ");
-	await processTrackedEntityInstances("RDEklSXCD4C", 500, 100, useTracker, {
-		processedUnits,
-		sessions,
-		periods,
-		lastUpdatedDuration: "90d",
-	});
+	// console.log("Processing program RDEklSXCD4C ");
+	// await processTrackedEntityInstances("RDEklSXCD4C", 500, 100, useTracker, {
+	// 	processedUnits,
+	// 	sessions,
+	// 	periods,
+	// 	lastUpdatedDuration: "90d",
+	// });
 };
 processAll().then(() => console.log("Done"));

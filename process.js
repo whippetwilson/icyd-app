@@ -2813,14 +2813,19 @@ module.exports.processTrackedEntityInstances = async (
 	otherParams = {}
 ) => {
 	let startingPage = 1;
-	let { processedUnits, sessions, ...realOtherParams } = otherParams;
-
+	let {
+		processedUnits,
+		searchInstances,
+		periods,
+		sessions,
+		...realOtherParams
+	} = otherParams;
 	if (realOtherParams.page) {
 		const { page, ...rest } = realOtherParams;
 		startingPage = page;
 		realOtherParams = rest;
 	}
-	const params = {
+	let params = {
 		fields: "*",
 		ouMode: "ALL",
 		program,
@@ -2828,6 +2833,9 @@ module.exports.processTrackedEntityInstances = async (
 		page: startingPage,
 		...realOtherParams,
 	};
+	if (searchInstances) {
+		params = { ...params, trackedEntityInstance: searchInstances };
+	}
 	console.log("Pulling from ICYD");
 	const {
 		data: {
@@ -2847,6 +2855,7 @@ module.exports.processTrackedEntityInstances = async (
 			),
 			processedUnits,
 			sessions,
+			periods,
 		});
 	}
 	if (pageCount > startingPage) {
@@ -2866,6 +2875,7 @@ module.exports.processTrackedEntityInstances = async (
 					),
 					processedUnits,
 					sessions,
+					periods,
 				});
 			}
 		}
