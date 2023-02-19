@@ -132,7 +132,7 @@ module.exports.mapping = {
 	"No means No sessions (Boys) New Curriculum":
 		"Completed NMN Boys New Curriculum",
 	SINOVUYO: "Completed SINOVUYO",
-	ECD: "Completed SINOVUYO",
+	ECD: "Completed ECD",
 	"Saving and Borrowing": "Completed Saving and Borrowing",
 	"SPM Training": "Completed SPM Training",
 	"Financial Literacy": "Completed Financial Literacy",
@@ -144,7 +144,12 @@ module.exports.mapping2 = {
 	"No means No sessions (Boys)": 4,
 	"No means No sessions (Girls)": 4,
 	"No means No sessions (Boys) New Curriculum": 8,
-	SINOVUYO: 10,
+	SINOVUYO: 14,
+	ECD: 8,
+	"Saving and Borrowing": 6,
+	"SPM Training": 5,
+	"Financial Literacy": 4,
+	"VSLA Methodology": 7,
 };
 
 module.exports.hadASession = (memberSessions, startDate, endDate, sessions) => {
