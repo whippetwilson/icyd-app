@@ -34,6 +34,7 @@ const processAll = async () => {
 		processedUnits,
 		sessions,
 		periods,
+		lastUpdatedDuration: "3d",
 	});
 
 	console.log("Processing program IXxHJADVCkb ");
@@ -41,7 +42,7 @@ const processAll = async () => {
 		processedUnits,
 		sessions,
 		periods,
-		// lastUpdatedDuration: "90d",
+		lastUpdatedDuration: "3d",
 		// searchInstances: ["p9Wxpol3FrX"],
 	});
 	console.log("Processing program RDEklSXCD4C ");
@@ -49,7 +50,7 @@ const processAll = async () => {
 		processedUnits,
 		sessions,
 		periods,
-		// lastUpdatedDuration: "90d",
+		lastUpdatedDuration: "3d",
 	});
 };
 processAll().then(() => console.log("Done"));
