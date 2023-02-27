@@ -10,30 +10,49 @@ const args = process.argv.slice(2);
 let running = {};
 const transfer = async (program) => {
 	try {
+		const processedUnits = await fetchUnits4Instances();
 		if (program === "RDEklSXCD4C") {
 			console.log("Fetching facilities");
-			const processedUnits = await fetchUnits4Instances();
 			console.log("Fetching metadata");
 			const { sessions } = await useLoader();
-			await processTrackedEntityInstances(program, 50, 100, useTracker, {
-				lastUpdatedDuration: "4h",
+			await processTrackedEntityInstances(
+				program,
+				50,
+				100,
 				processedUnits,
-				sessions,
-			});
+				useTracker,
+				{
+					lastUpdatedDuration: "4h",
+					sessions,
+				}
+			);
 		} else if (program === "IXxHJADVCkb") {
 			console.log("Fetching facilities");
 			const processedUnits = await fetchUnits4Instances();
 			console.log("Fetching metadata");
 			const { sessions } = await useLoader();
-			await processTrackedEntityInstances(program, 50, 100, useProgramStage, {
-				lastUpdatedDuration: "4h",
+			await processTrackedEntityInstances(
+				program,
+				50,
+				100,
 				processedUnits,
-				sessions,
-			});
+				useProgramStage,
+				{
+					lastUpdatedDuration: "4h",
+					sessions,
+				}
+			);
 		} else {
-			await processTrackedEntityInstances(program, 50, 100, null, {
-				lastUpdatedDuration: "4h",
-			});
+			await processTrackedEntityInstances(
+				program,
+				50,
+				100,
+				processedUnits,
+				null,
+				{
+					lastUpdatedDuration: "4h",
+				}
+			);
 		}
 	} catch (error) {
 		console.log(error.message);

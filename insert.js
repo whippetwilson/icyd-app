@@ -30,27 +30,41 @@ const processAll = async () => {
 	const { sessions } = await useLoader();
 
 	console.log("Processing program HEWq6yr4cs5 ");
-	await processTrackedEntityInstances("HEWq6yr4cs5", 250, 100, null, {
+	await processTrackedEntityInstances(
+		"HEWq6yr4cs5",
+		250,
+		100,
 		processedUnits,
-		sessions,
-		periods,
-		lastUpdatedDuration: "3d",
-	});
+		null,
+		{
+			sessions,
+			periods,
+		}
+	);
 
 	console.log("Processing program IXxHJADVCkb ");
-	await processTrackedEntityInstances("IXxHJADVCkb", 50, 100, useProgramStage, {
+	await processTrackedEntityInstances(
+		"IXxHJADVCkb",
+		50,
+		100,
 		processedUnits,
-		sessions,
-		periods,
-		lastUpdatedDuration: "3d",
-		// searchInstances: ["p9Wxpol3FrX"],
-	});
+		useProgramStage,
+		{
+			sessions,
+			periods,
+		}
+	);
 	console.log("Processing program RDEklSXCD4C ");
-	await processTrackedEntityInstances("RDEklSXCD4C", 500, 100, useTracker, {
+	await processTrackedEntityInstances(
+		"RDEklSXCD4C",
+		500,
+		100,
 		processedUnits,
-		sessions,
-		periods,
-		lastUpdatedDuration: "3d",
-	});
+		useTracker,
+		{
+			sessions,
+			periods,
+		}
+	);
 };
 processAll().then(() => console.log("Done"));

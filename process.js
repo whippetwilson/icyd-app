@@ -2689,6 +2689,7 @@ module.exports.useTracker = async (args) => {
 module.exports.flattenInstances = async (
 	trackedEntityInstances,
 	program,
+	processedUnits,
 	chunkSize
 ) => {
 	let instances = [];
@@ -2702,6 +2703,7 @@ module.exports.flattenInstances = async (
 		deleted,
 		relationships,
 	} of trackedEntityInstances) {
+		const units = processedUnits[orgUnit];
 		const processedAttributes = fromPairs(
 			attributes.map(({ attribute, value }) => [attribute, value])
 		);
@@ -2728,6 +2730,7 @@ module.exports.flattenInstances = async (
 						orgUnit,
 						...processedAttributes,
 						...allRelations,
+						...units,
 						inactive,
 						deleted,
 						enrollmentDate,
@@ -2754,6 +2757,7 @@ module.exports.flattenInstances = async (
 								eventDate,
 								deleted,
 								event,
+								...units,
 								...fromPairs(
 									dataValues.map(({ dataElement, value }) => [
 										dataElement,
@@ -2814,17 +2818,12 @@ module.exports.processTrackedEntityInstances = async (
 	program,
 	pageSize,
 	chunkSize,
+	processedUnits,
 	callback,
 	otherParams = {}
 ) => {
 	let startingPage = 1;
-	let {
-		processedUnits,
-		searchInstances,
-		periods,
-		sessions,
-		...realOtherParams
-	} = otherParams;
+	let { searchInstances, periods, sessions, ...realOtherParams } = otherParams;
 	if (realOtherParams.page) {
 		const { page, ...rest } = realOtherParams;
 		startingPage = page;
@@ -2851,7 +2850,12 @@ module.exports.processTrackedEntityInstances = async (
 		params: { ...params, totalPages: true },
 	});
 	console.log("Processing and inserting");
-	await this.flattenInstances(trackedEntityInstances, program, chunkSize);
+	await this.flattenInstances(
+		trackedEntityInstances,
+		program,
+		processedUnits,
+		chunkSize
+	);
 	if (callback) {
 		console.log("Generating layering");
 		await callback({
@@ -2871,7 +2875,12 @@ module.exports.processTrackedEntityInstances = async (
 			} = await this.instance.get("trackedEntityInstances.json", {
 				params: { ...params, page },
 			});
-			await this.flattenInstances(trackedEntityInstances, program, chunkSize);
+			await this.flattenInstances(
+				trackedEntityInstances,
+				program,
+				processedUnits,
+				chunkSize
+			);
 			if (callback) {
 				console.log("Generating layering");
 				await callback({
