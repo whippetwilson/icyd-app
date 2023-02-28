@@ -29,31 +29,31 @@ const processAll = async () => {
 	console.log("Fetching metadata");
 	const { sessions } = await useLoader();
 
-	console.log("Processing program HEWq6yr4cs5 ");
-	await processTrackedEntityInstances(
-		"HEWq6yr4cs5",
-		250,
-		100,
-		processedUnits,
-		null,
-		{
-			sessions,
-			periods,
-		}
-	);
+	// console.log("Processing program HEWq6yr4cs5 ");
+	// await processTrackedEntityInstances(
+	// 	"HEWq6yr4cs5",
+	// 	250,
+	// 	100,
+	// 	processedUnits,
+	// 	null,
+	// 	{
+	// 		sessions,
+	// 		periods,
+	// 	}
+	// );
 
-	console.log("Processing program IXxHJADVCkb ");
-	await processTrackedEntityInstances(
-		"IXxHJADVCkb",
-		50,
-		100,
-		processedUnits,
-		useProgramStage,
-		{
-			sessions,
-			periods,
-		}
-	);
+	// console.log("Processing program IXxHJADVCkb ");
+	// await processTrackedEntityInstances(
+	// 	"IXxHJADVCkb",
+	// 	50,
+	// 	100,
+	// 	processedUnits,
+	// 	useProgramStage,
+	// 	{
+	// 		sessions,
+	// 		periods,
+	// 	}
+	// );
 	console.log("Processing program RDEklSXCD4C ");
 	await processTrackedEntityInstances(
 		"RDEklSXCD4C",
