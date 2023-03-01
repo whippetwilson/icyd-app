@@ -2835,6 +2835,7 @@ module.exports.processTrackedEntityInstances = async (
 		program,
 		pageSize,
 		page: startingPage,
+		includeDeleted: true,
 		...realOtherParams,
 	};
 	if (searchInstances) {
