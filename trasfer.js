@@ -22,7 +22,7 @@ const transfer = async (program) => {
 				processedUnits,
 				useTracker,
 				{
-					lastUpdatedDuration: "4h",
+					lastUpdatedDuration: "27h",
 					sessions,
 				}
 			);
@@ -38,7 +38,7 @@ const transfer = async (program) => {
 				processedUnits,
 				useProgramStage,
 				{
-					lastUpdatedDuration: "4h",
+					lastUpdatedDuration: "27h",
 					sessions,
 				}
 			);
@@ -50,7 +50,7 @@ const transfer = async (program) => {
 				processedUnits,
 				null,
 				{
-					lastUpdatedDuration: "4h",
+					lastUpdatedDuration: "27h",
 				}
 			);
 		}
@@ -59,6 +59,6 @@ const transfer = async (program) => {
 	}
 	running = { ...running, [program]: false };
 };
-schedule.scheduleJob("*/30 * * * *", async () => {
+schedule.scheduleJob("0 1 * * *", async () => {
 	await transfer(args[0]);
 });
