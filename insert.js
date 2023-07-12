@@ -39,7 +39,7 @@ const processAll = async () => {
 		{
 			sessions,
 			periods,
-			lastUpdatedDuration: "4m",
+			// lastUpdatedDuration: "4m",
 		}
 	);
 
@@ -53,7 +53,7 @@ const processAll = async () => {
 		{
 			sessions,
 			periods,
-			lastUpdatedDuration: "4m",
+			// lastUpdatedDuration: "4m",
 		}
 	);
 	console.log("Processing program RDEklSXCD4C ");
@@ -66,7 +66,7 @@ const processAll = async () => {
 		{
 			sessions,
 			periods,
-			lastUpdatedDuration: "4m",
+			// lastUpdatedDuration: "4m",
 		}
 	);
 };
