@@ -43,32 +43,32 @@ const processAll = async () => {
 	// 	}
 	// );
 
-	// console.log("Processing program IXxHJADVCkb ");
-	// await processTrackedEntityInstances(
-	// 	"IXxHJADVCkb",
-	// 	50,
-	// 	100,
-	// 	processedUnits,
-	// 	useProgramStage,
-	// 	{
-	// 		sessions,
-	// 		periods,
-	// 		// lastUpdatedDuration: "4m",
-	// 	}
-	// );
-	console.log("Processing program RDEklSXCD4C ");
+	console.log("Processing program IXxHJADVCkb ");
 	await processTrackedEntityInstances(
-		"RDEklSXCD4C",
-		500,
+		"IXxHJADVCkb",
+		50,
 		100,
 		processedUnits,
-		useTracker,
+		useProgramStage,
 		{
 			sessions,
 			periods,
-			page: 500,
 			// lastUpdatedDuration: "4m",
 		}
 	);
+	// console.log("Processing program RDEklSXCD4C ");
+	// await processTrackedEntityInstances(
+	// 	"RDEklSXCD4C",
+	// 	500,
+	// 	100,
+	// 	processedUnits,
+	// 	useTracker,
+	// 	{
+	// 		sessions,
+	// 		periods,
+	// 		page: 500,
+	// 		// lastUpdatedDuration: "4m",
+	// 	}
+	// );
 };
 processAll().then(() => console.log("Done"));
