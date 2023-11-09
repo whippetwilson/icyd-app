@@ -66,7 +66,6 @@ const processAll = async () => {
 		{
 			sessions,
 			periods,
-			page: 500,
 			// lastUpdatedDuration: "4m",
 		}
 	);
