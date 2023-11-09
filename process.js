@@ -2824,7 +2824,6 @@ module.exports.processTrackedEntityInstances = async (
 ) => {
 	let startingPage = 1;
 	let { searchInstances, periods, sessions, ...realOtherParams } = otherParams;
-	console.log(realOtherParams);
 	if (realOtherParams.page) {
 		const { page, ...rest } = realOtherParams;
 		startingPage = page;
@@ -2836,6 +2835,7 @@ module.exports.processTrackedEntityInstances = async (
 		program,
 		pageSize,
 		page: startingPage,
+		order: "created:desc",
 		includeDeleted: true,
 		...realOtherParams,
 	};
