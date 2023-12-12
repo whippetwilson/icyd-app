@@ -1,11 +1,10 @@
 "use strict";
 
 /**
-	* @typedef {import('moleculer').Context} Context Moleculer's Context
-	*/
+ * @typedef {import('moleculer').Context} Context Moleculer's Context
+ */
 
 const axios = require("axios");
-console.log(process.env);
 const instance = axios.create({
 	baseURL: process.env.ICYD_BASE_URL,
 	auth: {
@@ -18,84 +17,84 @@ module.exports = {
 	name: "dhis2",
 
 	/**
-		* Settings
-		*/
+	 * Settings
+	 */
 	settings: {},
 
 	/**
-		* Dependencies
-		*/
+	 * Dependencies
+	 */
 	dependencies: [],
 
 	/**
-		* Actions
-		*/
+	 * Actions
+	 */
 	actions: {
 		/**
-			* Say a 'Hello' action.
-			*
-			* @returns
-			*/
+		 * Say a 'Hello' action.
+		 *
+		 * @returns
+		 */
 		get: {
 			rest: {
 				method: "GET",
 				path: "/",
 			},
 			async handler(ctx) {
-				const {url, ...params} = ctx.params;
-				const {data} = await instance.get(url, {
+				const { url, ...params } = ctx.params;
+				const { data } = await instance.get(url, {
 					params,
 				});
 				return data;
 			},
 		},
 		/**
-			* Say a 'Hello' action.
-			*
-			* @returns
-			*/
+		 * Say a 'Hello' action.
+		 *
+		 * @returns
+		 */
 		trackedEntityInstances: {
 			rest: {
 				method: "GET",
 				path: "/trackedEntityInstances",
 			},
 			async handler(ctx) {
-				const {data} = await instance.get("trackedEntityInstances.json", {
+				const { data } = await instance.get("trackedEntityInstances.json", {
 					params: ctx.params,
 				});
 				return data;
 			},
 		},
 		/**
-			* Say a 'Hello' action.
-			*
-			* @returns
-			*/
+		 * Say a 'Hello' action.
+		 *
+		 * @returns
+		 */
 		events: {
 			rest: {
 				method: "GET",
 				path: "/events",
 			},
 			async handler(ctx) {
-				const {data} = await instance.get("events.json", {
+				const { data } = await instance.get("events.json", {
 					params: ctx.params,
 				});
 				return data;
 			},
 		},
 		/**
-			* Welcome, a username
-			*
-			* @param {String} name - User name
-			*/
+		 * Welcome, a username
+		 *
+		 * @param {String} name - User name
+		 */
 		post: {
 			rest: {
 				method: "POST",
 				path: "/",
 			},
 			async handler(ctx) {
-				const {url, ...body} = ctx.params;
-				const {data} = await instance.post(url, body);
+				const { url, ...body } = ctx.params;
+				const { data } = await instance.post(url, body);
 				return data;
 			},
 		},
@@ -105,38 +104,35 @@ module.exports = {
 				path: "/",
 			},
 			async handler(ctx) {
-				const {url, ...body} = ctx.params;
-				const {data} = await instance.put(url, body);
+				const { url, ...body } = ctx.params;
+				const { data } = await instance.put(url, body);
 				return data;
 			},
 		},
 	},
 
 	/**
-		* Events
-		*/
+	 * Events
+	 */
 	events: {},
 
 	/**
-		* Methods
-		*/
+	 * Methods
+	 */
 	methods: {},
 
 	/**
-		* Service created lifecycle event handler
-		*/
-	created() {
-	},
+	 * Service created lifecycle event handler
+	 */
+	created() {},
 
 	/**
-		* Service started lifecycle event handler
-		*/
-	async started() {
-	},
+	 * Service started lifecycle event handler
+	 */
+	async started() {},
 
 	/**
-		* Service stopped lifecycle event handler
-		*/
-	async stopped() {
-	},
+	 * Service stopped lifecycle event handler
+	 */
+	async stopped() {},
 };

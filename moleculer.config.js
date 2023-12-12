@@ -196,14 +196,11 @@ module.exports = {
 	replCommands: null,
 
 	// Called after broker created.
-	created() {
-	},
+	created() {},
 
 	// Called after broker started.
-	async started() {
-	},
+	async started() {},
 
 	// Called after broker stopped.
-	async stopped() {
-	},
+	async stopped() {},
 };
