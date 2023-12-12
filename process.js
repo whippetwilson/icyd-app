@@ -34,8 +34,7 @@ const risks = {
 };
 
 module.exports.api = axios.create({
-	// baseURL: "https://data.icyd.hispuganda.org/api/",
-	baseURL: "http://localhost:3001/api/",
+	baseURL: "http://localhost:8080/api/",
 });
 
 module.exports.mis = axios.create({
