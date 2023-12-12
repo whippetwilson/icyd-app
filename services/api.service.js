@@ -14,7 +14,7 @@ module.exports = {
 	// More info about settings: https://moleculer.services/docs/0.14/moleculer-web.html
 	settings: {
 		// Exposed port
-		port: process.env.PORT || 3001,
+		port: process.env.PORT || 8080,
 
 		// Exposed IP
 		ip: "0.0.0.0",
@@ -147,7 +147,7 @@ module.exports = {
 				// Check the token. Tip: call a service which verify the token. E.g. `accounts.resolveToken`
 				if (token == "123456") {
 					// Returns the resolved user. It will be set to the `ctx.meta.user`
-					return {id: 1, name: "John Doe"};
+					return { id: 1, name: "John Doe" };
 				} else {
 					// Invalid token
 					throw new ApiGateway.Errors.UnAuthorizedError(
