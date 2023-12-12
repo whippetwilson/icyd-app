@@ -1,5 +1,5 @@
-const {useTracker} = require("./process");
-const moment = require("moment");
+const { useTracker } = require("./process");
+// const moment = require("moment");
 const generate = async () => {
 	// try {
 	// console.log("Working on HVAT");
@@ -7,8 +7,8 @@ const generate = async () => {
 	// console.log("Working on GROUP ACTIVITIES");
 	// await processTrackedEntityInstances("IXxHJADVCkb", 100, 100);
 	// console.log("Generating the layering");
-	const args = process.argv.slice(2);
-	const page = args.length > 0 ? args[0] : 1;
+	// const args = process.argv.slice(2);
+	// const page = args.length > 0 ? args[0] : 1;
 	await useTracker({});
 	// } catch (error) {
 	// 	console.log(error.message);
