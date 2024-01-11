@@ -93,7 +93,7 @@ const processAll = async () => {
 		{
 			sessions,
 			periods,
-			lastUpdatedDuration: "2d",
+			lastUpdatedDuration: "1d",
 		}
 	);
 
@@ -107,7 +107,7 @@ const processAll = async () => {
 		{
 			sessions,
 			periods,
-			lastUpdatedDuration: "2d",
+			lastUpdatedDuration: "1d",
 		}
 	);
 	console.log("Processing program RDEklSXCD4C ");
@@ -120,10 +120,10 @@ const processAll = async () => {
 		{
 			sessions,
 			periods,
-			lastUpdatedDuration: "2d",
+			lastUpdatedDuration: "1d",
 		}
 	);
 };
-schedule.scheduleJob("0 1 * * *", async () => {
+schedule.scheduleJob("0 * * * *", async () => {
 	await processAll();
 });
