@@ -2745,6 +2745,9 @@ module.exports.flattenInstances = async (
 							eventDate,
 							event,
 							deleted,
+							notes,
+							relationships,
+							geometry,
 							...eventDetails
 						} of events) {
 							calculatedEvents.push({
