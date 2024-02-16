@@ -2791,26 +2791,28 @@ module.exports.flattenInstances = async (
 		}),
 		...requests,
 	]);
-	const total = sum(
-		inserted.map(
-			({ data: { items } }) =>
-				items.filter((i) => i.index.error === undefined).length
-		)
-	);
-	const allErrors = inserted.flatMap(({ data: { items } }) =>
-		items
-			.filter((i) => i.index.error !== undefined)
-			.map(({ index: { error } }) => error)
-	);
-	console.log(allErrors);
-	const errors = sum(
-		inserted.map(
-			({ data: { items } }) =>
-				items.filter((i) => i.index.error !== undefined).length
-		)
-	);
-	console.log(`total:${total}`);
-	console.log(`errors:${errors}`);
+
+	console.log(JSON.stringify(inserted[0]));
+	// const total = sum(
+	// 	inserted.map(
+	// 		({ data: { items } }) =>
+	// 			items.filter((i) => i.index.error === undefined).length
+	// 	)
+	// );
+	// const allErrors = inserted.flatMap(({ data: { items } }) =>
+	// 	items
+	// 		.filter((i) => i.index.error !== undefined)
+	// 		.map(({ index: { error } }) => error)
+	// );
+	// console.log(allErrors);
+	// const errors = sum(
+	// 	inserted.map(
+	// 		({ data: { items } }) =>
+	// 			items.filter((i) => i.index.error !== undefined).length
+	// 	)
+	// );
+	// console.log(`total:${total}`);
+	// console.log(`errors:${errors}`);
 	// } catch (error) {
 	// 	console.log(error.message);
 	// }
