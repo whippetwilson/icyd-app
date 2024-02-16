@@ -34,7 +34,7 @@ const risks = {
 };
 
 module.exports.api = axios.create({
-	baseURL: "https://ovcdhis2.idi.co.ug/api/",
+	baseURL: "http://localhost:3001/api/",
 });
 
 module.exports.mis = axios.create({
@@ -571,32 +571,32 @@ module.exports.fetchRelationships4Instances = async (
 };
 
 module.exports.previousLayering = async (trackedEntityInstances) => {
-	// try {
-	const data = await this.fetchAll({
-		query:
-			"select trackedEntityInstance,qtr,quarter,fullyGraduated,preGraduated from layering",
-		filter: {
-			terms: {
-				"trackedEntityInstance.keyword": trackedEntityInstances,
+	try {
+		const data = await this.fetchAll({
+			query:
+				"select trackedEntityInstance,qtr,quarter,fullyGraduated,preGraduated from layering",
+			filter: {
+				terms: {
+					"trackedEntityInstance.keyword": trackedEntityInstances,
+				},
 			},
-		},
-	});
-	return fromPairs(
-		Object.entries(groupBy(data, "trackedEntityInstance")).map(
-			([instance, data]) => [
-				instance,
-				fromPairs(
-					data.map((d) => [
-						d["qtr"],
-						{ fullyGraduated: d["fullyGraduated"], quarter: d["quarter"] },
-					])
-				),
-			]
-		)
-	);
-	// } catch (error) {
-	// 	return {};
-	// }
+		});
+		return fromPairs(
+			Object.entries(groupBy(data, "trackedEntityInstance")).map(
+				([instance, data]) => [
+					instance,
+					fromPairs(
+						data.map((d) => [
+							d["qtr"],
+							{ fullyGraduated: d["fullyGraduated"], quarter: d["quarter"] },
+						])
+					),
+				]
+			)
+		);
+	} catch (error) {
+		return {};
+	}
 };
 
 module.exports.fetchGroupActivities4Instances = async (
@@ -2481,19 +2481,19 @@ module.exports.processInstances = async (
 	}
 	const records = chunk(layering, 100);
 	for (const record of records) {
-		// try {
-		const {
-			data: { items },
-		} = await this.api.post("wal/index?index=layering", {
-			data: record,
-		});
-		const total = items.filter((i) => i.index.error === undefined).length;
-		const errors = items.filter((i) => i.index.error !== undefined).length;
-		console.log(`total:${total}`);
-		console.log(`errors:${errors}`);
-		// } catch (e) {
-		// 	console.log(e);
-		// }
+		try {
+			const {
+				data: { items },
+			} = await this.api.post("wal/index?index=layering", {
+				data: record,
+			});
+			const total = items.filter((i) => i.index.error === undefined).length;
+			const errors = items.filter((i) => i.index.error !== undefined).length;
+			console.log(`total:${total}`);
+			console.log(`errors:${errors}`);
+		} catch (e) {
+			console.log(e);
+		}
 	}
 };
 
@@ -2775,47 +2775,45 @@ module.exports.flattenInstances = async (
 		}
 	}
 	const foundEvents = groupBy(calculatedEvents, "programStage");
-	// try {
-	const requests = Object.entries(foundEvents).flatMap(([stage, events]) => {
-		return chunk(events, chunkSize).map((c) => {
-			return this.api.post(`wal/index?index=${stage.toLowerCase()}`, {
-				data: c,
+	try {
+		const requests = Object.entries(foundEvents).flatMap(([stage, events]) => {
+			return chunk(events, chunkSize).map((c) => {
+				return this.api.post(`wal/index?index=${stage.toLowerCase()}`, {
+					data: c,
+				});
 			});
 		});
-	});
-	const inserted = await Promise.all([
-		...chunk(instances, chunkSize).map((c) => {
-			return this.api.post(`wal/index?index=${program.toLowerCase()}`, {
-				data: c,
-			});
-		}),
-		...requests,
-	]);
-
-	console.log(JSON.stringify(inserted[0].data));
-	// const total = sum(
-	// 	inserted.map(
-	// 		({ data: { items } }) =>
-	// 			items.filter((i) => i.index.error === undefined).length
-	// 	)
-	// );
-	// const allErrors = inserted.flatMap(({ data: { items } }) =>
-	// 	items
-	// 		.filter((i) => i.index.error !== undefined)
-	// 		.map(({ index: { error } }) => error)
-	// );
-	// console.log(allErrors);
-	// const errors = sum(
-	// 	inserted.map(
-	// 		({ data: { items } }) =>
-	// 			items.filter((i) => i.index.error !== undefined).length
-	// 	)
-	// );
-	// console.log(`total:${total}`);
-	// console.log(`errors:${errors}`);
-	// } catch (error) {
-	// 	console.log(error.message);
-	// }
+		const inserted = await Promise.all([
+			...chunk(instances, chunkSize).map((c) => {
+				return this.api.post(`wal/index?index=${program.toLowerCase()}`, {
+					data: c,
+				});
+			}),
+			...requests,
+		]);
+		const total = sum(
+			inserted.map(
+				({ data: { items } }) =>
+					items.filter((i) => i.index.error === undefined).length
+			)
+		);
+		const allErrors = inserted.flatMap(({ data: { items } }) =>
+			items
+				.filter((i) => i.index.error !== undefined)
+				.map(({ index: { error } }) => error)
+		);
+		console.log(allErrors);
+		const errors = sum(
+			inserted.map(
+				({ data: { items } }) =>
+					items.filter((i) => i.index.error !== undefined).length
+			)
+		);
+		console.log(`total:${total}`);
+		console.log(`errors:${errors}`);
+	} catch (error) {
+		console.log(error.message);
+	}
 };
 
 module.exports.processTrackedEntityInstances = async (
