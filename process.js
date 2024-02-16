@@ -2792,7 +2792,7 @@ module.exports.flattenInstances = async (
 		...requests,
 	]);
 
-	console.log(JSON.stringify(inserted[0]));
+	console.log(JSON.stringify(inserted[0].data));
 	// const total = sum(
 	// 	inserted.map(
 	// 		({ data: { items } }) =>
