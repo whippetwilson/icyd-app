@@ -34,7 +34,7 @@ const risks = {
 };
 
 module.exports.api = axios.create({
-	baseURL: "http://localhost:8080/api/",
+	baseURL: "https://ovcdhis2.idi.co.ug/api/",
 });
 
 module.exports.mis = axios.create({
