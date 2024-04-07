@@ -801,7 +801,6 @@ module.exports.processPrevention = async (
 };
 
 module.exports.getHEIInformation = (age, heiData) => {
-	console.log(heiData);
 	if (age <= 2) {
 		const eidEnrollmentDate = this.findAnyEventValue(heiData, "sDMDb4InL5F");
 		const motherArtNo = this.findAnyEventValue(heiData, "P6KEPNorRTT");

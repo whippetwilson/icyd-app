@@ -76,7 +76,6 @@ module.exports = {
 								trackedEntityInstances,
 								processedUnits
 							);
-
 							this.localQueue(ctx, "indexData", {
 								instances,
 								calculatedEvents,
