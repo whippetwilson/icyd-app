@@ -9,7 +9,7 @@ runner
 		__filename,
 		"--config",
 		path.join(__dirname, "moleculer.config.js"),
-		//"--repl",
+		"--env",
 		path.join(__dirname, "services"),
 	])
 	.catch((err) => {

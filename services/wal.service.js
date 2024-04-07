@@ -107,7 +107,6 @@ module.exports = {
 					processedUnits,
 				} = ctx.params;
 				const foundEvents = groupBy(calculatedEvents, "programStage");
-				// try {
 				const requests = Object.entries(foundEvents).flatMap(
 					([stage, events]) => {
 						return chunk(events, 250).map((c) =>
@@ -134,8 +133,8 @@ module.exports = {
 				const { totalSuccess, totalErrors, errors } =
 					processBulkInserts(inserted);
 
-				this.logger.info(`Total:${totalSuccess}`);
-				this.logger.info(`Errors:${totalErrors}`);
+				this.logger.info(totalSuccess);
+				this.logger.info(totalErrors);
 				this.logger.info(errors);
 
 				if (generate) {
@@ -144,9 +143,6 @@ module.exports = {
 						processedUnits,
 					});
 				}
-				// } catch (error) {
-				// 	this.logger.error(error.message);
-				// }
 			},
 		},
 		generateLayering: {
