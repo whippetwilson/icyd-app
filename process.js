@@ -801,71 +801,53 @@ module.exports.processPrevention = async (
 };
 
 module.exports.getHEIInformation = (age, heiData) => {
-	if (age <= 2) {
-		const eidEnrollmentDate = this.findAnyEventValue(heiData, "sDMDb4InL5F");
-		const motherArtNo = this.findAnyEventValue(heiData, "P6KEPNorRTT");
-		const eidNo = this.findAnyEventValue(heiData, "Qyp4adG3KJL");
+	const eidEnrollmentDate = this.findAnyEventValue(heiData, "sDMDb4InL5F");
+	const motherArtNo = this.findAnyEventValue(heiData, "P6KEPNorRTT");
+	const eidNo = this.findAnyEventValue(heiData, "Qyp4adG3KJL");
 
-		const dateFirstPCRDone = this.findAnyEventValue(heiData, "yTSlwP6htQh");
-		const firstPCRResults = this.findAnyEventValue(heiData, "fUY7DEjsZin");
+	const dateFirstPCRDone = this.findAnyEventValue(heiData, "yTSlwP6htQh");
+	const firstPCRResults = this.findAnyEventValue(heiData, "fUY7DEjsZin");
 
-		const dateSecondPCRDone = this.findAnyEventValue(heiData, "TJPxuJHRA3P");
-		const secondPCRResults = this.findAnyEventValue(heiData, "TX2qmTSj0rM");
+	const dateSecondPCRDone = this.findAnyEventValue(heiData, "TJPxuJHRA3P");
+	const secondPCRResults = this.findAnyEventValue(heiData, "TX2qmTSj0rM");
 
-		const dateThirdPCRDone = this.findAnyEventValue(heiData, "r0zBP8h3UEl");
-		const thirdPCRResults = this.findAnyEventValue(heiData, "G0YhL0M4YjJ");
+	const dateThirdPCRDone = this.findAnyEventValue(heiData, "r0zBP8h3UEl");
+	const thirdPCRResults = this.findAnyEventValue(heiData, "G0YhL0M4YjJ");
 
-		const hivTestDueDate = this.findAnyEventValue(heiData, "CWqTgshbDbW");
-		const dateHivTestDone = this.findAnyEventValue(heiData, "qitG6coAg3q");
-		const hivTestResults = this.findAnyEventValue(heiData, "lznDPbUscke");
-		const finalOutcome = this.findAnyEventValue(heiData, "fcAZR5zt9i3");
-		let pcr = "";
+	const hivTestDueDate = this.findAnyEventValue(heiData, "CWqTgshbDbW");
+	const dateHivTestDone = this.findAnyEventValue(heiData, "qitG6coAg3q");
+	const hivTestResults = this.findAnyEventValue(heiData, "lznDPbUscke");
+	const finalOutcome = this.findAnyEventValue(heiData, "fcAZR5zt9i3");
+	let pcr = "";
 
-		if (hivTestResults) {
-			pcr = "4";
-		} else if (thirdPCRResults) {
-			pcr = "3";
-		} else if (secondPCRResults) {
-			pcr = "2";
-		} else if (firstPCRResults) {
-			pcr = "1";
-		}
-		return {
-			eidEnrollmentDate,
-			motherArtNo,
-			eidNo,
-			dateFirstPCRDone,
-			firstPCRResults:
-				firstPCRResults === "1" ? "+" : firstPCRResults === "2" ? "-" : "",
-			dateSecondPCRDone,
-			secondPCRResults:
-				secondPCRResults === "1" ? "+" : secondPCRResults === "2" ? "-" : "",
-			dateThirdPCRDone,
-			thirdPCRResults:
-				thirdPCRResults === "1" ? "+" : thirdPCRResults === "2" ? "-" : "",
-			hivTestDueDate,
-			dateHivTestDone,
-			hivTestResults:
-				hivTestResults === "1" ? "+" : hivTestResults === "2" ? "-" : "",
-			finalOutcome,
-			pcr,
-		};
+	if (hivTestResults) {
+		pcr = "4";
+	} else if (thirdPCRResults) {
+		pcr = "3";
+	} else if (secondPCRResults) {
+		pcr = "2";
+	} else if (firstPCRResults) {
+		pcr = "1";
 	}
 	return {
-		eidEnrollmentDate: "",
-		motherArtNo: "",
-		eidNo: "",
-		dateFirstPCRDone: "",
-		firstPCRResults: "",
-		dateSecondPCRDone: "",
-		secondPCRResults: "",
-		dateThirdPCRDone: "",
-		thirdPCRResults: "",
-		hivTestDueDate: "",
-		dateHivTestDone: "",
-		hivTestResults: "",
-		finalOutcome: "",
-		pcr: "",
+		eidEnrollmentDate,
+		motherArtNo,
+		eidNo,
+		dateFirstPCRDone,
+		firstPCRResults:
+			firstPCRResults === "1" ? "+" : firstPCRResults === "2" ? "-" : "",
+		dateSecondPCRDone,
+		secondPCRResults:
+			secondPCRResults === "1" ? "+" : secondPCRResults === "2" ? "-" : "",
+		dateThirdPCRDone,
+		thirdPCRResults:
+			thirdPCRResults === "1" ? "+" : thirdPCRResults === "2" ? "-" : "",
+		hivTestDueDate,
+		dateHivTestDone,
+		hivTestResults:
+			hivTestResults === "1" ? "+" : hivTestResults === "2" ? "-" : "",
+		finalOutcome,
+		pcr,
 	};
 };
 
