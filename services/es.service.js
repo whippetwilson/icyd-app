@@ -1,9 +1,7 @@
 "use strict";
 const { Client } = require("@elastic/elasticsearch");
-const { flatMap } = require("lodash");
+const { flatMap, fromPairs } = require("lodash");
 const client = new Client({ node: "http://localhost:9200" });
-// const client = new Client({node: "http://192.168.64.3:9200"});
-
 /**
  * @typedef {import('moleculer').Context} Context Moleculer's Context
  */
@@ -56,6 +54,33 @@ module.exports = {
 		sql: {
 			async handler(ctx) {
 				return await client.sql.query(ctx.params);
+			},
+		},
+		queryAll: {
+			async handler(ctx) {
+				try {
+					let {
+						rows: allRows,
+						columns,
+						cursor: currentCursor,
+					} = await client.sql.query(ctx.params);
+
+					if (currentCursor) {
+						do {
+							let {
+								data: { rows, cursor },
+							} = await client.sql.query({ cursor: currentCursor });
+							allRows = allRows.concat(rows);
+							currentCursor = cursor;
+						} while (currentCursor);
+					}
+					return allRows.map((r) => {
+						return fromPairs(columns.map((c, i) => [c.name, r[i]]));
+					});
+				} catch (error) {
+					this.logger.error(error.message);
+					return [];
+				}
 			},
 		},
 		search: {
@@ -117,6 +142,29 @@ module.exports = {
 					id,
 				});
 				return _source;
+			},
+		},
+		reset: {
+			params: {
+				index: "string",
+			},
+			async handler(ctx) {
+				for (const index of ctx.params.index.split(",")) {
+					try {
+						await client.indices.delete({ index });
+					} catch (error) {
+						console.log(error);
+					}
+					try {
+						await client.indices.create({
+							index,
+							settings: { "index.mapping.total_fields.limit": "10000" },
+						});
+					} catch (error) {
+						console.log(error);
+					}
+				}
+				return { response: "Done" };
 			},
 		},
 	},

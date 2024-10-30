@@ -19,6 +19,7 @@ pm2 delete transfer3
 
 
 curl -X DELETE "localhost:9200/rdeklsxcd4c?pretty"
+curl -X DELETE "localhost:9200/hewq6yr4cs5?pretty"
 curl -X DELETE "localhost:9200/tuljephu0um?pretty"
 curl -X DELETE "localhost:9200/haaslv2ur0l?pretty"
 curl -X DELETE "localhost:9200/b9ei27lmqrz?pretty"
@@ -40,6 +41,7 @@ curl -X DELETE "localhost:9200/layering2?pretty"
 
 
 curl -X PUT "localhost:9200/hg8f2ohckvh?pretty"
+curl -X PUT "localhost:9200/hewq6yr4cs5?pretty"
 curl -X PUT "localhost:9200/rdeklsxcd4c?pretty"
 curl -X PUT "localhost:9200/tuljephu0um?pretty"
 curl -X PUT "localhost:9200/haaslv2ur0l?pretty"
@@ -60,3 +62,23 @@ curl -X PUT "localhost:9200/layering2?pretty"
 
 
 
+curl -s -XPUT http://localhost:9200/hg8f2ohckvh/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/rdeklsxcd4c/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/hewq6yr4cs5/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/tuljephu0um/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/haaslv2ur0l/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/b9ei27lmqrz/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/kklayguncml/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/latgkmbf7yv/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/yz3zh5ifezm/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/evkas8ljnbo/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/sxnxrdtsjzp/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/cs61idhyntk/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/cs61idhyntk/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/kofm3jjl7n7/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/qnxroc1wiya/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/layering/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/ixxhjadvckb/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/atzwdrojnxj/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/vzkqbbglj3o/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
+curl -s -XPUT http://localhost:9200/layering2/_settings  -H 'Content-Type: application/json' -d '{"index.mapping.total_fields.limit": 2000}'
