@@ -489,6 +489,7 @@ module.exports.syncOrganisations = async () => {
 			level: 5,
 		},
 	});
+	console.log("API Response - Organisation Units:", organisationUnits);
 	const units = organisationUnits.map((unit) => {
 		return {
 			subCounty: unit.parent ? unit.parent.name : "",
